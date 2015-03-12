@@ -1,2 +1,4 @@
 # TimGuenther.github.io
-Portfolio Website
+Portfolio [Website](http://timguenther.github.io/), currently under construction.
+
+
