@@ -1,4 +1,4 @@
-# TimGuenther.github.io
-Portfolio [Website](http://timguenther.github.io/), currently under construction.
+# Tim-Conrad.github.io
+Portfolio [Website](https://blog.hckr.site/), currently under construction.
 
 
