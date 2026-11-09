@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wq.d0-0b.pw/sitemap.xml

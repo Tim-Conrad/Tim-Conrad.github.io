@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Tim Conrad · Security research</title>
+<meta name="description" content="Tim Conrad is a security researcher. Home of the CVE-2022-46166 write-up: remote code execution in Spring Boot Admin through a theme colour setting.">
+<link rel="canonical" href="https://wq.d0-0b.pw/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tim Conrad · Security research">
+<meta property="og:description" content="Vulnerability research, coordinated disclosure, and the write-ups that follow.">
+<meta property="og:url" content="https://wq.d0-0b.pw/">
+<meta property="og:image" content="https://wq.d0-0b.pw/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/" aria-label="Tim Conrad, home">:wq</a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#research">Research</a>
+      <a class="opt2" href="#disclosure">Disclosure</a>
+      <a href="#projects">Projects</a>
+      <a class="opt3" href="#verify">Verify</a>
+      <a class="opt" href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero wrap">
+  <p class="label">Security research · Coordinated disclosure</p>
+  <div class="hero__grid">
+    <div class="hero__main">
+      <h1><span>Tim</span><span>Conrad<i class="cursor" aria-hidden="true"></i></span></h1>
+      <div class="hero__lede">
+        <p>I look for the places where software trusts its input <mark>more than it should</mark>. Then I report them, wait for the fix, and write up how they worked.</p>
+        <div class="btn-row">
+          <a class="btn" href="/research/cve-2022-46166/">Read the CVE write-up</a>
+          <a class="btn btn--ghost" href="#verify">Get my PGP key</a>
+        </div>
+      </div>
+    </div>
+
+    <form class="env" id="env-form" aria-labelledby="env-title" novalidate>
+      <div class="env__bar"><span id="env-title">Environment manager</span><span>wq.d0-0b.pw</span></div>
+      <div class="env__body">
+        <p>CVE-2022-46166 hid in a setting called <code>theme_color</code>. This site has one too. Change it and the whole page follows.</p>
+        <div class="field">
+          <span class="label">Property name</span>
+          <output>site.theme_color</output>
+        </div>
+        <div class="field">
+          <label for="theme-color">Value</label>
+          <div class="env__row">
+            <input id="theme-color" name="value" type="text" value="#ffb000" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button class="btn" type="submit">Update</button>
+          </div>
+        </div>
+        <div class="chips">
+          <button class="chip" type="button" data-fill="#ffb000"><i class="sw-amber"></i>ffb000</button>
+          <button class="chip" type="button" data-fill="#6db33f"><i class="sw-green"></i>6db33f</button>
+          <button class="chip" type="button" data-fill="#439fe0"><i class="sw-blue"></i>439fe0</button>
+          <button class="chip" type="button" data-fill="#ff5fa2"><i class="sw-pink"></i>ff5fa2</button>
+          <button class="chip chip--payload" type="button" data-hold data-fill="#{T(java.lang.Runtime).getRuntime().exec('open -a calculator')}">load the payload</button>
+        </div>
+        <p class="env__out" id="env-out" role="status" data-state="ok">Ready. Any CSS colour works. So did a Java expression, in the original.</p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="section" id="research">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/research</p>
+      <h2>A theme colour that ran code</h2>
+      <p>Spring Boot Admin read its Microsoft Teams notification settings as expression templates. Any signed-in user could edit those settings from the web UI.</p>
+    </div>
+
+    <article class="adv">
+      <div class="adv__main">
+        <div class="adv__id"><span class="hot">CVE-2022-46166</span><span>GHSA-w3x5-427h-wfq6</span><span>CWE-94</span></div>
+        <h3>Template injection in Spring Boot Admin leads to remote code execution</h3>
+        <p>The notifier parsed <code>theme_color</code> as a Spring Expression Language template. Put an expression there, trigger any notification, and the server evaluates it with full access to Java types. That is arbitrary code on the host.</p>
+        <div class="code">
+          <div class="code__bar"><span>MicrosoftTeamsNotifier.java</span><span>the vulnerable setter</span></div>
+<pre class="ln ln-233"><code><span class="l"><span class="k">public void</span> setThemeColor(String themeColor) {</span><span class="l">  <span class="k">this</span>.themeColor = parser.<span class="hl">parseExpression(themeColor, ParserContext.TEMPLATE_EXPRESSION)</span>;</span><span class="l">}</span></code></pre>
+        </div>
+        <div class="btn-row">
+          <a class="btn" href="/research/cve-2022-46166/">Full write-up with proof of concept</a>
+        </div>
+      </div>
+      <dl class="adv__facts">
+        <div><dt>Impact</dt><dd>Remote code execution</dd></div>
+        <div><dt>Weakness</dt><dd>CWE-94, improper control of generation of code</dd></div>
+        <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
+        <div><dt>Needs</dt><dd>An authenticated user and Teams notifications enabled</dd></div>
+        <div><dt>Fix</dt><dd><code>SimpleEvaluationContext</code> replaces <code>StandardEvaluationContext</code> in <a href="https://github.com/codecentric/spring-boot-admin/commit/320eab19ff76e2c012623a1eb53af6f4ae26e20b" rel="noopener">320eab1</a></dd></div>
+        <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GitHub Security Advisory</a></dd></div>
+      </dl>
+    </article>
+
+    <ol class="chain" aria-label="Attack steps">
+      <li><h4>Enable the notifier</h4><p>Run Spring Boot Admin with Microsoft Teams notifications switched on.</p></li>
+      <li><h4>Plant the expression</h4><p>In the Environment tab, set <code>ms-teams.theme_color</code> to a Java gadget.</p></li>
+      <li><h4>Trigger a notification</h4><p>Any event will do. Deleting the application is the quickest.</p></li>
+      <li><h4>Code runs on the host</h4><p>The notifier evaluates the colour as a template, and the gadget executes.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="disclosure">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/disclosure</p>
+      <h2>From report to advisory in 11 days</h2>
+      <p>Reported privately, fixed by the maintainers, then published together. The axis below is drawn to scale, one sixteenth per day.</p>
+    </div>
+
+    <div class="scale" aria-hidden="true">
+      <span class="span">11 days</span>
+      <i class="d0" data-d="day 0"></i>
+      <i class="d4" data-d="4"></i>
+      <i class="d11 on" data-d="11"></i>
+      <i class="d14" data-d="14"></i>
+      <i class="d16" data-d="16"></i>
+    </div>
+    <ol class="events">
+      <li><time datetime="2022-11-28">28 Nov 2022</time><b>Reported</b><span>Vulnerability sent to codecentric by email.</span></li>
+      <li><time datetime="2022-12-02">2 Dec 2022</time><b>Confirmed</b><span>codecentric confirms the vulnerability.</span></li>
+      <li><time datetime="2022-12-09">9 Dec 2022</time><b>Advisory</b><span>GitHub Security Advisory published and CVE assigned.</span></li>
+      <li><time datetime="2022-12-12">12 Dec 2022</time><b>Coordinated</b><span>Disclosure and write-up agreed with codecentric.</span></li>
+      <li><time datetime="2022-12-14">14 Dec 2022</time><b>Published</b><span>The write-up goes live on this site.</span></li>
+    </ol>
+
+    <blockquote class="quote">
+      <p>The communication was very professional and fast from codecentric.</p>
+      <footer>From the <a href="/research/cve-2022-46166/#timeline">write-up</a></footer>
+    </blockquote>
+  </div>
+</section>
+
+<section class="section" id="projects">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/projects</p>
+      <h2>Small worlds for the browser</h2>
+      <p>I also build games. Both of these run in a browser tab with nothing to install, and both were made for small hands.</p>
+    </div>
+    <div class="projects">
+      <a class="proj" href="/projects/kleinbahn/">
+        <img src="/assets/projects/kleinbahn-poster.jpg" width="1280" height="720" alt="A low-poly island seen from above, with a railway, a town, bridges and smaller islands around it.">
+        <div class="proj__body">
+          <p class="label">three.js · sandbox</p>
+          <h3>Kleinbahn</h3>
+          <p>An island railway that fits in your pocket. Lay track, run trains, and watch a town, a harbour and a launch site come to life around them.</p>
+        </div>
+      </a>
+      <a class="proj" href="/projects/wortzauber/">
+        <img src="/assets/projects/wortzauber-poster.jpg" width="1280" height="720" alt="A pixel-art meadow where a child hero stands next to an apple that was just written into the world.">
+        <div class="proj__body">
+          <p class="label">Children · German and English</p>
+          <h3>Wortzauber</h3>
+          <p>A letter-tracing word game. A child writes a word, traces every letter, and the thing appears in the world.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="verify">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/verify</p>
+      <h2>Check that it is really me</h2>
+      <p>Use this PGP key to verify anything published under my name. Compare the fingerprint before you trust the key.</p>
+    </div>
+
+    <div class="verify">
+      <div class="fpr">
+        <p class="fpr__hex" id="fpr" data-text="A8866CB16B079685561574B2A91DABBEC9967390" aria-label="Fingerprint A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390">
+          <span>A886</span><span>6CB1</span><span>6B07</span><span>9685</span><span>5615</span><span>74B2</span><span>A91D</span><span>ABBE</span><span>C996</span><span>7390</span>
+        </p>
+        <p class="fpr__meta"><span>RSA 3072</span><span>created 4 Dec 2020</span><span>sign, certify, encrypt</span></p>
+        <div class="btn-row">
+          <a class="btn" href="/key.asc">Download key.asc</a>
+          <button class="btn btn--ghost" type="button" data-copy="fpr">Copy fingerprint</button>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code__bar"><span>Check the fingerprint yourself</span><button class="copy" type="button" data-copy="verify-cmd">copy</button></div>
+<pre id="verify-cmd"><code><span class="l">curl -O https://wq.d0-0b.pw/key.asc</span><span class="l">gpg --show-keys --with-fingerprint key.asc</span><span class="l"><span class="c"># expect: A886 6CB1 6B07 9685 5615  74B2 A91D ABBE C996 7390</span></span><span class="l">gpg --import key.asc</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <h2>Say hello</h2>
+    <p>Interested in the research, or found something you want a second pair of eyes on? Message me on LinkedIn, or find my code on GitHub.</p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/Tim-Conrad" rel="me noopener">github.com/Tim-Conrad</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad. No cookies, no trackers, no third-party requests.</span>
+    <span>:wq</span>
+  </div>
+</footer>
+
+<div class="calc" id="calc" role="dialog" aria-label="Calculator" hidden>
+  <div class="calc__bar"><span>Calculator</span><button type="button" id="calc-close" aria-label="Close calculator">x</button></div>
+  <div class="calc__screen" id="calc-screen" aria-live="polite">46166</div>
+  <div class="calc__keys">
+    <button type="button" class="wide" data-k="C">C</button><button type="button" class="op" data-k="/">÷</button><button type="button" class="op" data-k="*">×</button>
+    <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><button type="button" class="op" data-k="-">−</button>
+    <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" class="op" data-k="+">+</button>
+    <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" class="eq" data-k="=">=</button>
+    <button type="button" class="wide" data-k="0">0</button><button type="button" class="wide" data-k=".">.</button>
+  </div>
+  <p class="calc__note">The proof of concept ran <code>open -a calculator</code> on the server. This one runs in your browser and nowhere else.</p>
+</div>
+
+</body>
+</html>
