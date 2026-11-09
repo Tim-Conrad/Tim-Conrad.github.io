@@ -6,12 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Tim Conrad · Security research</title>
 <meta name="description" content="Tim Conrad is a security researcher. Home of the CVE-2022-46166 write-up: remote code execution in Spring Boot Admin through a theme colour setting.">
-<link rel="canonical" href="https://wq.d0-0b.pw/">
+<link rel="canonical" href="https://t7d.dev/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Tim Conrad · Security research">
 <meta property="og:description" content="Vulnerability research, coordinated disclosure, and the write-ups that follow.">
-<meta property="og:url" content="https://wq.d0-0b.pw/">
-<meta property="og:image" content="https://wq.d0-0b.pw/assets/og.png">
+<meta property="og:url" content="https://t7d.dev/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
@@ -53,7 +53,7 @@
     </div>
 
     <form class="env" id="env-form" aria-labelledby="env-title" novalidate>
-      <div class="env__bar"><span id="env-title">Environment manager</span><span>wq.d0-0b.pw</span></div>
+      <div class="env__bar"><span id="env-title">Environment manager</span><span>t7d.dev</span></div>
       <div class="env__body">
         <p>CVE-2022-46166 hid in a setting called <code>theme_color</code>. This site has one too. Change it and the whole page follows.</p>
         <div class="field">
@@ -200,7 +200,7 @@
       </div>
       <div class="code">
         <div class="code__bar"><span>Check the fingerprint yourself</span><button class="copy" type="button" data-copy="verify-cmd">copy</button></div>
-<pre id="verify-cmd"><code><span class="l">curl -O https://wq.d0-0b.pw/key.asc</span><span class="l">gpg --show-keys --with-fingerprint key.asc</span><span class="l"><span class="c"># expect: A886 6CB1 6B07 9685 5615  74B2 A91D ABBE C996 7390</span></span><span class="l">gpg --import key.asc</span></code></pre>
+<pre id="verify-cmd"><code><span class="l">curl -O https://t7d.dev/key.asc</span><span class="l">gpg --show-keys --with-fingerprint key.asc</span><span class="l"><span class="c"># expect: A886 6CB1 6B07 9685 5615  74B2 A91D ABBE C996 7390</span></span><span class="l">gpg --import key.asc</span></code></pre>
       </div>
     </div>
   </div>
