@@ -13,9 +13,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = os.path.dirname(os.path.dirname(HERE))
 S = os.environ.get('REELS_WORK') or os.path.join(SITE, '.reels')
 
-# Stills for the product pages: (reel time in seconds) in page order. Check them after a timeline change.
-STILLS = {'kleinbahn': [7.0, 11.5, 24.0, 37.0], 'wortzauber': [8.2, 16.0, 24.5, 34.5]}
-POSTER = {'kleinbahn': 4.3, 'wortzauber': 13.2}
+# Pictures for the product pages, taken from the sources so they carry no caption. First entry = the poster
+# (also the card on the front page), then the four stills in page order.
+# Kleinbahn: (shot, frame number). Wortzauber: (take, mark in marks.json, seconds after the mark).
+KB_PICS = [('a-wide', 60), ('b-train', 60), ('c-town', 70), ('f-launch', 60), ('i-dusk', 119)]
+WZ_PICS = [('meadow', 'apple', 1.0), ('meadow', 'traced', -3.0), ('quest', 'start', 2.5), ('castle', 'start', 2.0), ('map', 'start', 2.5)]
+# The picture inside the landscape phone frame of the Wortzauber page, cropped to the phone's 874:402 shape.
+WZ_PHONE = ('quest', 'start', 2.5)
 
 
 def run(args):
@@ -111,7 +115,7 @@ def wz(repo):
         clip('01-type', 'meadow', m['start'] - 0.1, m['typed'] + 0.5, [('c-type', 1.9, 'end')]),
         # the tracing is slow to watch: run it at a multiple of real time
         clip('02-trace', 'meadow', m['trace'] - 0.3, m['traced'] + 0.3, [('c-trace', 0.3, 'end')], speed=(m['traced'] - m['trace'] + 0.6) / 5.5),
-        clip('03-apple', 'meadow', m['closed'] - 0.2, m['end'], [('c-apple', 0.4, 'end')]),
+        clip('03-apple', 'meadow', m['closed'] - 0.2, m['picked'] - 1.0, [('c-apple', 0.4, 'end')]),
         clip('04-quest', 'quest', *span('quest'), [('c-quest', 0.3, 'end')]),
         clip('05-wall', 'wall', *span('wall', 0.6), [('c-wall', 0.3, 'end')]),
         clip('06-castle', 'castle', *span('castle', 0.6), [('c-castle', 0.3, 'end')]),
@@ -130,12 +134,17 @@ def publish():
         if not os.path.exists(src):
             print('missing', src); continue
         audio = ['-c:a', 'aac', '-b:a', '112k'] if name == 'wortzauber' else ['-an']
-        run(['-i', src, '-c:v', 'libx264', '-crf', '26', '-preset', 'slow', '-maxrate', '2400k', '-bufsize', '4800k',
+        run(['-i', src, '-c:v', 'libx264', '-crf', '26', '-preset', 'slow', '-maxrate', '1800k', '-bufsize', '3600k',
              '-pix_fmt', 'yuv420p', '-movflags', '+faststart'] + audio + [f'{out}/{name}-reel.mp4'])
-        shots = [('poster', POSTER[name])] + [(str(i + 1), t) for i, t in enumerate(STILLS[name])]
-        for tag, t in shots:
-            run(['-ss', f'{t}', '-i', src, '-frames:v', '1', '-q:v', '3', f'{out}/{name}-{tag}.jpg'])
         print(name, 'published', os.path.getsize(f'{out}/{name}-reel.mp4') // 1024, 'KB')
+    tags = ['poster', '1', '2', '3', '4']
+    for tag, (shot, frame) in zip(tags, KB_PICS):
+        run(['-i', f'{S}/kb/frames/{shot}/{frame:04d}.jpg', '-q:v', '3', f'{out}/kleinbahn-{tag}.jpg'])
+    marks = json.load(open(f'{S}/wz/rec/marks.json'))
+    grab = lambda take, mark, off: ['-ss', f'{marks[take][mark] + off:.3f}', '-i', glob.glob(f'{S}/wz/rec/v-{take}/*.webm')[0], '-frames:v', '1', '-q:v', '3']
+    for tag, pic in zip(tags, WZ_PICS):
+        run(grab(*pic) + [f'{out}/wortzauber-{tag}.jpg'])
+    run(grab(*WZ_PHONE) + ['-vf', 'crop=1280:589:0:66,scale=1748:804:flags=neighbor', f'{out}/wortzauber-phone.jpg'])
 
 
 if __name__ == '__main__':

@@ -11,6 +11,9 @@ Personal site of Tim Conrad. Plain HTML, CSS and a little JavaScript. No build s
 | `CVE/CVE-2022-46166/` | Redirect from the old MkDocs URL |
 | `404.html` | Not-found page |
 | `key.asc` | PGP public key |
+| `projects/kleinbahn/`, `projects/wortzauber/` | Product pages of the two games, with a reel and a tap-to-play live demo |
+| `assets/projects/` | Reels, posters and stills of the product pages |
+| `tools/reels/` | Scripts that film the games and cut the reels (see `.claude/skills/updating-product-reels/`) |
 | `assets/site.css` | All styles and colour tokens |
 | `assets/theme.js` | Applies the saved theme and accent before first paint |
 | `assets/site.js` | Theme toggle, the `site.theme_color` editor, copy buttons |
