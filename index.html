@@ -1,203 +1,243 @@
-
-<!DOCTYPE html>
-
-<html class="no-js" lang="en">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<link href="assets/images/favicon.png" rel="icon"/>
-<meta content="mkdocs-1.4.2, mkdocs-material-8.5.10" name="generator"/>
-<title>Tim Conrad's Blog</title>
-<link href="assets/stylesheets/main.472b142f.min.css" rel="stylesheet"/>
-<link href="assets/stylesheets/palette.08040f6c.min.css" rel="stylesheet"/>
-<meta content="#000000" name="theme-color"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
-<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-<script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-<link href="assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
-            html.glightbox-open { overflow: initial; height: 100%; }
-            .gslide-title { margin-top: 0px; user-select: text; }
-            .gslide-desc { color: #666; user-select: text; }
-            .gslide-image img { background: white; }
-            
-                .gscrollbar-fixer { padding-right: 15px; }
-                .gdesc-inner { font-size: 0.75rem; }
-                body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
-                body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
-                body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}
-                </style><script src="assets/javascripts/glightbox.min.js"></script></head>
-<body data-md-color-accent="red" data-md-color-primary="black" data-md-color-scheme="default" dir="ltr">
-<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
-<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
-<label class="md-overlay" for="__drawer"></label>
-<div data-md-component="skip">
-<a class="md-skip" href="#about">
-          Skip to content
-        </a>
-</div>
-<div data-md-component="announce">
-</div>
-<header class="md-header" data-md-component="header">
-<nav aria-label="Header" class="md-header__inner md-grid">
-<a aria-label="Tim Conrad's Blog" class="md-header__button md-logo" data-md-component="logo" href="." title="Tim Conrad's Blog">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"></path></svg>
-</a>
-<label class="md-header__button md-icon" for="__drawer">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"></path></svg>
-</label>
-<div class="md-header__title" data-md-component="header-title">
-<div class="md-header__ellipsis">
-<div class="md-header__topic">
-<span class="md-ellipsis">
-            Tim Conrad's Blog
-          </span>
-</div>
-<div class="md-header__topic" data-md-component="header-topic">
-<span class="md-ellipsis">
-            
-              About
-            
-          </span>
-</div>
-</div>
-</div>
-<label class="md-header__button md-icon" for="__search">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"></path></svg>
-</label>
-<div class="md-search" data-md-component="search" role="dialog">
-<label class="md-search__overlay" for="__search"></label>
-<div class="md-search__inner" role="search">
-<form class="md-search__form" name="search">
-<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
-<label class="md-search__icon md-icon" for="__search">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"></path></svg>
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"></path></svg>
-</label>
-<nav aria-label="Search" class="md-search__options">
-<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"></path></svg>
-</button>
-</nav>
-</form>
-<div class="md-search__output">
-<div class="md-search__scrollwrap" data-md-scrollfix="">
-<div class="md-search-result" data-md-component="search-result">
-<div class="md-search-result__meta">
-            Initializing search
-          </div>
-<ol class="md-search-result__list"></ol>
-</div>
-</div>
-</div>
-</div>
-</div>
-</nav>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Tim Conrad · Security research</title>
+<meta name="description" content="Tim Conrad is a security researcher. Home of the CVE-2022-46166 write-up: remote code execution in Spring Boot Admin through a theme colour setting.">
+<link rel="canonical" href="https://t7d.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tim Conrad · Security research">
+<meta property="og:description" content="Vulnerability research, coordinated disclosure, and the write-ups that follow.">
+<meta property="og:url" content="https://t7d.dev/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/" aria-label="Tim Conrad, home">:wq</a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#research">Research</a>
+      <a class="opt2" href="#disclosure">Disclosure</a>
+      <a href="#projects">Projects</a>
+      <a class="opt3" href="#verify">Verify</a>
+      <a class="opt" href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
 </header>
-<div class="md-container" data-md-component="container">
-<main class="md-main" data-md-component="main">
-<div class="md-main__inner md-grid">
-<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
-<label class="md-nav__title" for="__drawer">
-<a aria-label="Tim Conrad's Blog" class="md-nav__button md-logo" data-md-component="logo" href="." title="Tim Conrad's Blog">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"></path></svg>
-</a>
-    Tim Conrad's Blog
-  </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item md-nav__item--active">
-<input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
-<a class="md-nav__link md-nav__link--active" href=".">
-        About
+
+<main id="main">
+
+<section class="hero wrap">
+  <p class="label">Security research · Coordinated disclosure</p>
+  <div class="hero__grid">
+    <div class="hero__main">
+      <h1><span>Tim</span><span>Conrad<i class="cursor" aria-hidden="true"></i></span></h1>
+      <div class="hero__lede">
+        <p>I look for the places where software trusts its input <mark>more than it should</mark>. Then I report them, wait for the fix, and write up how they worked.</p>
+        <div class="btn-row">
+          <a class="btn" href="/research/cve-2022-46166/">Read the CVE write-up</a>
+          <a class="btn btn--ghost" href="#verify">Get my PGP key</a>
+        </div>
+      </div>
+    </div>
+
+    <form class="env" id="env-form" aria-labelledby="env-title" novalidate>
+      <div class="env__bar"><span id="env-title">Environment manager</span><span>t7d.dev</span></div>
+      <div class="env__body">
+        <p>CVE-2022-46166 hid in a setting called <code>theme_color</code>. This site has one too. Change it and the whole page follows.</p>
+        <div class="field">
+          <span class="label">Property name</span>
+          <output>site.theme_color</output>
+        </div>
+        <div class="field">
+          <label for="theme-color">Value</label>
+          <div class="env__row">
+            <input id="theme-color" name="value" type="text" value="#ffb000" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button class="btn" type="submit">Update</button>
+          </div>
+        </div>
+        <div class="chips">
+          <button class="chip" type="button" data-fill="#ffb000"><i class="sw-amber"></i>ffb000</button>
+          <button class="chip" type="button" data-fill="#6db33f"><i class="sw-green"></i>6db33f</button>
+          <button class="chip" type="button" data-fill="#439fe0"><i class="sw-blue"></i>439fe0</button>
+          <button class="chip" type="button" data-fill="#ff5fa2"><i class="sw-pink"></i>ff5fa2</button>
+          <button class="chip chip--payload" type="button" data-hold data-fill="#{T(java.lang.Runtime).getRuntime().exec('open -a calculator')}">load the payload</button>
+        </div>
+        <p class="env__out" id="env-out" role="status" data-state="ok">Ready. Any CSS colour works. So did a Java expression, in the original.</p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="section" id="research">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/research</p>
+      <h2>A theme colour that ran code</h2>
+      <p>Spring Boot Admin read its Microsoft Teams notification settings as expression templates. Any signed-in user could edit those settings from the web UI.</p>
+    </div>
+
+    <article class="adv">
+      <div class="adv__main">
+        <div class="adv__id"><span class="hot">CVE-2022-46166</span><span>GHSA-w3x5-427h-wfq6</span><span>CWE-94</span></div>
+        <h3>Template injection in Spring Boot Admin leads to remote code execution</h3>
+        <p>The notifier parsed <code>theme_color</code> as a Spring Expression Language template. Put an expression there, trigger any notification, and the server evaluates it with full access to Java types. That is arbitrary code on the host.</p>
+        <div class="code">
+          <div class="code__bar"><span>MicrosoftTeamsNotifier.java</span><span>the vulnerable setter</span></div>
+<pre class="ln ln-233"><code><span class="l"><span class="k">public void</span> setThemeColor(String themeColor) {</span><span class="l">  <span class="k">this</span>.themeColor = parser.<span class="hl">parseExpression(themeColor, ParserContext.TEMPLATE_EXPRESSION)</span>;</span><span class="l">}</span></code></pre>
+        </div>
+        <div class="btn-row">
+          <a class="btn" href="/research/cve-2022-46166/">Full write-up with proof of concept</a>
+        </div>
+      </div>
+      <dl class="adv__facts">
+        <div><dt>Impact</dt><dd>Remote code execution</dd></div>
+        <div><dt>Weakness</dt><dd>CWE-94, improper control of generation of code</dd></div>
+        <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
+        <div><dt>Needs</dt><dd>An authenticated user and Teams notifications enabled</dd></div>
+        <div><dt>Fix</dt><dd><code>SimpleEvaluationContext</code> replaces <code>StandardEvaluationContext</code> in <a href="https://github.com/codecentric/spring-boot-admin/commit/320eab19ff76e2c012623a1eb53af6f4ae26e20b" rel="noopener">320eab1</a></dd></div>
+        <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GitHub Security Advisory</a></dd></div>
+      </dl>
+    </article>
+
+    <ol class="chain" aria-label="Attack steps">
+      <li><h4>Enable the notifier</h4><p>Run Spring Boot Admin with Microsoft Teams notifications switched on.</p></li>
+      <li><h4>Plant the expression</h4><p>In the Environment tab, set <code>ms-teams.theme_color</code> to a Java gadget.</p></li>
+      <li><h4>Trigger a notification</h4><p>Any event will do. Deleting the application is the quickest.</p></li>
+      <li><h4>Code runs on the host</h4><p>The notifier evaluates the colour as a template, and the gadget executes.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" id="disclosure">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/disclosure</p>
+      <h2>From report to advisory in 11 days</h2>
+      <p>Reported privately, fixed by the maintainers, then published together. The axis below is drawn to scale, one sixteenth per day.</p>
+    </div>
+
+    <div class="scale" aria-hidden="true">
+      <span class="span">11 days</span>
+      <i class="d0" data-d="day 0"></i>
+      <i class="d4" data-d="4"></i>
+      <i class="d11 on" data-d="11"></i>
+      <i class="d14" data-d="14"></i>
+      <i class="d16" data-d="16"></i>
+    </div>
+    <ol class="events">
+      <li><time datetime="2022-11-28">28 Nov 2022</time><b>Reported</b><span>Vulnerability sent to codecentric by email.</span></li>
+      <li><time datetime="2022-12-02">2 Dec 2022</time><b>Confirmed</b><span>codecentric confirms the vulnerability.</span></li>
+      <li><time datetime="2022-12-09">9 Dec 2022</time><b>Advisory</b><span>GitHub Security Advisory published and CVE assigned.</span></li>
+      <li><time datetime="2022-12-12">12 Dec 2022</time><b>Coordinated</b><span>Disclosure and write-up agreed with codecentric.</span></li>
+      <li><time datetime="2022-12-14">14 Dec 2022</time><b>Published</b><span>The write-up goes live on this site.</span></li>
+    </ol>
+
+    <blockquote class="quote">
+      <p>The communication was very professional and fast from codecentric.</p>
+      <footer>From the <a href="/research/cve-2022-46166/#timeline">write-up</a></footer>
+    </blockquote>
+  </div>
+</section>
+
+<section class="section" id="projects">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/projects</p>
+      <h2>Small worlds for the browser</h2>
+      <p>I also build games. Both of these run in a browser tab with nothing to install, and both were made for small hands.</p>
+    </div>
+    <div class="projects">
+      <a class="proj" href="/projects/kleinbahn/">
+        <img src="/assets/projects/kleinbahn-poster.jpg" width="1280" height="720" alt="A low-poly island seen from above, with a railway, a town, bridges and smaller islands around it.">
+        <div class="proj__body">
+          <p class="label">three.js · sandbox</p>
+          <h3>Kleinbahn</h3>
+          <p>An island railway that fits in your pocket. Lay track, run trains, and watch a town, a harbour and a launch site come to life around them.</p>
+        </div>
       </a>
-</li>
-<li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" id="__nav_2" type="checkbox"/>
-<label class="md-nav__link" for="__nav_2">
-          CVE
-          <span class="md-nav__icon md-icon"></span>
-</label>
-<nav aria-label="CVE" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_2">
-<span class="md-nav__icon md-icon"></span>
-          CVE
-        </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="CVE/CVE-2022-46166/">
-        CVE-2022-46166 - Template Injection - Remote Code Execution
+      <a class="proj" href="/projects/wortzauber/">
+        <img src="/assets/projects/wortzauber-poster.jpg" width="1280" height="720" alt="A pixel-art meadow where a child hero stands next to an apple that was just written into the world.">
+        <div class="proj__body">
+          <p class="label">Children · German and English</p>
+          <h3>Wortzauber</h3>
+          <p>A letter-tracing word game. A child writes a word, traces every letter, and the thing appears in the world.</p>
+        </div>
       </a>
-</li>
-</ul>
-</nav>
-</li>
-</ul>
-</nav>
-</div>
-</div>
-</div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
-</nav>
-</div>
-</div>
-</div>
-<div class="md-content" data-md-component="content">
-<article class="md-content__inner md-typeset">
-<nav class="md-tags">
-<span class="md-tag">PGP</span>
-<span class="md-tag">About</span>
-</nav>
-<h1 id="about">About</h1>
-<p><a href="/key.asc">PGP Key</a> to verify information. You can contact me on LinkedIn if interested in my content.</p>
-</article>
-</div>
-</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="verify">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label path">~/verify</p>
+      <h2>Check that it is really me</h2>
+      <p>Use this PGP key to verify anything published under my name. Compare the fingerprint before you trust the key.</p>
+    </div>
+
+    <div class="verify">
+      <div class="fpr">
+        <p class="fpr__hex" id="fpr" data-text="A8866CB16B079685561574B2A91DABBEC9967390" aria-label="Fingerprint A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390">
+          <span>A886</span><span>6CB1</span><span>6B07</span><span>9685</span><span>5615</span><span>74B2</span><span>A91D</span><span>ABBE</span><span>C996</span><span>7390</span>
+        </p>
+        <p class="fpr__meta"><span>RSA 3072</span><span>created 4 Dec 2020</span><span>sign, certify, encrypt</span></p>
+        <div class="btn-row">
+          <a class="btn" href="/key.asc">Download key.asc</a>
+          <button class="btn btn--ghost" type="button" data-copy="fpr">Copy fingerprint</button>
+        </div>
+      </div>
+      <div class="code">
+        <div class="code__bar"><span>Check the fingerprint yourself</span><button class="copy" type="button" data-copy="verify-cmd">copy</button></div>
+<pre id="verify-cmd"><code><span class="l">curl -O https://t7d.dev/key.asc</span><span class="l">gpg --show-keys --with-fingerprint key.asc</span><span class="l"><span class="c"># expect: A886 6CB1 6B07 9685 5615  74B2 A91D ABBE C996 7390</span></span><span class="l">gpg --import key.asc</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <h2>Say hello</h2>
+    <p>Interested in the research, or found something you want a second pair of eyes on? Message me on LinkedIn, or find my code on GitHub.</p>
+    <div class="btn-row">
+      <a class="btn" href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">Message me on LinkedIn</a>
+      <a class="btn btn--ghost" href="https://github.com/Tim-Conrad" rel="me noopener">github.com/Tim-Conrad</a>
+    </div>
+  </div>
+</section>
+
 </main>
-<footer class="md-footer">
-<nav aria-label="Footer" class="md-footer__inner md-grid">
-<a aria-label="Next: CVE-2022-46166 - Template Injection - Remote Code Execution" class="md-footer__link md-footer__link--next" href="CVE/CVE-2022-46166/" rel="next">
-<div class="md-footer__title">
-<div class="md-ellipsis">
-<span class="md-footer__direction">
-                Next
-              </span>
-              CVE-2022-46166 - Template Injection - Remote Code Execution
-            </div>
-</div>
-<div class="md-footer__button md-icon">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"></path></svg>
-</div>
-</a>
-</nav>
-<div class="md-footer-meta md-typeset">
-<div class="md-footer-meta__inner md-grid">
-<div class="md-copyright">
-  
-  
-    Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
-      Material for MkDocs
-    </a>
-</div>
-<div class="md-social">
-<a class="md-social__link" href="https://github.com/Tim-Conrad" rel="noopener" target="_blank" title="github.com">
-<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path></svg>
-</a>
-</div>
-</div>
-</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad. No cookies, no trackers, no third-party requests.</span>
+    <span>:wq</span>
+  </div>
 </footer>
+
+<div class="calc" id="calc" role="dialog" aria-label="Calculator" hidden>
+  <div class="calc__bar"><span>Calculator</span><button type="button" id="calc-close" aria-label="Close calculator">x</button></div>
+  <div class="calc__screen" id="calc-screen" aria-live="polite">46166</div>
+  <div class="calc__keys">
+    <button type="button" class="wide" data-k="C">C</button><button type="button" class="op" data-k="/">÷</button><button type="button" class="op" data-k="*">×</button>
+    <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><button type="button" class="op" data-k="-">−</button>
+    <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" class="op" data-k="+">+</button>
+    <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" class="eq" data-k="=">=</button>
+    <button type="button" class="wide" data-k="0">0</button><button type="button" class="wide" data-k=".">.</button>
+  </div>
+  <p class="calc__note">The proof of concept ran <code>open -a calculator</code> on the server. This one runs in your browser and nowhere else.</p>
 </div>
-<div class="md-dialog" data-md-component="dialog">
-<div class="md-dialog__inner md-typeset"></div>
-</div>
-<script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "toc.follow", "navigation.tracking"], "search": "assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
-<script src="assets/javascripts/bundle.d6c3db9e.min.js"></script>
-<script>document$.subscribe(() => {const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});})</script></body>
+
+</body>
 </html>
