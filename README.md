@@ -1,4 +1,4 @@
-# wq.d0-0b.pw
+# t7d.dev
 
 Personal site of Tim Conrad. Plain HTML, CSS and a little JavaScript. No build step, no dependencies, no third-party requests.
 
@@ -29,7 +29,9 @@ Then open <http://localhost:8000>. Paths are absolute, so serve from the reposit
 
 ## Deploy
 
-GitHub Pages, deploying from the root of the default branch. `.nojekyll` turns off Jekyll processing and `CNAME` sets the custom domain.
+GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the source.
+
+Every push to `master` runs `.github/workflows/deploy.yml`, which calls `tools/deploy.sh`. The script copies the site files of the commit (not `tools/`, `.claude/` or this README) to `gh-pages`. To deploy by hand, run `tools/deploy.sh` on `master`.
 
 ## Add a write-up
 
