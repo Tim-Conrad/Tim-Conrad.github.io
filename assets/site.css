@@ -290,6 +290,7 @@ mark { background: var(--accent); color: var(--on-accent); padding: 0 .12em; tra
 .contact h2 { font-size: clamp(3rem, 1.5rem + 8vw, 8rem); font-weight: 800; font-stretch: 75%; text-transform: uppercase; line-height: .85; letter-spacing: -0.03em; }
 .contact p { max-width: 46ch; font-size: var(--step-1); line-height: 1.45; }
 .contact .btn { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.contact .btn--ghost { background: transparent; color: var(--bg); border-color: var(--bg); }
 .contact .btn:hover { background: var(--bg); color: var(--ink); border-color: var(--bg); }
 .contact :focus-visible { outline-color: var(--accent); }
 .foot { font: 500 var(--step--1)/1.5 var(--mono); color: var(--muted); }
