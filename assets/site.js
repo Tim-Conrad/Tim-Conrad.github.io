@@ -176,6 +176,23 @@
     Object.keys(byId).forEach(function (id) { var h = document.getElementById(id); if (h) io.observe(h); });
   }
 
+  /* ---- live demo: the game loads from its own host only after a tap ---- */
+  $$('[data-demo]').forEach(function (screen) {
+    var link = $('.phone__play', screen);
+    if (!link) return;
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var f = document.createElement('iframe');
+      f.src = screen.getAttribute('data-demo');
+      f.title = screen.getAttribute('data-title') || 'Live demo';
+      f.setAttribute('allow', screen.getAttribute('data-allow') || 'fullscreen');
+      f.setAttribute('allowfullscreen', '');
+      screen.textContent = '';
+      screen.appendChild(f);
+      f.focus();
+    });
+  });
+
   /* ---- 404: show the path that missed ---- */
   var lost = $('#lost-path');
   if (lost) lost.textContent = location.pathname;

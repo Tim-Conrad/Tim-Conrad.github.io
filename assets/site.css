@@ -264,6 +264,26 @@ mark { background: var(--accent); color: var(--on-accent); padding: 0 .12em; tra
 .shots img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 2px solid var(--ink); }
 @media (max-width: 560px) { .shots { grid-template-columns: minmax(0, 1fr); } }
 
+/* ---------- live demo in a phone ---------- */
+.demo { display: grid; gap: 1.25rem; justify-items: center; }
+.demo--side { grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: clamp(2rem, 6vw, 5rem); align-items: center; justify-items: start; }
+@media (max-width: 860px) { .demo--side { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
+.demo__text { display: grid; gap: 1rem; max-width: 34rem; }
+.demo__text h2 { font-size: var(--step-2); font-weight: 800; }
+.demo__text p { color: var(--muted); }
+.demo__note { font: 500 var(--step--1)/1.5 var(--mono); color: var(--muted); max-width: 60ch; }
+.phone { background: var(--code-bg); border: 2px solid var(--ink); border-radius: 2.6rem; padding: .8rem; box-shadow: .5rem .5rem 0 var(--accent); transition: box-shadow .3s; max-width: 100%; }
+.phone--portrait { width: 22.5rem; }
+.phone--landscape { width: 56rem; border-radius: 2.2rem; }
+.phone__screen { position: relative; overflow: hidden; border-radius: 1.9rem; background: var(--code-bg); display: grid; }
+.phone--portrait .phone__screen { aspect-ratio: 9 / 19; }
+.phone--landscape .phone__screen { aspect-ratio: 874 / 402; border-radius: 1.5rem; }
+.phone__screen > * { grid-area: 1 / 1; }
+.phone__screen img, .phone__screen iframe { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
+.phone__play { align-self: center; justify-self: center; z-index: 1; background: var(--accent); color: var(--on-accent); border-color: var(--ink); box-shadow: .3rem .3rem 0 var(--ink); }
+.phone__play:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+@media (max-width: 700px) { .phone--landscape { border-radius: 1.2rem; padding: .4rem; } .phone--landscape .phone__screen { border-radius: .9rem; } }
+
 /* ---------- contact + footer ---------- */
 .contact { background: var(--ink); color: var(--bg); transition: background-color .3s, color .3s; }
 .contact .wrap { padding-block: clamp(4rem, 9vw, 7rem); display: grid; gap: 2rem; }

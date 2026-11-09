@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; frame-src https://wortzauber.beacon.host; base-uri 'none'; form-action 'none'">
 <title>Wortzauber · Tim Conrad</title>
 <meta name="description" content="Wortzauber is a letter-tracing word game for children, in German and English. Write a word, trace every letter, and it appears.">
 <link rel="canonical" href="https://wq.d0-0b.pw/projects/wortzauber/">
@@ -51,6 +51,21 @@
       <source src="/assets/projects/wortzauber-reel.mp4" type="video/mp4">
     </video>
   </figure>
+
+  <section class="demo" aria-labelledby="play-h">
+    <div class="demo__text">
+      <h2 id="play-h">Try the real thing</h2>
+      <p>This is the game itself, not a video. It is made for a phone held sideways, so it plays best full screen.</p>
+    </div>
+    <div class="phone phone--landscape">
+      <div class="phone__screen" data-demo="https://wortzauber.beacon.host/" data-title="Wortzauber, live demo" data-allow="fullscreen; microphone">
+        <img src="/assets/projects/wortzauber-phone.jpg" width="1748" height="804" alt="Wortzauber on a phone held sideways: the hero and the hovering robot on the meadow.">
+        <a class="btn phone__play" href="https://wortzauber.beacon.host/" rel="noopener">Play it here</a>
+      </div>
+    </div>
+    <div class="btn-row"><a class="btn btn--ghost" href="https://wortzauber.beacon.host/" rel="noopener">Open it full screen</a></div>
+    <p class="demo__note">The demo loads from wortzauber.beacon.host, and only after you press play.</p>
+  </section>
 
   <div class="product__about">
     <div class="prose">

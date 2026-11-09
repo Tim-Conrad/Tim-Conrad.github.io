@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; frame-src https://tiny-train.beacon.host; base-uri 'none'; form-action 'none'">
 <title>Kleinbahn · Tim Conrad</title>
 <meta name="description" content="Kleinbahn is an island-railway sandbox in three.js, built phone first. Lay track, run trains and watch the island come alive.">
 <link rel="canonical" href="https://wq.d0-0b.pw/projects/kleinbahn/">
@@ -51,6 +51,21 @@
       <source src="/assets/projects/kleinbahn-reel.mp4" type="video/mp4">
     </video>
   </figure>
+
+  <section class="demo demo--side" aria-labelledby="play-h">
+    <div class="phone phone--portrait">
+      <div class="phone__screen" data-demo="https://tiny-train.beacon.host/" data-title="Kleinbahn, live demo">
+        <img src="/assets/projects/kleinbahn-phone.jpg" width="780" height="1646" alt="Kleinbahn on a phone: the island with the build dock at the bottom of the screen.">
+        <a class="btn phone__play" href="https://tiny-train.beacon.host/" rel="noopener">Play it here</a>
+      </div>
+    </div>
+    <div class="demo__text">
+      <h2 id="play-h">Try the real thing</h2>
+      <p>This is the game itself, not a video. Drag to look around, pinch or scroll to zoom, and use the dock at the bottom to build.</p>
+      <div class="btn-row"><a class="btn btn--ghost" href="https://tiny-train.beacon.host/" rel="noopener">Open it full screen</a></div>
+      <p class="demo__note">The demo loads from tiny-train.beacon.host, and only after you press play.</p>
+    </div>
+  </section>
 
   <div class="product__about">
     <div class="prose">
