@@ -70,4 +70,16 @@ export const STAGES = [
     setup: `G('env').time=0.5; const st=[...G('astate').values()][0], p=st.planes.find(p => p.spec.loops>0); T.ap=[st,p]; G('aStartFlight')(st,p);`,
     until: `T.ap[1].lu>=0`, after: `const p=T.ap[1]; T.L={x:p.lx0+Math.sin(p.yaw)*p.lR*0.6, z:p.lz0+Math.cos(p.yaw)*p.lR*0.6, y:p.ly0-G('TOP')+p.lR, r:p.lR, yaw:p.yaw};`, pre: 1,
     cam: `({x:T.L.x, z:T.L.z, y:T.L.y, dist:T.L.r*4.2+1*e, pitch:0.16, yaw:T.L.yaw+Math.PI/2+0.3*u})` },
+
+  // #14: the game hosts; the scripted guest Mia claims a plane, the host's crew bring it up, and Mia steers it:
+  // the host's game draws the plane from her pose. The host follows her, and her chip says what she does.
+  { id: 'pr14', ref: '52eb17f', net: 'host', ui: true, frames: 120,
+    setup: `G('env').time=0.5; T.st=[...G('astate').values()][0]; T.p=T.st.planes[0]; T.id=G('akey')(T.st.v)+':'+T.p.k;
+      T.pres=c => __peer.sync.presence({x:c.x, z:c.z, d:10, yaw:0.5, pitch:0.6, n:'Mia', c});
+      T.pres({k:'plane', id:T.id, sh:true, x:T.p.px, y:T.p.py, z:T.p.pz, yaw:T.p.yaw, p:0, r:0, s:0, f:0});`,
+    until: `T.p.phase==='pilot'`,
+    after: `T.c={x:T.p.px, y:T.p.py, z:T.p.pz, yaw:T.p.yaw}; G('netFollowStart')(G('NET_PRES')[0].g);`, pre: 1,
+    each: `const c=T.c, s=1.6, dt=1/24; c.yaw+=0.35*dt; c.x+=Math.sin(c.yaw)*s*dt; c.z+=Math.cos(c.yaw)*s*dt; c.y=Math.min(c.y+0.3*dt, G('TOP')+4);
+      T.pres({k:'plane', id:T.id, sh:true, x:c.x, y:c.y, z:c.z, yaw:c.yaw, p:0.12, r:-0.3, s, f:4});`,
+    cam: null },
 ];

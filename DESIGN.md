@@ -63,7 +63,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 - **The front page stays short.** It says what exists and links to it: overview, the research summary with a button to the write-up, the games, the PGP key, contact. Details such as the attack steps and the disclosure timeline belong in the write-up, not here.
 - **Title block.** The box next to the name lists site, contents, contact and the PGP fingerprint. It holds facts only. Update "Contents" when a write-up or a game is added.
 - **Grid.** The faint 48 px grid appears only behind the name on the front page. It is the one decorative element. Do not put it behind text blocks.
-- **Square corners.** Nothing has rounded corners or a shadow, except the phone frame and the step numbers.
+- **Square corners.** Nothing has rounded corners or a shadow, except the phone frame, the step numbers and the dots of the timeline.
 - **Spacing.** Lay out with grid or flex and `gap`. Side padding is `--pad`.
 
 ## Components
@@ -77,7 +77,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 | Game box | `.proj` | One framed box per game, and the whole box is the link to the details page. In this order: the name as a heading, a gameplay loop, one or two plain sentences, "Details and live demo". |
 | Video | `.player` | A silent loop with a poster. It plays while it is on screen. The only controls are one icon button (two bars to pause, a triangle to play) and a 2 px progress line. The button fades out while the video plays and comes back on hover, on keyboard focus and when paused; on touch screens it stays faintly visible. Controls on a video use `--video-bg` and `--video-fg`, black and white in both themes, so they read on any footage. No sound, no native browser controls. |
 | Live demo | `.phone`, `[data-demo]` | Loads the game from its own host only after a tap. The note below says so. |
-| Timeline | `.changes`, `.tl` | On a game page: one entry per merged pull request that changed play, oldest first. A silent clip (the video component) beside a mono label with date and PR, the title as `h3`, one sentence on what the clip shows and a short list of the other changes. One line at the end names the PRs that are not shown. |
+| Timeline | `.changes`, `.tl` | On a game page: one entry per merged pull request that changed play, newest first, on a vertical ink line with a dot per entry (the newest dot filled). Each entry: a mono label with date and PR, the title as `h3`, one sentence on what the clip shows, a short list of the other changes, and the silent clip (the video component) beside the text. One line at the end names the PRs that are not shown. |
 | Encrypted site login | `.sealed` | The login page of a site below `/sealed/`, written by sealed (theme `t7d`). Label "Encrypted", the title as `h1`, one hint, username, password, one filled button "Open", a mono status line. Inputs are framed in ink with square corners. |
 
 ## Rules that are easy to break

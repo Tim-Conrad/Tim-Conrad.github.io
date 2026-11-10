@@ -6,7 +6,7 @@ description: Use when a game (Kleinbahn / tiny-train, later Wortzauber) got new 
 # Updating the game timeline
 
 ## Overview
-The product page of a game has a section "How it changed": one entry per merged pull request that changed play, oldest first. Each entry has a short silent clip, filmed from the game at the PR's merge commit, one sentence on what the clip shows, and a short list of the other changes in that PR.
+The product page of a game has a section "How it changed": one entry per merged pull request that changed play, newest first, on a vertical line with a dot per entry. Each entry has a short silent clip, filmed from the game at the PR's merge commit, one sentence on what the clip shows, and a short list of the other changes in that PR.
 
 | Game | Stages | Clips | Page |
 | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ Do not read the code of every PR. Work from the git log.
 6. Test only the new stages, three frames each: `node tools/reels/timeline.mjs ../tiny-train --test --only pr14`. Join the frames into one sheet and read it (`ffmpeg -i <work>/tl/kb-test/pr14/%04d.jpg -vf tile=3x1 sheet.jpg`).
 7. Film them: `node tools/reels/timeline.mjs ../tiny-train --only pr14` (about 1 to 3 s a frame; a stage of 96 frames takes 2 to 5 min).
 8. Cut: `python3 tools/reels/build.py timeline` writes the clips and posters of every filmed stage into `assets/projects/timeline/` (640x360, about 100 to 400 KB each).
-9. Add the entry to `projects/kleinbahn/index.html` (copy the last `<li>` of `.tl`): date, PR number, title, the sentence on the clip, "Also:" list. Newest at the bottom.
+9. Add the entry to `projects/kleinbahn/index.html`: copy the first `<li>` of `.tl` and put the new one above it (newest first). Date, PR number, title, the sentence on the clip, the list of the other changes.
 10. Serve the site and check `/projects/kleinbahn/#changes` at 1440, 390 and 320 px, light and dark. Commit the stages file, the clips and the page.
 
 ## The timeline script
