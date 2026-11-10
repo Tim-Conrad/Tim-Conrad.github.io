@@ -59,23 +59,13 @@
       <p>The Microsoft Teams notifier read one of its settings as an expression template. A signed-in user could change that setting in the web UI. I reported it in November 2022. The fix and the advisory followed 11 days later.</p>
     </div>
 
-    <ol class="chain" aria-label="Attack steps">
-      <li><h4>Enable the notifier</h4><p>Teams notifications are switched on.</p></li>
-      <li><h4>Change the setting</h4><p>Set <code>theme_color</code> to a Java expression.</p></li>
-      <li><h4>Trigger a notification</h4><p>For example, delete the application.</p></li>
-      <li><h4>Code runs on the host</h4><p>The server evaluates the expression.</p></li>
-    </ol>
+    <div class="btn-row"><a class="btn" href="/research/cve-2022-46166/">Read the write-up</a></div>
 
     <dl class="facts">
       <div><dt>Weakness</dt><dd>CWE-94, code injection</dd></div>
       <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
-      <div><dt>Needs</dt><dd>A signed-in user and Teams notifications enabled</dd></div>
-      <div><dt>Fix</dt><dd>Commit <a href="https://github.com/codecentric/spring-boot-admin/commit/320eab19ff76e2c012623a1eb53af6f4ae26e20b" rel="noopener">320eab1</a></dd></div>
       <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GHSA-w3x5-427h-wfq6</a></dd></div>
-      <div><dt>Write-up</dt><dd><a href="/research/cve-2022-46166/">Proof of concept and details</a></dd></div>
     </dl>
-
-    <div class="btn-row"><a class="btn" href="/research/cve-2022-46166/">Read the write-up</a></div>
   </div>
 </section>
 
@@ -88,41 +78,23 @@
     </div>
     <div class="projects">
       <a class="proj" href="/projects/kleinbahn/">
-        <img src="/assets/projects/kleinbahn-poster.jpg" width="1280" height="720" alt="A low-poly island seen from above, with a railway, a town, bridges and smaller islands around it.">
-        <div class="proj__body">
-          <h3>Kleinbahn</h3>
-          <p>An island-railway sandbox in three.js, built for phones. You lay track and place things; trains, people and boats do the rest.</p>
-        </div>
+        <h3>Kleinbahn</h3>
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcset="/assets/projects/kleinbahn-1.jpg">
+          <img src="/assets/projects/kleinbahn-loop.webp" width="640" height="360" loading="lazy" decoding="async" alt="Gameplay: a steam train runs through a town, past a carousel and a level crossing.">
+        </picture>
+        <p>An island-railway sandbox in three.js, built for phones. You lay track and place things; trains, people and boats do the rest.</p>
+        <span class="proj__more">Details and live demo</span>
       </a>
       <a class="proj" href="/projects/wortzauber/">
-        <img src="/assets/projects/wortzauber-poster.jpg" width="1280" height="720" alt="A pixel-art meadow where a child hero stands next to an apple.">
-        <div class="proj__body">
-          <h3>Wortzauber</h3>
-          <p>A letter-tracing word game for children, in German and English. Write a word, trace each letter, and the thing appears.</p>
-        </div>
+        <h3>Wortzauber</h3>
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" srcset="/assets/projects/wortzauber-1.jpg">
+          <img src="/assets/projects/wortzauber-loop.webp" width="640" height="360" loading="lazy" decoding="async" alt="Gameplay: the word apfel is traced letter by letter, then an apple appears on the meadow.">
+        </picture>
+        <p>A letter-tracing word game for children, in German and English. Write a word, trace each letter, and the thing appears.</p>
+        <span class="proj__more">Details and live demo</span>
       </a>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="disclosure">
-  <div class="wrap">
-    <div class="section__head">
-      <p class="label">Sheet 4 · Disclosure timeline</p>
-      <h2>How the report went</h2>
-      <p>codecentric answered quickly and handled the report professionally.</p>
-    </div>
-    <div class="tablewrap">
-      <table class="rev">
-        <thead><tr><th>Date</th><th>What happened</th></tr></thead>
-        <tbody>
-          <tr><td><time datetime="2022-11-28">28 Nov 2022</time></td><td>I reported the vulnerability to codecentric by email.</td></tr>
-          <tr><td><time datetime="2022-12-02">2 Dec 2022</time></td><td>codecentric confirmed it.</td></tr>
-          <tr><td><time datetime="2022-12-09">9 Dec 2022</time></td><td>The security advisory was published and the CVE assigned.</td></tr>
-          <tr><td><time datetime="2022-12-12">12 Dec 2022</time></td><td>We agreed on the disclosure and on the write-up.</td></tr>
-          <tr><td><time datetime="2022-12-14">14 Dec 2022</time></td><td>I published the write-up.</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </section>
@@ -130,7 +102,7 @@
 <section class="section" id="verify">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 5 · PGP key</p>
+      <p class="label">Sheet 4 · PGP key</p>
       <h2>PGP key</h2>
       <p>Use this key to verify anything published under my name. Compare the fingerprint before you trust the key.</p>
     </div>
@@ -156,7 +128,7 @@
 <section class="section" id="contact">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 6 · Contact</p>
+      <p class="label">Sheet 5 · Contact</p>
       <h2>Contact</h2>
       <p>Message me on LinkedIn. My code is on GitHub.</p>
     </div>
