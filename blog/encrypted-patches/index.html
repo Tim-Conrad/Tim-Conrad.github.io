@@ -202,15 +202,22 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <p>The signature covers the hash of the ciphertext from the manifest, so the key belongs to exactly one bundle. With a threshold, each officer adds a signature of 64 bytes.</p>
 
     <h2 id="beacon">Without a key server</h2>
-    <p>The key server is a single point that can fail, be forced to wait, or leak. Timelock encryption removes it. With tlock, data is encrypted to a future round of the drand beacon, run by the League of Entropy. At that round the network publishes a threshold BLS signature, and that signature is the decryption key <a href="#s17">[17]</a>. On drand's quicknet a round is 3 seconds and a signature is 48 bytes.</p>
-    <p>The vendor can wrap the content key twice: once for its own key server, once to the drand round at T. Then the patch opens at T even if the vendor's server is down. Two limits: the vendor still creates the key, so an insider can still leak it; and a timelocked key cannot be pulled back if the fix turns out to be broken. Test the round number before you publish: a bug there opens the patch at once.</p>
+    <p>The key server is the weak spot. It can go down at the wrong moment, someone can force it to wait, or someone can leak the key early. There is a way to release a key on time without any server of the vendor.</p>
+    <p>A public service called drand publishes a new signed number every three seconds, and each number has a sequence position. A group of independent organisations runs it together, the League of Entropy. No single member can make the number for a position alone: it takes enough of them together, and they make it only when that moment has come <a href="#s17">[17]</a>.</p>
+    <p>The trick: you can lock data to a number that does not exist yet. The vendor picks the position that falls on patch day T and locks the patch key to it. Until T nobody, the vendor included, can open the lock. At T drand publishes the number, and that number opens it. The free tool tlock does exactly this <a href="#s17">[17]</a>.</p>
+    <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
+    <ul>
+      <li>The vendor still makes the key before it locks it, so someone inside can still leak it.</li>
+      <li>Once locked, the key cannot be held back. If the fix turns out to be broken, it opens at T anyway.</li>
+    </ul>
+    <p>Check the chosen position before you publish. A wrong one, in the past, opens the patch at once.</p>
 
     <h2 id="airgap">Air-gapped sites</h2>
-    <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand signature, which the site checks against a pinned group key <a href="#s17">[17]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s18">[18]</a>, or can be typed in as hex.</p>
+    <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand number for T, which the site checks against drand's public key, stored there in advance <a href="#s17">[17]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s18">[18]</a>, or can be typed in as hex.</p>
     <figure class="fig-wide">
       <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d3t d3d">
   <title id="d3t">Updates for an air-gapped site</title>
-  <desc id="d3d">Days before T, the encrypted bundle and its signed manifest cross the air gap on removable media, gigabytes in size. At T only a key-release statement of about 104 bytes, or a 48-byte drand signature, crosses, small enough for one QR code. The offline site checks both against pinned keys, then decrypts and installs.</desc>
+  <desc id="d3d">Days before T, the encrypted bundle and its signed manifest cross the air gap on removable media, gigabytes in size. At T only a key-release statement of about 104 bytes, or a 48-byte drand number, crosses, small enough for one QR code. The offline site checks both against pinned keys, then decrypts and installs.</desc>
   <defs><pattern id="d3h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatch-p" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
   <text x="20" y="28" class="t-h">Connected</text>
   <text x="380" y="28" text-anchor="middle" class="t-h">Air gap</text>
@@ -220,12 +227,12 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="36" y="90" class="t-s">bundle, manifest</text>
   <text x="36" y="196">key release</text>
   <text x="36" y="214" class="t-s">vendor statement</text>
-  <text x="36" y="230" class="t-s">or drand round r</text>
+  <text x="36" y="230" class="t-s">or drand number</text>
   <rect class="gap" x="350" y="44" width="60" height="262"/>
   <rect class="bx" x="550" y="44" width="190" height="262"/>
-  <text x="566" y="72">pinned keys</text>
+  <text x="566" y="72">keys stored early</text>
   <text x="566" y="90" class="t-s">org key</text>
-  <text x="566" y="106" class="t-s">drand group key</text>
+  <text x="566" y="106" class="t-s">drand public key</text>
   <text x="566" y="196">at T</text>
   <text x="566" y="214" class="t-s">verify offline</text>
   <text x="566" y="230" class="t-s">decrypt, install</text>
@@ -240,12 +247,12 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="376" y="210">QR code</text>
   <text x="376" y="232" class="t-s">104 B signed</text>
   <text x="376" y="248" class="t-s">statement, or</text>
-  <text x="376" y="264" class="t-s">48 B drand sig</text>
+  <text x="376" y="264" class="t-s">48 B drand no.</text>
   <line class="ln" x1="210" y1="232" x2="255.0" y2="232.0"/><polygon class="arr" points="260,232 252.6,235.1 252.6,228.9"/><line class="ln" x1="498" y1="232" x2="543.0" y2="232.0"/><polygon class="arr" points="548,232 540.6,235.1 540.6,228.9"/>
 </svg>
       <figcaption>Fig. 4 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
     </figure>
-    <p>A verified drand signature also proves that the time is at least the time of its round. A site without a trusted clock gets a lower bound for free.</p>
+    <p>A checked drand number also proves that its moment has passed. A site without a reliable clock learns that it is at least that late.</p>
 
     <h2 id="oss">Open source in private</h2>
     <p>For an open-source project the hard part comes earlier: the fix has to be written and tested without showing it. Today it often shows. In the Keycloak case the fixed builds were tagged a week before the CVE, the port to the main branch was a public pull request whose title does not mention security, and the proof of concept was written from that diff <a href="#s3">[3]</a><a href="#s4">[4]</a>.</p>
