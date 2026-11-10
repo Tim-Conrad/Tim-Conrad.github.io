@@ -49,6 +49,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `.claude/skills/adding-a-thought/` | Working guide for Claude Code: how to turn a link into a new thought, and how to revise one |
 | `.claude/skills/updating-game-timeline/` | Working guide for Claude Code: how to film the timeline clips of a game page |
 | `.claude/skills/handling-review-notes/` | Working guide for Claude Code: how to handle Tim's notes from the review site |
+| `.claude/rules/pages.md` | Rules for a new page; Claude Code loads them only when it works on an HTML page, the sitemap or the deploy script |
 | `.claude/settings.json` | A hook that prints the number of open review notes at the start of a session |
 | `tools/check.py` | Checks the CSP rules and the sitemap of every page; CI runs it |
 
