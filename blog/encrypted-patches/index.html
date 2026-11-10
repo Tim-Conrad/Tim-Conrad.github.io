@@ -143,53 +143,60 @@
       <li><b>Log.</b> Every statement goes into an append-only transparency log, so a release before T, or a different key for some customers, can be seen <a href="#s16">[16]</a>.</li>
       <li><b>Install.</b> The client checks the statement and the log entry, decrypts with the key and installs.</li>
     </ol>
-    <figure class="fig-wide">
+    <figure class="fig-wide" data-steps>
       <svg class="dg" viewBox="0 0 760 420" role="img" aria-labelledby="d2t d2d">
   <title id="d2t">Who signs what</title>
   <desc id="d2d">An offline organisation root key delegates to a targets role and a release role. Days before T the targets role signs a manifest with the hash of the encrypted bundle, and mirrors carry both. At T a release role, two of three officers, signs a key-release statement that is written to a transparency log. The client verifies the manifest, the bundle hash, the statement signature and the log entry, then decrypts and installs.</desc>
   <text x="20" y="28" class="t-h">Organisation</text>
   <text x="290" y="28" class="t-h">Mirrors and log</text>
   <text x="560" y="28" class="t-h">Client</text>
-  <rect class="bx-i" x="20" y="44" width="220" height="54"/>
-  <text x="36" y="67" class="t-inv">org root key</text>
-  <text x="36" y="86" class="t-inv t-s">offline · delegates roles</text>
-  <line class="ln" x1="70" y1="98" x2="70.0" y2="135.0"/><polygon class="arr" points="70,140 66.9,132.6 73.1,132.6"/>
-  <line class="ln" x1="190" y1="98" x2="190.0" y2="257.0"/><polygon class="arr" points="190,262 186.9,254.6 193.1,254.6"/>
-  <rect class="bx" x="20" y="142" width="160" height="54"/>
-  <text x="36" y="165">targets role</text>
-  <text x="36" y="184" class="t-s">signs the manifest</text>
-  <rect class="bx" x="100" y="264" width="140" height="54"/>
-  <text x="114" y="287">release role</text>
-  <text x="114" y="306" class="t-s">2 of 3 officers</text>
-  <line class="ln" x1="180" y1="169" x2="283.0" y2="169.0"/><polygon class="arr" points="288,169 280.6,172.1 280.6,165.9"/>
-  <text x="196" y="160" class="t-s">−7 days</text>
-  <line class="ln" x1="240" y1="291" x2="283.0" y2="291.0"/><polygon class="arr" points="288,291 280.6,294.1 280.6,287.9"/>
-  <text x="250" y="282" class="t-s">at T</text>
-  <rect class="bx-s" x="290" y="142" width="220" height="54"/>
-  <text x="304" y="165">manifest + bundle</text>
-  <text x="304" y="184" class="t-s">hash, size, patch id, T</text>
-  <rect class="bx-i" x="290" y="264" width="220" height="54"/>
-  <text x="304" y="287" class="t-inv">key-release statement</text>
-  <text x="304" y="306" class="t-inv t-s">patch id, hash, key · 104 B</text>
-  <line class="ln" x1="400" y1="318" x2="400.0" y2="349.0"/><polygon class="arr" points="400,354 396.9,346.6 403.1,346.6"/>
-  <rect class="bx-d" x="290" y="356" width="220" height="46"/>
-  <text x="304" y="377">transparency log</text>
-  <text x="304" y="394" class="t-s">append only, public</text>
-  <line class="ln" x1="510" y1="169" x2="553.0" y2="169.0"/><polygon class="arr" points="558,169 550.6,172.1 550.6,165.9"/>
-  <line class="ln" x1="510" y1="291" x2="553.0" y2="291.0"/><polygon class="arr" points="558,291 550.6,294.1 550.6,287.9"/>
-  <path class="ln-s" d="M510 379 H534 V320 H558"/>
-  <rect class="bx" x="560" y="122" width="180" height="236"/>
-  <text x="576" y="150">1 check manifest</text>
-  <text x="590" y="166" class="t-s">against org key</text>
-  <text x="576" y="192">2 check bundle</text>
-  <text x="590" y="208" class="t-s">hash from manifest</text>
-  <text x="576" y="234">3 wait for T</text>
-  <text x="590" y="250" class="t-s">the key opens, not</text><text x="590" y="264" class="t-s">the clock</text>
-  <text x="576" y="286">4 check statement</text>
-  <text x="590" y="302" class="t-s">signature + log proof</text>
-  <text x="576" y="326">5 decrypt, install</text>
-  <text x="590" y="342" class="t-s">AES-GCM, key from 4</text>
+  <g data-step="1"><rect class="bx-i" x="20" y="44" width="220" height="54"/></g>
+  <g data-step="1"><text x="36" y="67" class="t-inv">org root key</text></g>
+  <g data-step="1"><text x="36" y="86" class="t-inv t-s">offline · delegates roles</text></g>
+  <g data-step="1"><line class="ln" x1="70" y1="98" x2="70.0" y2="135.0"/><polygon class="arr" points="70,140 66.9,132.6 73.1,132.6"/></g>
+  <g data-step="1"><line class="ln" x1="190" y1="98" x2="190.0" y2="257.0"/><polygon class="arr" points="190,262 186.9,254.6 193.1,254.6"/></g>
+  <g data-step="1"><rect class="bx" x="20" y="142" width="160" height="54"/></g>
+  <g data-step="1"><text x="36" y="165">targets role</text></g>
+  <g data-step="1"><text x="36" y="184" class="t-s">signs the manifest</text></g>
+  <g data-step="1"><rect class="bx" x="100" y="264" width="140" height="54"/></g>
+  <g data-step="1"><text x="114" y="287">release role</text></g>
+  <g data-step="1"><text x="114" y="306" class="t-s">2 of 3 officers</text></g>
+  <g data-step="2"><line class="ln" x1="180" y1="169" x2="283.0" y2="169.0"/><polygon class="arr" points="288,169 280.6,172.1 280.6,165.9"/></g>
+  <g data-step="2"><text x="196" y="160" class="t-s">−7 days</text></g>
+  <g data-step="4"><line class="ln" x1="240" y1="291" x2="283.0" y2="291.0"/><polygon class="arr" points="288,291 280.6,294.1 280.6,287.9"/></g>
+  <g data-step="4"><text x="250" y="282" class="t-s">at T</text></g>
+  <g data-step="2"><rect class="bx-s" x="290" y="142" width="220" height="54"/></g>
+  <g data-step="2"><text x="304" y="165">manifest + bundle</text></g>
+  <g data-step="2"><text x="304" y="184" class="t-s">hash, size, patch id, T</text></g>
+  <g data-step="4"><rect class="bx-i" x="290" y="264" width="220" height="54"/></g>
+  <g data-step="4"><text x="304" y="287" class="t-inv">key-release statement</text></g>
+  <g data-step="4"><text x="304" y="306" class="t-inv t-s">patch id, hash, key · 104 B</text></g>
+  <g data-step="4"><line class="ln" x1="400" y1="318" x2="400.0" y2="349.0"/><polygon class="arr" points="400,354 396.9,346.6 403.1,346.6"/></g>
+  <g data-step="4"><rect class="bx-d" x="290" y="356" width="220" height="46"/></g>
+  <g data-step="4"><text x="304" y="377">transparency log</text></g>
+  <g data-step="4"><text x="304" y="394" class="t-s">append only, public</text></g>
+  <g data-step="2"><line class="ln" x1="510" y1="169" x2="553.0" y2="169.0"/><polygon class="arr" points="558,169 550.6,172.1 550.6,165.9"/></g>
+  <g data-step="4"><line class="ln" x1="510" y1="291" x2="553.0" y2="291.0"/><polygon class="arr" points="558,291 550.6,294.1 550.6,287.9"/></g>
+  <g data-step="4"><path class="ln-s" d="M510 379 H534 V320 H558"/></g>
+  <g data-step="3"><rect class="bx" x="560" y="122" width="180" height="236"/></g>
+  <g data-step="3"><text x="576" y="150">1 check manifest</text></g>
+  <g data-step="3"><text x="590" y="166" class="t-s">against org key</text></g>
+  <g data-step="3"><text x="576" y="192">2 check bundle</text></g>
+  <g data-step="3"><text x="590" y="208" class="t-s">hash from manifest</text></g>
+  <g data-step="3"><text x="576" y="234">3 wait for T</text></g>
+  <g data-step="3"><text x="590" y="250" class="t-s">the key opens, not</text><text x="590" y="264" class="t-s">the clock</text></g>
+  <g data-step="5"><text x="576" y="286">4 check statement</text></g>
+  <g data-step="5"><text x="590" y="302" class="t-s">signature + log proof</text></g>
+  <g data-step="5"><text x="576" y="326">5 decrypt, install</text></g>
+  <g data-step="5"><text x="590" y="342" class="t-s">AES-GCM, key from 4</text></g>
 </svg>
+      <ol class="steps__list">
+        <li>The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
+        <li>Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
+        <li>Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
+        <li>At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
+        <li>The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
+      </ol>
       <figcaption>Fig. 3 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
     </figure>
     <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
@@ -205,37 +212,44 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <p>The key server is the weak spot. It can go down at the wrong moment, someone can force it to wait, or someone can leak the key early. There is a way to release a key on time without any server of the vendor.</p>
     <p>A public service called drand publishes a new signed number every three seconds, and each number has a sequence position. A group of independent organisations runs it together, the League of Entropy. No single member can make the number for a position alone: it takes enough of them together, and they make it only when that moment has come <a href="#s17">[17]</a>.</p>
     <p>The trick: you can lock data to a number that does not exist yet. The vendor picks the position that falls on patch day T and locks the patch key to it. Until T nobody, the vendor included, can open the lock. At T drand publishes the number, and that number opens it. The free tool tlock does exactly this <a href="#s17">[17]</a>.</p>
-    <figure class="fig-wide">
+    <figure class="fig-wide" data-steps>
       <svg class="dg" viewBox="0 0 760 380" role="img" aria-labelledby="d5t d5d">
   <title id="d5t">How a drand number opens a patch key at patch day</title>
   <desc id="d5d">Independent organisations make a new numbered value every three seconds; the value for a position exists only when enough of them have taken part, at that moment. Days before patch day the vendor locks the patch key to the value at position T, which does not exist yet. At T the organisations make that value, it is published, and anyone can use it to open the lock and install the patch.</desc>
-  <text x="20" y="34" class="t-h">League of Entropy</text>
-  <text x="250" y="34" class="t-s">independent organisations</text>
-  <rect class="bx" x="250" y="58" width="48" height="30"/><text x="274" y="78" text-anchor="middle" class="t-s">org A</text><rect class="bx" x="310" y="58" width="48" height="30"/><text x="334" y="78" text-anchor="middle" class="t-s">org B</text><rect class="bx" x="370" y="58" width="48" height="30"/><text x="394" y="78" text-anchor="middle" class="t-s">org C</text><rect class="bx" x="430" y="58" width="48" height="30"/><text x="454" y="78" text-anchor="middle" class="t-s">org D</text><rect class="bx" x="490" y="58" width="48" height="30"/><text x="514" y="78" text-anchor="middle" class="t-s">org E</text>
-  <line class="ln" x1="274" y1="88" x2="439.5" y2="165.9"/><polygon class="arr" points="444,168 436.0,167.7 438.7,162.0"/><line class="ln" x1="394" y1="88" x2="441.4" y2="163.8"/><polygon class="arr" points="444,168 437.5,163.4 442.7,160.1"/><line class="ln" x1="454" y1="88" x2="444.6" y2="163.0"/><polygon class="arr" points="444,168 441.8,160.3 448.0,161.1"/><line class="ln" x1="514" y1="88" x2="447.3" y2="164.2"/><polygon class="arr" points="444,168 446.5,160.4 451.2,164.5"/>
-  <line class="ln-s" x1="334" y1="88" x2="440.0" y2="165.1"/>
-  <text x="560" y="78" class="t-s">enough of them together</text>
-  <text x="560" y="94" class="t-s">make the value for T,</text>
-  <text x="560" y="110" class="t-s">only when T has come</text>
-  <text x="560" y="134" class="t-s">(B is not needed)</text>
-  <text x="20" y="195" class="t-h">drand values</text>
-  <rect class="bx-s" x="150" y="176" width="28" height="28"/><rect class="bx-s" x="190" y="176" width="28" height="28"/><rect class="bx-s" x="230" y="176" width="28" height="28"/><rect class="bx-s" x="270" y="176" width="28" height="28"/><rect class="bx-s" x="310" y="176" width="28" height="28"/><rect class="bx-s" x="350" y="176" width="28" height="28"/><rect class="bx-s" x="390" y="176" width="28" height="28"/><rect class="bx-i" x="424" y="170" width="40" height="40"/><text x="444" y="195" text-anchor="middle" class="t-inv">T</text><rect class="bx-d" x="470" y="176" width="28" height="28"/><rect class="bx-d" x="510" y="176" width="28" height="28"/><rect class="bx-d" x="550" y="176" width="28" height="28"/><rect class="bx-d" x="590" y="176" width="28" height="28"/><rect class="bx-d" x="630" y="176" width="28" height="28"/>
-  <text x="150" y="232" class="t-s">already published</text>
-  <text x="550" y="232" class="t-s">not made yet</text>
-  <text x="150" y="166" class="t-s">one every 3 seconds</text>
-  <rect class="bx" x="20" y="268" width="250" height="84"/>
-  <text x="36" y="290" class="t-h">Vendor · days before T</text>
-  <path class="ln" d="M40 314 V310 a5 5 0 0 1 10 0 V314"/><rect class="bx" x="36" y="314" width="18" height="13"/>
-  <text x="66" y="322">patch key, locked</text>
-  <text x="66" y="340" class="t-s">to the value at T</text>
-  <line class="ln-s" x1="240" y1="300" x2="425.5" y2="214.1"/><polygon class="arr" points="430,212 424.6,217.9 422.0,212.3"/>
-  <rect class="bx" x="490" y="268" width="250" height="84"/>
-  <text x="506" y="290" class="t-h">Everyone · at T</text>
-  <path class="ln" d="M510 314 V304 a5 5 0 0 1 10 0 V306"/><rect class="bx-i" x="506" y="314" width="18" height="13"/>
-  <text x="536" y="322">value T opens it</text>
-  <text x="536" y="340" class="t-s">patch key → install</text>
-  <line class="ln" x1="458" y1="212" x2="535.8" y2="263.3"/><polygon class="arr" points="540,266 532.1,264.5 535.6,259.3"/>
+  <g data-step="3"><text x="20" y="34" class="t-h">League of Entropy</text></g>
+  <g data-step="3"><text x="250" y="34" class="t-s">independent organisations</text></g>
+  <g data-step="3"><rect class="bx" x="250" y="58" width="48" height="30"/><text x="274" y="78" text-anchor="middle" class="t-s">org A</text><rect class="bx" x="310" y="58" width="48" height="30"/><text x="334" y="78" text-anchor="middle" class="t-s">org B</text><rect class="bx" x="370" y="58" width="48" height="30"/><text x="394" y="78" text-anchor="middle" class="t-s">org C</text><rect class="bx" x="430" y="58" width="48" height="30"/><text x="454" y="78" text-anchor="middle" class="t-s">org D</text><rect class="bx" x="490" y="58" width="48" height="30"/><text x="514" y="78" text-anchor="middle" class="t-s">org E</text></g>
+  <g data-step="3"><line class="ln" x1="274" y1="88" x2="439.5" y2="165.9"/><polygon class="arr" points="444,168 436.0,167.7 438.7,162.0"/><line class="ln" x1="394" y1="88" x2="441.4" y2="163.8"/><polygon class="arr" points="444,168 437.5,163.4 442.7,160.1"/><line class="ln" x1="454" y1="88" x2="444.6" y2="163.0"/><polygon class="arr" points="444,168 441.8,160.3 448.0,161.1"/><line class="ln" x1="514" y1="88" x2="447.3" y2="164.2"/><polygon class="arr" points="444,168 446.5,160.4 451.2,164.5"/></g>
+  <g data-step="3"><line class="ln-s" x1="334" y1="88" x2="440.0" y2="165.1"/></g>
+  <g data-step="3"><text x="560" y="78" class="t-s">enough of them together</text></g>
+  <g data-step="3"><text x="560" y="94" class="t-s">make the value for T,</text></g>
+  <g data-step="3"><text x="560" y="110" class="t-s">only when T has come</text></g>
+  <g data-step="3"><text x="560" y="134" class="t-s">(B is not needed)</text></g>
+  <g data-step="1"><text x="20" y="195" class="t-h">drand values</text></g>
+  <g data-step="1"><rect class="bx-s" x="150" y="176" width="28" height="28"/><rect class="bx-s" x="190" y="176" width="28" height="28"/><rect class="bx-s" x="230" y="176" width="28" height="28"/><rect class="bx-s" x="270" y="176" width="28" height="28"/><rect class="bx-s" x="310" y="176" width="28" height="28"/><rect class="bx-s" x="350" y="176" width="28" height="28"/><rect class="bx-s" x="390" y="176" width="28" height="28"/><rect class="bx-d" x="470" y="176" width="28" height="28"/><rect class="bx-d" x="510" y="176" width="28" height="28"/><rect class="bx-d" x="550" y="176" width="28" height="28"/><rect class="bx-d" x="590" y="176" width="28" height="28"/><rect class="bx-d" x="630" y="176" width="28" height="28"/></g>
+  <g data-step="3"><rect class="bx-i" x="424" y="170" width="40" height="40"/><text x="444" y="195" text-anchor="middle" class="t-inv">T</text></g>
+  <g data-step="1"><text x="150" y="232" class="t-s">already published</text></g>
+  <g data-step="1"><text x="550" y="232" class="t-s">not made yet</text></g>
+  <g data-step="1"><text x="150" y="166" class="t-s">one every 3 seconds</text></g>
+  <g data-step="2"><rect class="bx" x="20" y="268" width="250" height="84"/></g>
+  <g data-step="2"><text x="36" y="290" class="t-h">Vendor · days before T</text></g>
+  <g data-step="2"><path class="ln" d="M40 314 V310 a5 5 0 0 1 10 0 V314"/><rect class="bx" x="36" y="314" width="18" height="13"/></g>
+  <g data-step="2"><text x="66" y="322">patch key, locked</text></g>
+  <g data-step="2"><text x="66" y="340" class="t-s">to the value at T</text></g>
+  <g data-step="2"><line class="ln-s" x1="240" y1="300" x2="425.5" y2="214.1"/><polygon class="arr" points="430,212 424.6,217.9 422.0,212.3"/></g>
+  <g data-step="4"><rect class="bx" x="490" y="268" width="250" height="84"/></g>
+  <g data-step="4"><text x="506" y="290" class="t-h">Everyone · at T</text></g>
+  <g data-step="4"><path class="ln" d="M510 314 V304 a5 5 0 0 1 10 0 V306"/><rect class="bx-i" x="506" y="314" width="18" height="13"/></g>
+  <g data-step="4"><text x="536" y="322">value T opens it</text></g>
+  <g data-step="4"><text x="536" y="340" class="t-s">patch key → install</text></g>
+  <g data-step="4"><line class="ln" x1="458" y1="212" x2="535.8" y2="263.3"/><polygon class="arr" points="540,266 532.1,264.5 535.6,259.3"/></g>
 </svg>
+      <ol class="steps__list">
+        <li>drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
+        <li>Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
+        <li>At T enough of the organisations together make the value for T. Not every one is needed.</li>
+        <li>The value is public. It opens the lock, and everyone installs the patch.</li>
+      </ol>
       <figcaption>Fig. 4 · The lock points at a value that does not exist yet. Only the organisations together can make it, and only at T.</figcaption>
     </figure>
     <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
@@ -319,13 +333,38 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
 </svg>
       <figcaption>Fig. 6 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
     </figure>
-    <p>To make this normal, a forge such as GitHub or GitLab would need:</p>
+    <p>To make this normal, a forge such as GitHub or GitLab would need (Fig. 7):</p>
     <ul>
       <li>Private branches and pull requests inside the public repository, visible only to maintainers and a security role.</li>
       <li>Private CI for those branches, with closed logs and no webhooks to outside apps.</li>
       <li>Release artefacts that are published encrypted and signed, with the key held by the forge.</li>
       <li>One action that, at T, publishes the key, merges the branch and publishes the advisory.</li>
     </ul>
+    <figure class="fig-wide" data-steps>
+      <svg class="dg" viewBox="0 0 760 420" role="img" aria-labelledby="d6t d6d">
+  <title id="d6t">What a forge would need for a private fix in a public repository</title>
+  <desc id="d6d">Inside the public repository a private branch holds the fix; only maintainers and a security role see it. Private CI with closed logs tests it. Days before T the forge publishes the encrypted, signed release, and the embargo list gets the key early. At T one action publishes the key and the advisory and merges the branch, and everyone applies the fix.</desc>
+  <rect class="bx" x="20" y="44" width="720" height="262"/>
+  <text x="36" y="68" class="t-h">Public repository</text>
+  <line class="ln-s" x1="600" y1="34" x2="600" y2="404"/>
+  <text x="600" y="26" text-anchor="middle" class="t-h">T</text>
+  <text x="60" y="88" class="t-s">main · public</text>
+  <line class="ln-t" x1="60" y1="104" x2="720" y2="104"/>
+  <circle class="dot" cx="110" cy="104" r="5"/><circle class="dot" cx="210" cy="104" r="5"/><circle class="dot" cx="310" cy="104" r="5"/><circle class="dot" cx="410" cy="104" r="5"/><circle class="dot" cx="510" cy="104" r="5"/>
+  <g data-step="1"><rect class="bx-d" x="60" y="124" width="500" height="112"/><text x="166" y="144" class="t-s">private branch · maintainers and a security role only</text><path class="ln" d="M150 104 V176 H520"/><circle class="dot" cx="230" cy="176" r="5"/><circle class="dot" cx="310" cy="176" r="5"/><circle class="dot" cx="390" cy="176" r="5"/></g>
+  <g data-step="2"><rect class="bx-s" x="344" y="192" width="200" height="34"/><text x="356" y="214">private CI, closed logs</text></g>
+  <text x="36" y="276" class="t-s">releases</text>
+  <g data-step="3"><rect class="bx-s" x="330" y="254" width="250" height="38"/><text x="344" y="278">encrypted release, signed</text><line class="ln" x1="455" y1="292" x2="455.0" y2="329.0"/><polygon class="arr" points="455,334 451.9,326.6 458.1,326.6"/><rect class="bx" x="330" y="336" width="250" height="54"/><text x="344" y="358">embargo list</text><text x="344" y="377" class="t-s">early key: test</text></g>
+  <g data-step="4"><path class="ln" d="M520 176 L600 104"/><circle class="dot" cx="600" cy="104" r="7"/><text x="610" y="128" class="t-s">merge</text><rect class="bx-i" x="600" y="254" width="130" height="38"/><text x="612" y="278" class="t-inv">key + advisory</text><line class="ln" x1="665" y1="292" x2="665.0" y2="329.0"/><polygon class="arr" points="665,334 661.9,326.6 668.1,326.6"/><rect class="bx" x="600" y="336" width="140" height="54"/><text x="612" y="358">everyone</text><text x="612" y="377" class="t-s">applies at T</text></g>
+</svg>
+      <ol class="steps__list">
+        <li>The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
+        <li>Private CI builds and tests the branch. Its logs stay closed.</li>
+        <li>Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
+        <li>At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
+      </ol>
+      <figcaption>Fig. 7 · What a forge would need. Step through it, or look at the whole picture.</figcaption>
+    </figure>
     <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, so the list stays short and the embargo stays short.</p>
 
     <h2 id="limits">What it does not fix</h2>

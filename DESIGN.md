@@ -80,6 +80,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 | Timeline | `.changes`, `.tl` | On a game page: one entry per merged pull request that changed play, newest first, on a vertical ink line with a dot per entry (the newest dot filled). Each entry: a mono label with date and PR, the title as `h3`, one sentence on what the clip shows, a short list of the other changes, and the silent clip (the video component) beside the text. One line at the end names the PRs that are not shown. |
 | Post list | `.posts` | On the front page and `/blog/`: date as a label, the title underlined, one sentence. Newest first. |
 | Diagram | `.dg` in a `figure` | Inline SVG drawn only with the classes in `site.css` (`.bx`, `.bx-s`, `.bx-i`, `.ln`, `.t-h`, `.t-s`, ...), which use the colour tokens, so a diagram follows the theme. Give it `<title>` and `<desc>`. In a `.fig-wide` figure it scrolls inside its box on a phone instead of shrinking the text. No colours, no `style` attributes. |
+| Diagram with steps | `figure[data-steps]`, `.steps__list` | A diagram whose parts carry `data-step="n"`, with one list item per step. `site.js` adds Back, Next and Play and shows one step at a time: earlier steps faint, later ones nearly hidden, the text of the step below. Without the script the whole diagram and the numbered list show. Use it where a process has an order; keep a still diagram where it has none. |
 | Encrypted site login | `.sealed` | The login page of a site below `/sealed/`, written by sealed (theme `t7d`). Label "Encrypted", the title as `h1`, one hint, username, password, one filled button "Open", a mono status line. Inputs are framed in ink with square corners. |
 
 ## Rules that are easy to break
@@ -88,7 +89,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 - **Links are underlined.** Colour cannot mark a link here.
 - **Keyboard focus is visible**: a 3 px ink outline.
 - **Phone first.** Check each change at 1440, 390 and 320 px wide, in both themes. The page must not scroll sideways. Wide tables and code scroll inside their own box.
-- **Motion.** The interface does not move, apart from smooth scrolling to a section. The exceptions are recordings of real things: the videos, which loop silently and do not start by themselves for a visitor who asked for reduced motion, and the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element.
+- **Motion.** The interface does not move, apart from smooth scrolling to a section. The exceptions are recordings of real things: the videos, which loop silently and do not start by themselves for a visitor who asked for reduced motion, and the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element. The other exception is a diagram with steps in a post: it changes only when the reader presses Back, Next or Play, never by itself, and without fades for a visitor who asked for reduced motion.
 - **Pictures.** Give every picture `width`, `height` and a plain `alt` text that describes what it shows.
 
 ## Where things are

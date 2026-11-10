@@ -114,6 +114,47 @@
     } else if (wanted) play();
   });
 
+  /* ---- diagrams with steps: Back, Next and Play walk through the parts of an SVG (data-step="n").
+     Without the script the whole diagram and the numbered list show. Nothing moves until the reader asks. ---- */
+  $$('figure[data-steps]').forEach(function (fig) {
+    var svg = $('svg', fig), items = $$('.steps__list li', fig), n = items.length;
+    if (!svg || !n) return;
+    var parts = $$('[data-step]', svg), at = 0, timer = null;
+    var bar = document.createElement('div'); bar.className = 'steps__bar';
+    function button(label, text) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn--ghost btn--s';
+      b.textContent = text; b.setAttribute('aria-label', label); bar.appendChild(b); return b;
+    }
+    var back = button('Previous step', '← Back'), next = button('Next step', 'Next →'), play = button('Play all steps', 'Play');
+    var status = document.createElement('span'); status.className = 'steps__at'; status.setAttribute('aria-live', 'polite');
+    bar.appendChild(status);
+    fig.insertBefore(bar, svg.nextSibling);
+    fig.classList.add('steps--on');
+    function show(k) {
+      at = k;
+      parts.forEach(function (p) {
+        var s = +p.getAttribute('data-step');
+        p.classList.toggle('is-later', k > 0 && s > k);
+        p.classList.toggle('is-past', k > 0 && s < k && s > 0);
+      });
+      items.forEach(function (li, i) { li.classList.toggle('is-now', i === k - 1); });
+      status.textContent = k ? 'Step ' + k + ' of ' + n : 'All ' + n + ' steps \u00b7 Next or Play goes through them';
+      back.disabled = k === 0; next.disabled = k === n;
+    }
+    function stop() {
+      if (!timer) return;
+      clearInterval(timer); timer = null; play.textContent = 'Play'; play.setAttribute('aria-label', 'Play all steps');
+    }
+    back.addEventListener('click', function () { stop(); show(at - 1); });
+    next.addEventListener('click', function () { stop(); show(at + 1); });
+    play.addEventListener('click', function () {
+      if (timer) { stop(); return; }
+      show(1); play.textContent = 'Pause'; play.setAttribute('aria-label', 'Pause');
+      timer = setInterval(function () { if (at >= n) stop(); else show(at + 1); }, 2800);
+    });
+    show(0);
+  });
+
   /* ---- 404: show the path that missed ---- */
   var lost = $('#lost-path');
   if (lost) lost.textContent = location.pathname;
