@@ -34,8 +34,9 @@ export const STAGES = [
   { id: 'pr32', ref: 'ad915dc', scene: 'castle', hold: 4000 },
   // #38: the gate of the Thronsaal
   { id: 'pr38', ref: '7fbae22', setup: jump('castleDoor'), hold: 4000 },
-  // #39: the castle finale brings the verb ziehen: it pulls the nearest loose thing (a summoned apple) to the hero
-  { id: 'pr39', ref: '641e1ff', setup: `async () => { WZ.useWord('Apfel'); ${wait(2500)} }`,
+  // #39: the castle finale brings the verb ziehen: it pulls the nearest loose thing (a summoned apple) to the hero.
+  // The castle page teaches the verb, so the stage marks it as learned (WZ.levels.pull).
+  { id: 'pr39', ref: '641e1ff', setup: `async () => { WZ.levels.pull = true; WZ.useWord('Apfel'); ${wait(2500)} }`,
     act: `async () => { WZ.useWord('ziehen'); ${wait(3000)} }`, hold: 1000 },
   // #41: the map
   { id: 'pr41', ref: 'fd951d0', setup: jump('map'), hold: 4000 },
