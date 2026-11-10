@@ -1,4 +1,4 @@
-"""Tests of the review server. Run: python3 -m unittest tools/review/test_devserver.py"""
+"""Tests of the review server. Run: python3 -m unittest scripts/review/test_devserver.py"""
 import json
 import os
 import sys

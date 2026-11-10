@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds a preview of one page of the site as a Claude artifact bundle, so Tim can review it before it is published.
 
-  python3 tools/preview-artifact.py thoughts/humans-md [<out dir>]
+  python3 scripts/preview-artifact.py thoughts/humans-md [<out dir>]
 
 The out dir defaults to .preview/<page> (git ignores it). It holds index.html and the files it needs, at the paths the
 page uses:

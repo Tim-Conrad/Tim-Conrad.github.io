@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check the pages
-        run: python3 tools/check.py
+        run: python3 scripts/check.py
       - name: Publish the site files to gh-pages
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        run: tools/deploy.sh
+        run: scripts/deploy.sh

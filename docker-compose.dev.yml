@@ -1,4 +1,4 @@
-# The review site: this clone with live reload and the note tab (tools/review/devserver.py), in the lab behind its
+# The review site: this clone with live reload and the note tab (scripts/review/devserver.py), in the lab behind its
 # login. GitHub Pages still serves t7d.dev from gh-pages. This stack never touches it.
 #
 #   mkdir -p .review/notes           # first: else Docker makes the folder as root
@@ -14,7 +14,7 @@ services:
     container_name: t7d-review
     restart: unless-stopped
     user: "1001:1001"
-    command: [python3, /repo/tools/review/devserver.py, --root, /repo, --notes, /repo/.review/notes, --host, 0.0.0.0, --port, "8000"]
+    command: [python3, /repo/scripts/review/devserver.py, --root, /repo, --notes, /repo/.review/notes, --host, 0.0.0.0, --port, "8000"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     read_only: true

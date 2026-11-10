@@ -1,5 +1,5 @@
 // Renders the Kleinbahn reel shots frame by frame on the game's virtual clock.
-// node tools/reels/kleinbahn-shots.mjs <path to tiny-train> [--test] [--only a-wide,b-train]
+// node scripts/reels/kleinbahn-shots.mjs <path to tiny-train> [--test] [--only a-wide,b-train]
 // Frames land in <work>/kb/frames/<shot>/ (or <work>/kb/test/ with --test: three frames per shot).
 import fs from 'node:fs';
 import path from 'node:path';

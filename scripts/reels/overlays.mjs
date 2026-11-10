@@ -1,5 +1,5 @@
 // Renders the transparent 1280x720 title, caption and end-card overlays of both reels into <work>/ov/kb and <work>/ov/wz.
-// node tools/reels/overlays.mjs <path to wortzauber>   (the Andika font comes from the game)
+// node scripts/reels/overlays.mjs <path to wortzauber>   (the Andika font comes from the game)
 // The caption texts live here: edit KB.items and WZ.items.
 import fs from 'node:fs';
 import path from 'node:path';

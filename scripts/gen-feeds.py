@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Writes /llms.txt and the RSS feed of the thoughts (/thoughts/feed.xml) from the pages of the site.
 
-  python3 tools/gen-feeds.py [<site folder>]
+  python3 scripts/gen-feeds.py [<site folder>]
 
-The folder defaults to the repository root. tools/deploy.sh runs it on the published copy, so both files always
+The folder defaults to the repository root. scripts/deploy.sh runs it on the published copy, so both files always
 match the pages and nobody edits them by hand. Everything comes from each page's <head>: <title>, the meta
 description, the canonical URL and article:published_time. A page is listed in its section by its folder:
 projects/ (games), thoughts/<slug>/ (thoughts), research/ (write-ups). Standard library only.
@@ -99,7 +99,7 @@ FILES = {'llms.txt': llms, 'thoughts/feed.xml': rss, 'blog/feed.xml': rss}
 
 
 def build(root):
-    """The text of each generated file for the site in `root`. The review server (tools/review/devserver.py) uses it."""
+    """The text of each generated file for the site in `root`. The review server (scripts/review/devserver.py) uses it."""
     global ROOT
     ROOT = os.path.abspath(root)
     return {path: make() for path, make in FILES.items()}

@@ -2,7 +2,7 @@
 """Show where a review note points: open the page at the width and in the theme of the note, frame the part in red,
 and save <notes>/<id>.png next to the note (it stays out of git).
 
-    uv run --no-project --with playwright python3 tools/review/show.py <id> [<id> ...] [--suffix after]
+    uv run --no-project --with playwright python3 scripts/review/show.py <id> [<id> ...] [--suffix after]
 
 --suffix after writes <id>.after.png: run it after the fix and compare the two pictures. The script serves the
 working tree itself (devserver.py on a free port), so it shows the files as they are now.

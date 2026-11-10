@@ -1,9 +1,9 @@
 // Films the development timeline of Wortzauber: one short screen recording per merged pull request, each at its own git state.
-// node tools/reels/timeline-wz.mjs <path to wortzauber> [--dry] [--only pr65,pr63]
-// For each stage of tools/reels/timeline-wortzauber.mjs it checks out the stage's commit as a git worktree, serves it on its
+// node scripts/reels/timeline-wz.mjs <path to wortzauber> [--dry] [--only pr65,pr63]
+// For each stage of scripts/reels/timeline-wortzauber.mjs it checks out the stage's commit as a git worktree, serves it on its
 // own port (a fresh browser each time, so no stale cache), opens /?dev=1&fresh=1 at 1280x720 in German, runs the stage's
 // setup and holds. The video and the cut points land in <work>/tl/wz/<id>/ (video.webm, marks.json).
-// --dry saves one still per stage instead (<work>/tl/wz-dry/<id>.png). Then `python3 tools/reels/build.py timeline`.
+// --dry saves one still per stage instead (<work>/tl/wz-dry/<id>.png). Then `python3 scripts/reels/build.py timeline`.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Review server for the site: live reload and notes. Only the review site uses it. GitHub Pages serves t7d.dev.
 
-    python3 tools/review/devserver.py [--root .] [--notes .review/notes] [--host 127.0.0.1] [--port 8000]
+    python3 scripts/review/devserver.py [--root .] [--notes .review/notes] [--host 127.0.0.1] [--port 8000]
 
 - Serves the repository root with Cache-Control: no-cache. A missing page gets /404.html with status 404.
 - Every HTML page gets /__review/review.css and /__review/review.js. The page CSP gets connect-src 'self', so the
@@ -12,7 +12,7 @@
 - /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
   the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
   <notes>/done/ with an "answer" field. The page shows the answer under "My notes".
-- /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by tools/gen-feeds.py, as the deploy makes them for gh-pages.
+- /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by scripts/gen-feeds.py, as the deploy makes them for gh-pages.
 - /.git, /.review, /.reels and /node_modules are not served.
 """
 import argparse
@@ -37,7 +37,7 @@ GENERATED = {"/llms.txt": "text/plain; charset=utf-8", "/thoughts/feed.xml": "ap
 
 
 def gen_feeds():
-    """tools/gen-feeds.py as a module (its file name has a hyphen)."""
+    """scripts/gen-feeds.py as a module (its file name has a hyphen)."""
     spec = importlib.util.spec_from_file_location("gen_feeds", os.path.join(HERE, "..", "gen-feeds.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
