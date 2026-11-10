@@ -8,7 +8,9 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 
 | Page | Path | Content |
 | --- | --- | --- |
-| Front page | `/` | Overview, the CVE summary, the two games, the PGP key, contact |
+| Front page | `/` | Overview, the two games, the latest blog posts, the CVE summary, the PGP key, contact |
+| Blog | `/blog/` | List of posts; each post in `/blog/<slug>/` |
+| Post | `/blog/encrypted-patches/` | Encrypted patches, unlocked on patch day (three inline SVG diagrams) |
 | Write-up | `/research/cve-2022-46166/` | CVE-2022-46166: template injection in Spring Boot Admin |
 | Kleinbahn | `/projects/kleinbahn/` | Reel, live demo from `tiny-train.beacon.host`, features, stills |
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
@@ -21,7 +23,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | Path | What it is |
 | --- | --- |
 | `index.html`, `404.html` | Front page and not-found page |
-| `research/`, `projects/`, `CVE/` | One folder with an `index.html` per page |
+| `research/`, `projects/`, `blog/`, `CVE/` | One folder with an `index.html` per page |
 | `assets/site.css` | All styles and the colour tokens of both themes |
 | `assets/theme.js` | Applies the saved theme before the first paint |
 | `assets/site.js` | Theme toggle, copy buttons, the table of contents, the tap-to-play demo |

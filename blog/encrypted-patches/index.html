@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Encrypted patches, unlocked on patch day · Tim Conrad</title>
+<meta name="description" content="Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.">
+<link rel="canonical" href="https://t7d.dev/blog/encrypted-patches/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Encrypted patches, unlocked on patch day">
+<meta property="og:description" content="Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.">
+<meta property="og:url" content="https://t7d.dev/blog/encrypted-patches/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-10">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/blog/">Blog</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/blog/">← Blog</a>
+  <h1>Encrypted patches, unlocked on patch day</h1>
+  <p class="sub">Ship the security update early as ciphertext, publish the key at release time, and nobody can diff the fix before everyone can install it.</p>
+  <p class="label">Tim Conrad · <time datetime="2026-11-10">10 Nov 2026</time> · Updates · Patch diffing · Key release</p>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#problem">The problem</a></li>
+      <li><a href="#games">What games do</a></li>
+      <li><a href="#design">A design</a></li>
+      <li><a href="#beacon">Without a key server</a></li>
+      <li><a href="#airgap">Air-gapped sites</a></li>
+      <li><a href="#limits">What it does not fix</a></li>
+      <li><a href="#prior">Prior art</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="problem">The problem</h2>
+    <p>A security patch tells an attacker where the bug was. Compare the old and the new binary, and the fix points at the flaw. In 2008 Brumley and others built working exploits from five Windows patches in seconds to minutes, fully automated <a href="#s1">[1]</a>. Mandiant measured an average time-to-exploit of 5 days in 2023, down from 63 days in 2018 and 2019 <a href="#s2">[2]</a>.</p>
+    <p>Most updates also roll out over time. The first host that downloads the patch starts the attacker's clock, while most hosts still wait. The authors of the 2008 paper called this out: staggered rollout can hurt overall security <a href="#s1">[1]</a>.</p>
+    <p>The idea of this post: ship the update days early, but encrypted. At patch day T, publish only the key. Every host already has the bundle, so it can install at once, and nobody could diff it before T.</p>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 300" role="img" aria-labelledby="d1t d1d">
+  <title id="d1t">Timeline: today and with an encrypted pre-load</title>
+  <desc id="d1d">Today the attacker can diff the patch as soon as the first host downloads it at T, while installs spread over weeks. With a pre-load, the encrypted bundle arrives in the week before T, the key arrives at T, and automatic updates install within minutes, while the attacker also only starts at T.</desc>
+  <line class="ln-s" x1="420" y1="34" x2="420" y2="262"/>
+  <text x="420" y="24" text-anchor="middle" class="t-h">T · patch day</text>
+  <text x="20" y="68" class="t-h">Today</text>
+  <rect class="bx-s" x="420" y="56" width="250" height="26"/>
+  <text x="432" y="73">installs spread over weeks</text>
+  <rect class="bx-i" x="426" y="92" width="150" height="26"/>
+  <text x="438" y="109" class="t-inv">diff → exploit</text>
+  <text x="588" y="109" class="t-s">from the first download</text>
+  <text x="140" y="73" class="t-s">nothing on the hosts yet</text>
+  <line class="ln" x1="20" y1="140" x2="740" y2="140"/>
+  <text x="20" y="176" class="t-h">Pre-load</text>
+  <rect class="bx-s" x="140" y="164" width="280" height="26"/>
+  <text x="152" y="181">encrypted bundle on every host</text>
+  <rect class="bx-i" x="420" y="164" width="22" height="26"/>
+  <text x="452" y="181" class="t-s">installed within minutes</text>
+  <rect class="bx-i" x="426" y="200" width="150" height="26"/>
+  <text x="438" y="217" class="t-inv">diff → exploit</text>
+  <text x="588" y="217" class="t-s">same start line</text>
+  <g transform="translate(409,236)"><circle class="bx" cx="6" cy="6" r="5"/><line class="ln" x1="11" y1="6" x2="22" y2="6"/><line class="ln" x1="18" y1="6" x2="18" y2="10"/></g>
+  <text x="402" y="246" text-anchor="end" class="t-s">32-byte key published</text>
+  <line class="ln" x1="140" y1="274" x2="700" y2="274"/>
+  <line class="ln" x1="140" y1="270" x2="140" y2="278"/><text x="140" y="292" text-anchor="middle" class="t-s">−7 days</text>
+  <line class="ln" x1="420" y1="268" x2="420" y2="280"/><text x="420" y="292" text-anchor="middle" class="t-s">T</text>
+  <line class="ln" x1="700" y1="270" x2="700" y2="278"/><text x="700" y="292" text-anchor="middle" class="t-s">+7 days</text>
+</svg>
+      <figcaption>Fig. 1 · With a pre-load, the attacker and the defenders start at the same moment, and hosts that update by themselves are done within minutes.</figcaption>
+    </figure>
+
+    <h2 id="games">What games do</h2>
+    <p>Games have done this for years. A pre-load puts the game on your disk before launch, and it opens only at release.</p>
+    <p>GTA V shows both sides. In August 2013 the European PlayStation Store let pre-order customers download the game weeks early. People mined the files and story details leaked. Sony apologised and moved the pre-load to four days before launch <a href="#s3">[3]</a>. Reports disagree on whether those files were encrypted at all. For the PC version in April 2015, the pre-load arrived a week early and stayed encrypted until launch; at launch many players then waited at "unpacking" while the game decrypted <a href="#s4">[4]</a>.</p>
+    <p>GTA Online does something else. Content for later updates ships early inside earlier updates, and Rockstar switches it on from the server ("tunables"). The archives are encrypted, but the keys are in the game itself, so dataminers list unreleased cars and missions weeks ahead <a href="#s5">[5]</a>. A server switch decides <em>when</em> content is available. It does not keep the content <em>secret</em> while the key sits on the device.</p>
+    <p>Steam is closer to what a patch needs. As SteamDB describes it, each depot is encrypted with AES-256 and one key that is the same for every user, so mirrors and caches can serve the same bytes, and only owners can ask for the key <a href="#s6">[6]</a>. A pre-loaded game stays shut until the publisher releases it. Consoles had the opposite failure: in 2020 players started Cyberpunk 2077 early on Xbox by setting the console to a New Zealand time zone <a href="#s7">[7]</a>.</p>
+    <p>For patches, four rules follow:</p>
+    <ul>
+      <li>The key is not on the device before T.</li>
+      <li>The device clock never opens anything. Only the published key does.</li>
+      <li>Everything is signed, and the client checks the ciphertext before T.</li>
+      <li>Decryption at T is cheap. One key, one pass.</li>
+    </ul>
+
+    <h2 id="design">A design</h2>
+    <p>The update frameworks TUF and Uptane already solve most of this: an offline root key, roles with narrow rights, thresholds of signatures, and protection against rollback and freeze attacks <a href="#s8">[8]</a><a href="#s9">[9]</a>. Uptane even names patch diffing as an attacker goal and can carry wrapped keys for encrypted images. What they lack is a key that is published later. The design adds one role for that.</p>
+    <ol>
+      <li><b>Pre-load.</b> Days before T, the vendor publishes the encrypted bundle as an ordinary target. The manifest with its hash, size and release time is signed by the targets role under the organisation's root key. Clients download it and check the hash.</li>
+      <li><b>Release.</b> At T a separate release role signs a short statement: patch id, hash of the ciphertext, the 32-byte content key. A threshold, say two of three officers, keeps one person from releasing early.</li>
+      <li><b>Log.</b> Every statement goes into an append-only transparency log, so a release before T, or a different key for some customers, can be seen <a href="#s10">[10]</a>.</li>
+      <li><b>Install.</b> The client checks the statement and the log entry, decrypts with the key and installs.</li>
+    </ol>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 420" role="img" aria-labelledby="d2t d2d">
+  <title id="d2t">Who signs what</title>
+  <desc id="d2d">An offline organisation root key delegates to a targets role and a release role. Days before T the targets role signs a manifest with the hash of the encrypted bundle, and mirrors carry both. At T a release role, two of three officers, signs a key-release statement that is written to a transparency log. The client verifies the manifest, the bundle hash, the statement signature and the log entry, then decrypts and installs.</desc>
+  <text x="20" y="28" class="t-h">Organisation</text>
+  <text x="290" y="28" class="t-h">Mirrors and log</text>
+  <text x="560" y="28" class="t-h">Client</text>
+  <rect class="bx-i" x="20" y="44" width="220" height="54"/>
+  <text x="36" y="67" class="t-inv">org root key</text>
+  <text x="36" y="86" class="t-inv t-s">offline · delegates roles</text>
+  <line class="ln" x1="70" y1="98" x2="70.0" y2="135.0"/><polygon class="arr" points="70,140 66.9,132.6 73.1,132.6"/>
+  <line class="ln" x1="190" y1="98" x2="190.0" y2="257.0"/><polygon class="arr" points="190,262 186.9,254.6 193.1,254.6"/>
+  <rect class="bx" x="20" y="142" width="160" height="54"/>
+  <text x="36" y="165">targets role</text>
+  <text x="36" y="184" class="t-s">signs the manifest</text>
+  <rect class="bx" x="100" y="264" width="140" height="54"/>
+  <text x="114" y="287">release role</text>
+  <text x="114" y="306" class="t-s">2 of 3 officers</text>
+  <line class="ln" x1="180" y1="169" x2="283.0" y2="169.0"/><polygon class="arr" points="288,169 280.6,172.1 280.6,165.9"/>
+  <text x="196" y="160" class="t-s">−7 days</text>
+  <line class="ln" x1="240" y1="291" x2="283.0" y2="291.0"/><polygon class="arr" points="288,291 280.6,294.1 280.6,287.9"/>
+  <text x="250" y="282" class="t-s">at T</text>
+  <rect class="bx-s" x="290" y="142" width="220" height="54"/>
+  <text x="304" y="165">manifest + bundle</text>
+  <text x="304" y="184" class="t-s">hash, size, patch id, T</text>
+  <rect class="bx-i" x="290" y="264" width="220" height="54"/>
+  <text x="304" y="287" class="t-inv">key-release statement</text>
+  <text x="304" y="306" class="t-inv t-s">patch id, hash, key · 104 B</text>
+  <line class="ln" x1="400" y1="318" x2="400.0" y2="349.0"/><polygon class="arr" points="400,354 396.9,346.6 403.1,346.6"/>
+  <rect class="bx-d" x="290" y="356" width="220" height="46"/>
+  <text x="304" y="377">transparency log</text>
+  <text x="304" y="394" class="t-s">append only, public</text>
+  <line class="ln" x1="510" y1="169" x2="553.0" y2="169.0"/><polygon class="arr" points="558,169 550.6,172.1 550.6,165.9"/>
+  <line class="ln" x1="510" y1="291" x2="553.0" y2="291.0"/><polygon class="arr" points="558,291 550.6,294.1 550.6,287.9"/>
+  <path class="ln-s" d="M510 379 H534 V320 H558"/>
+  <rect class="bx" x="560" y="122" width="180" height="236"/>
+  <text x="576" y="150">1 check manifest</text>
+  <text x="590" y="166" class="t-s">against org key</text>
+  <text x="576" y="192">2 check bundle</text>
+  <text x="590" y="208" class="t-s">hash from manifest</text>
+  <text x="576" y="234">3 wait for T</text>
+  <text x="590" y="250" class="t-s">the key opens, not</text><text x="590" y="264" class="t-s">the clock</text>
+  <text x="576" y="286">4 check statement</text>
+  <text x="590" y="302" class="t-s">signature + log proof</text>
+  <text x="576" y="326">5 decrypt, install</text>
+  <text x="590" y="342" class="t-s">AES-GCM, key from 4</text>
+</svg>
+      <figcaption>Fig. 2 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
+    </figure>
+    <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
+    <div class="code">
+      <div class="code__bar"><span>key-release statement, about 104 bytes</span></div>
+<pre><code>patch    8 B   id of the patch, points to its manifest entry
+key     32 B   AES-256-GCM content key
+sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
+    </div>
+    <p>The signature covers the hash of the ciphertext from the manifest, so the key belongs to exactly one bundle. With a threshold, each officer adds a signature of 64 bytes.</p>
+
+    <h2 id="beacon">Without a key server</h2>
+    <p>The key server is a single point that can fail, be forced to wait, or leak. Timelock encryption removes it. With tlock, data is encrypted to a future round of the drand beacon, run by the League of Entropy. At that round the network publishes a threshold BLS signature, and that signature is the decryption key <a href="#s11">[11]</a>. On drand's quicknet a round is 3 seconds and a signature is 48 bytes.</p>
+    <p>The vendor can wrap the content key twice: once for its own key server, once to the drand round at T. Then the patch opens at T even if the vendor's server is down. Two limits: the vendor still creates the key, so an insider can still leak it; and a timelocked key cannot be pulled back if the fix turns out to be broken. Kudelski Security used tlock for a vulnerability report in 2023; a date bug encrypted it to the first round, so it could be read at once <a href="#s12">[12]</a>. Test the round number.</p>
+
+    <h2 id="airgap">Air-gapped sites</h2>
+    <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand signature, which the site checks against a pinned group key <a href="#s11">[11]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s13">[13]</a>, or can be typed in as hex.</p>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d3t d3d">
+  <title id="d3t">Updates for an air-gapped site</title>
+  <desc id="d3d">Days before T, the encrypted bundle and its signed manifest cross the air gap on removable media, gigabytes in size. At T only a key-release statement of about 104 bytes, or a 48-byte drand signature, crosses, small enough for one QR code. The offline site checks both against pinned keys, then decrypts and installs.</desc>
+  <defs><pattern id="d3h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatch-p" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
+  <text x="20" y="28" class="t-h">Connected</text>
+  <text x="380" y="28" text-anchor="middle" class="t-h">Air gap</text>
+  <text x="740" y="28" text-anchor="end" class="t-h">Offline site</text>
+  <rect class="bx" x="20" y="44" width="190" height="262"/>
+  <text x="36" y="72">vendor mirror</text>
+  <text x="36" y="90" class="t-s">bundle, manifest</text>
+  <text x="36" y="196">key release</text>
+  <text x="36" y="214" class="t-s">vendor statement</text>
+  <text x="36" y="230" class="t-s">or drand round r</text>
+  <rect class="gap" x="350" y="44" width="60" height="262"/>
+  <rect class="bx" x="550" y="44" width="190" height="262"/>
+  <text x="566" y="72">pinned keys</text>
+  <text x="566" y="90" class="t-s">org key</text>
+  <text x="566" y="106" class="t-s">drand group key</text>
+  <text x="566" y="196">at T</text>
+  <text x="566" y="214" class="t-s">verify offline</text>
+  <text x="566" y="230" class="t-s">decrypt, install</text>
+  <rect class="bx-s" x="250" y="66" width="260" height="70"/>
+  <text x="264" y="86" class="t-s">days before T</text>
+  <text x="264" y="106">USB or disc</text>
+  <text x="264" y="124" class="t-s">encrypted bundle · gigabytes</text>
+  <line class="ln" x1="210" y1="101" x2="243.0" y2="101.0"/><polygon class="arr" points="248,101 240.6,104.1 240.6,97.9"/><line class="ln" x1="510" y1="101" x2="543.0" y2="101.0"/><polygon class="arr" points="548,101 540.6,104.1 540.6,97.9"/>
+  <rect class="bx" x="262" y="164" width="236" height="122"/>
+  <text x="376" y="186" class="t-s">at T</text>
+  <g transform="translate(276,190)"><rect class="bx-i" x="0" y="0" width="28" height="28"/><rect class="qr-w" x="4" y="4" width="20" height="20"/><rect class="bx-i" x="8" y="8" width="12" height="12"/><rect class="bx-i" x="56" y="0" width="28" height="28"/><rect class="qr-w" x="60" y="4" width="20" height="20"/><rect class="bx-i" x="64" y="8" width="12" height="12"/><rect class="bx-i" x="0" y="56" width="28" height="28"/><rect class="qr-w" x="4" y="60" width="20" height="20"/><rect class="bx-i" x="8" y="64" width="12" height="12"/><rect class="dot" x="32" y="0" width="4" height="4"/><rect class="dot" x="36" y="0" width="4" height="4"/><rect class="dot" x="44" y="0" width="4" height="4"/><rect class="dot" x="32" y="4" width="4" height="4"/><rect class="dot" x="36" y="4" width="4" height="4"/><rect class="dot" x="44" y="4" width="4" height="4"/><rect class="dot" x="48" y="4" width="4" height="4"/><rect class="dot" x="32" y="8" width="4" height="4"/><rect class="dot" x="36" y="8" width="4" height="4"/><rect class="dot" x="40" y="8" width="4" height="4"/><rect class="dot" x="48" y="8" width="4" height="4"/><rect class="dot" x="32" y="12" width="4" height="4"/><rect class="dot" x="48" y="12" width="4" height="4"/><rect class="dot" x="36" y="16" width="4" height="4"/><rect class="dot" x="44" y="16" width="4" height="4"/><rect class="dot" x="48" y="16" width="4" height="4"/><rect class="dot" x="32" y="20" width="4" height="4"/><rect class="dot" x="36" y="20" width="4" height="4"/><rect class="dot" x="44" y="20" width="4" height="4"/><rect class="dot" x="36" y="24" width="4" height="4"/><rect class="dot" x="44" y="24" width="4" height="4"/><rect class="dot" x="48" y="24" width="4" height="4"/><rect class="dot" x="32" y="28" width="4" height="4"/><rect class="dot" x="40" y="28" width="4" height="4"/><rect class="dot" x="44" y="28" width="4" height="4"/><rect class="dot" x="0" y="32" width="4" height="4"/><rect class="dot" x="4" y="32" width="4" height="4"/><rect class="dot" x="16" y="32" width="4" height="4"/><rect class="dot" x="36" y="32" width="4" height="4"/><rect class="dot" x="44" y="32" width="4" height="4"/><rect class="dot" x="48" y="32" width="4" height="4"/><rect class="dot" x="56" y="32" width="4" height="4"/><rect class="dot" x="64" y="32" width="4" height="4"/><rect class="dot" x="0" y="36" width="4" height="4"/><rect class="dot" x="16" y="36" width="4" height="4"/><rect class="dot" x="28" y="36" width="4" height="4"/><rect class="dot" x="36" y="36" width="4" height="4"/><rect class="dot" x="56" y="36" width="4" height="4"/><rect class="dot" x="60" y="36" width="4" height="4"/><rect class="dot" x="68" y="36" width="4" height="4"/><rect class="dot" x="72" y="36" width="4" height="4"/><rect class="dot" x="76" y="36" width="4" height="4"/><rect class="dot" x="80" y="36" width="4" height="4"/><rect class="dot" x="0" y="40" width="4" height="4"/><rect class="dot" x="8" y="40" width="4" height="4"/><rect class="dot" x="12" y="40" width="4" height="4"/><rect class="dot" x="16" y="40" width="4" height="4"/><rect class="dot" x="24" y="40" width="4" height="4"/><rect class="dot" x="28" y="40" width="4" height="4"/><rect class="dot" x="48" y="40" width="4" height="4"/><rect class="dot" x="52" y="40" width="4" height="4"/><rect class="dot" x="56" y="40" width="4" height="4"/><rect class="dot" x="68" y="40" width="4" height="4"/><rect class="dot" x="72" y="40" width="4" height="4"/><rect class="dot" x="76" y="40" width="4" height="4"/><rect class="dot" x="80" y="40" width="4" height="4"/><rect class="dot" x="8" y="44" width="4" height="4"/><rect class="dot" x="12" y="44" width="4" height="4"/><rect class="dot" x="16" y="44" width="4" height="4"/><rect class="dot" x="20" y="44" width="4" height="4"/><rect class="dot" x="48" y="44" width="4" height="4"/><rect class="dot" x="68" y="44" width="4" height="4"/><rect class="dot" x="72" y="44" width="4" height="4"/><rect class="dot" x="76" y="44" width="4" height="4"/><rect class="dot" x="0" y="48" width="4" height="4"/><rect class="dot" x="4" y="48" width="4" height="4"/><rect class="dot" x="8" y="48" width="4" height="4"/><rect class="dot" x="12" y="48" width="4" height="4"/><rect class="dot" x="16" y="48" width="4" height="4"/><rect class="dot" x="20" y="48" width="4" height="4"/><rect class="dot" x="24" y="48" width="4" height="4"/><rect class="dot" x="28" y="48" width="4" height="4"/><rect class="dot" x="32" y="48" width="4" height="4"/><rect class="dot" x="36" y="48" width="4" height="4"/><rect class="dot" x="40" y="48" width="4" height="4"/><rect class="dot" x="52" y="48" width="4" height="4"/><rect class="dot" x="56" y="48" width="4" height="4"/><rect class="dot" x="60" y="48" width="4" height="4"/><rect class="dot" x="64" y="48" width="4" height="4"/><rect class="dot" x="68" y="48" width="4" height="4"/><rect class="dot" x="80" y="48" width="4" height="4"/><rect class="dot" x="36" y="52" width="4" height="4"/><rect class="dot" x="40" y="52" width="4" height="4"/><rect class="dot" x="44" y="52" width="4" height="4"/><rect class="dot" x="48" y="52" width="4" height="4"/><rect class="dot" x="56" y="52" width="4" height="4"/><rect class="dot" x="60" y="52" width="4" height="4"/><rect class="dot" x="72" y="52" width="4" height="4"/><rect class="dot" x="80" y="52" width="4" height="4"/><rect class="dot" x="48" y="56" width="4" height="4"/><rect class="dot" x="52" y="56" width="4" height="4"/><rect class="dot" x="56" y="56" width="4" height="4"/><rect class="dot" x="72" y="56" width="4" height="4"/><rect class="dot" x="76" y="56" width="4" height="4"/><rect class="dot" x="52" y="60" width="4" height="4"/><rect class="dot" x="60" y="60" width="4" height="4"/><rect class="dot" x="64" y="60" width="4" height="4"/><rect class="dot" x="68" y="60" width="4" height="4"/><rect class="dot" x="72" y="60" width="4" height="4"/><rect class="dot" x="76" y="60" width="4" height="4"/><rect class="dot" x="36" y="64" width="4" height="4"/><rect class="dot" x="52" y="64" width="4" height="4"/><rect class="dot" x="56" y="64" width="4" height="4"/><rect class="dot" x="60" y="64" width="4" height="4"/><rect class="dot" x="64" y="64" width="4" height="4"/><rect class="dot" x="68" y="64" width="4" height="4"/><rect class="dot" x="32" y="68" width="4" height="4"/><rect class="dot" x="44" y="68" width="4" height="4"/><rect class="dot" x="64" y="68" width="4" height="4"/><rect class="dot" x="68" y="68" width="4" height="4"/><rect class="dot" x="76" y="68" width="4" height="4"/><rect class="dot" x="36" y="72" width="4" height="4"/><rect class="dot" x="40" y="72" width="4" height="4"/><rect class="dot" x="52" y="72" width="4" height="4"/><rect class="dot" x="56" y="72" width="4" height="4"/><rect class="dot" x="60" y="72" width="4" height="4"/><rect class="dot" x="72" y="72" width="4" height="4"/><rect class="dot" x="36" y="76" width="4" height="4"/><rect class="dot" x="44" y="76" width="4" height="4"/><rect class="dot" x="48" y="76" width="4" height="4"/><rect class="dot" x="68" y="76" width="4" height="4"/><rect class="dot" x="80" y="76" width="4" height="4"/><rect class="dot" x="32" y="80" width="4" height="4"/><rect class="dot" x="36" y="80" width="4" height="4"/><rect class="dot" x="40" y="80" width="4" height="4"/><rect class="dot" x="48" y="80" width="4" height="4"/><rect class="dot" x="52" y="80" width="4" height="4"/><rect class="dot" x="56" y="80" width="4" height="4"/><rect class="dot" x="64" y="80" width="4" height="4"/><rect class="dot" x="68" y="80" width="4" height="4"/><rect class="dot" x="80" y="80" width="4" height="4"/></g>
+  <text x="376" y="210">QR code</text>
+  <text x="376" y="232" class="t-s">104 B signed</text>
+  <text x="376" y="248" class="t-s">statement, or</text>
+  <text x="376" y="264" class="t-s">48 B drand sig</text>
+  <line class="ln" x1="210" y1="232" x2="255.0" y2="232.0"/><polygon class="arr" points="260,232 252.6,235.1 252.6,228.9"/><line class="ln" x1="498" y1="232" x2="543.0" y2="232.0"/><polygon class="arr" points="548,232 540.6,235.1 540.6,228.9"/>
+</svg>
+      <figcaption>Fig. 3 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
+    </figure>
+    <p>A verified drand signature also proves that the time is at least the time of its round. A site without a trusted clock gets a lower bound for free.</p>
+
+    <h2 id="limits">What it does not fix</h2>
+    <ul>
+      <li><b>Diffing after T.</b> At T the patch is public. The scheme moves the start line; it does not stop the race. It helps the hosts that install at once.</li>
+      <li><b>Zero-days.</b> Mandiant counted 70&nbsp;% of exploited vulnerabilities in 2023 as zero-days <a href="#s2">[2]</a>. No patch, nothing to encrypt.</li>
+      <li><b>Slow patching.</b> Organisations take weeks to install fixes <a href="#s14">[14]</a>. A host that waits a month gains nothing.</li>
+      <li><b>Metadata.</b> File names and sizes still show which component changed. Padding and fixed bundles help, at a cost in bandwidth.</li>
+      <li><b>Insiders.</b> The key exists before T. Create it late, keep it in an HSM, split it between people.</li>
+      <li><b>Testing.</b> Companies test patches before they roll them out. With this scheme they can test only after T, or the vendor gives some of them the key early, which brings back the leaks of early-access programmes <a href="#s15">[15]</a>.</li>
+    </ul>
+
+    <h2 id="prior">Prior art</h2>
+    <p>The idea is not new. The 2008 paper on patch-based exploits reportedly proposed encrypted patches with a key released later <a href="#s16">[16]</a>, and Microsoft holds a patent on distributing an update encrypted and sending the key once enough machines have it <a href="#s17">[17]</a>. I found no vendor that does this for security patches today. What is new are the parts around it: TUF and Uptane for signed metadata, transparency logs, and a public beacon that can release a key on time without the vendor.</p>
+    <p>My conclusion: this is a tool for fleets that update by themselves and for fast offline sites, not a defence against patch diffing. It is cheap to add to an update system that already signs its metadata.</p>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">D. Brumley, P. Poosankam, D. Song, J. Zheng: <a href="https://bitblaze.cs.berkeley.edu/papers/apeg.pdf" rel="noopener">Automatic Patch-Based Exploit Generation is Possible</a>, IEEE S&amp;P 2008.</li>
+      <li id="s2">Mandiant: <a href="https://cloud.google.com/blog/topics/threat-intelligence/time-to-exploit-trends-2023" rel="noopener">How Low Can You Go? An Analysis of 2023 Time-to-Exploit Trends</a>, 2024.</li>
+      <li id="s3">GameSpot: <a href="https://www.gamespot.com/articles/sony-apologizes-to-rockstar-over-gtav-pre-load-leak/1100-6413639/" rel="noopener">Sony apologizes to Rockstar over GTA V pre-load leak</a>, 2013.</li>
+      <li id="s4">Attack of the Fanboy: <a href="https://attackofthefanboy.com/news/gta-v-launches-on-pc-download-and-unpacking-issues-plague-many/" rel="noopener">GTA V launches on PC, download and unpacking issues</a>, 2015.</li>
+      <li id="s5">Rockstar Intel: <a href="https://rockstarintel.com/gta-online-los-santos-drug-wars-all-unreleased-vehicles/" rel="noopener">Los Santos Drug Wars: all unreleased vehicles</a>, 2022; the RPF archive keys in community tools, for example <a href="https://docs.rs/crate/rage-rpf/0.5.1/source/src/archive.rs" rel="noopener">rage-rpf</a>.</li>
+      <li id="s6">SteamDB: <a href="https://steamdb.info/blog/steam-download-system" rel="noopener">How the Steam download system works</a>.</li>
+      <li id="s7">GamesRadar: <a href="https://www.gamesradar.com/uk/you-can-play-cyberpunk-2077-early-on-xbox-by-swapping-time-zones/" rel="noopener">You can play Cyberpunk 2077 early on Xbox by swapping time zones</a>, 2020.</li>
+      <li id="s8"><a href="https://github.com/theupdateframework/specification/blob/master/tuf-spec.md" rel="noopener">The Update Framework specification</a>.</li>
+      <li id="s9"><a href="https://github.com/uptane/uptane-standard/blob/master/uptane-standard.md" rel="noopener">Uptane Standard</a>.</li>
+      <li id="s10"><a href="https://datatracker.ietf.org/doc/html/rfc9162" rel="noopener">RFC 9162: Certificate Transparency 2.0</a>; <a href="https://docs.sigstore.dev/logging/overview/" rel="noopener">Sigstore Rekor</a>.</li>
+      <li id="s11">drand: <a href="https://github.com/drand/tlock" rel="noopener">tlock</a>; N. Gailly, K. Melissaris, Y. Romailler: <a href="https://eprint.iacr.org/2023/189" rel="noopener">tlock: practical timelock encryption from threshold BLS</a>, 2023.</li>
+      <li id="s12">Kudelski Security: <a href="https://research.kudelskisecurity.com/2023/01/09/announcing-a-timelocked-responsible-disclosure/" rel="noopener">Announcing a timelocked responsible disclosure</a> and <a href="https://research.kudelskisecurity.com/2023/02/22/releasing-a-timelocked-responsible-disclosure/" rel="noopener">Releasing a timelocked responsible disclosure</a>, 2023.</li>
+      <li id="s13">ISO/IEC 18004 capacity table, summarised by <a href="https://www.keyence.com/ss/products/auto_id/barcode_lecture/basic_2d/qr/" rel="noopener">Keyence</a>.</li>
+      <li id="s14">Qualys: <a href="https://www.qualys.com/2023-trurisk-research-report" rel="noopener">2023 TruRisk Research Report</a>.</li>
+      <li id="s15">The Register: <a href="https://www.theregister.com/2012/03/16/microsoft_rdp_flaw_release/" rel="noopener">Microsoft RDP exploit code leak</a>, 2012.</li>
+      <li id="s16">The Register: <a href="https://www.theregister.com/2008/04/25/patches_security_risk/?page=2" rel="noopener">Patches pose security risk</a>, 2008.</li>
+      <li id="s17">Microsoft: <a href="https://patents.google.com/patent/US7876902" rel="noopener">US 7,876,902 B2</a>.</li>
+    </ol>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>
