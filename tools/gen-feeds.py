@@ -12,7 +12,7 @@ import html, os, re, sys
 from datetime import datetime, timezone
 from email.utils import format_datetime
 
-ROOT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), '..'))
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 SITE = 'https://t7d.dev'
 
 
@@ -91,8 +91,21 @@ def rss():
 '''
 
 
+# the generated files, by their path on the site
+FILES = {'llms.txt': llms, 'blog/feed.xml': rss}
+
+
+def build(root):
+    """The text of each generated file for the site in `root`. The review server (tools/review/devserver.py) uses it."""
+    global ROOT
+    ROOT = os.path.abspath(root)
+    return {path: make() for path, make in FILES.items()}
+
+
 if __name__ == '__main__':
-    open(os.path.join(ROOT, 'llms.txt'), 'w', encoding='utf-8').write(llms())
-    os.makedirs(os.path.join(ROOT, 'blog'), exist_ok=True)
-    open(os.path.join(ROOT, 'blog', 'feed.xml'), 'w', encoding='utf-8').write(rss())
-    print('wrote llms.txt and blog/feed.xml in', ROOT)
+    if len(sys.argv) > 1:
+        ROOT = os.path.abspath(sys.argv[1])
+    for path, text in build(ROOT).items():
+        os.makedirs(os.path.dirname(os.path.join(ROOT, path)), exist_ok=True)
+        open(os.path.join(ROOT, path), 'w', encoding='utf-8').write(text)
+    print('wrote', ' and '.join(FILES), 'in', ROOT)
