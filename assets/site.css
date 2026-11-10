@@ -43,6 +43,8 @@
   --code-fg: #f2f2f2;
   --code-muted: #a3a3a3;
   --code-line: #3a3a3a;
+  --video-bg: #111111;   /* controls on top of a video: the same in both themes */
+  --video-fg: #ffffff;
 
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "Karla", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -191,10 +193,17 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 /* the player: a silent loop with one button and a thin progress line */
 .player { position: relative; display: grid; border: var(--rule) solid var(--ink); background: var(--code-bg); }
 .player video { width: 100%; height: auto; display: block; border: 0; cursor: pointer; }
-.player__btn { position: absolute; left: .6rem; bottom: .75rem; font: 500 .68rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: .45rem .55rem; border: 1px solid var(--ink); background: var(--bg); color: var(--ink); cursor: pointer; }
-.player__btn:hover { background: var(--ink); color: var(--bg); border-color: var(--bg); }
-.player__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--ink); pointer-events: none; }
-.player__bar i { display: block; height: 100%; width: 0; background: var(--bg); }
+.player__btn { position: absolute; left: .75rem; bottom: .9rem; width: 2.5rem; height: 2.5rem; padding: 0; border: 0; background: var(--video-bg); color: var(--video-fg); cursor: pointer; display: grid; place-items: center; transition: opacity .2s; }
+.player__btn::before { content: ""; display: block; width: .8rem; height: .9rem; background: currentColor; }
+.player[data-state="playing"] .player__btn::before { background: linear-gradient(90deg, currentColor 0 34%, transparent 34% 66%, currentColor 66%); }
+.player[data-state="paused"] .player__btn::before { clip-path: polygon(0 0, 100% 50%, 0 100%); margin-left: .15rem; }
+.player__btn:hover { background: var(--video-fg); color: var(--video-bg); }
+.player__btn:focus-visible { outline: 2px solid var(--video-fg); outline-offset: 2px; }
+/* while it plays, the button steps back until the pointer or the keyboard comes near */
+@media (hover: hover) { .player[data-state="playing"] .player__btn { opacity: 0; } .player:hover .player__btn, .player .player__btn:focus-visible { opacity: 1; } }
+@media (hover: none) { .player[data-state="playing"] .player__btn { opacity: .75; } }
+.player__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--video-bg); pointer-events: none; }
+.player__bar i { display: block; height: 100%; width: 0; background: var(--video-fg); }
 .product > .reel { border-width: 0; border-top: var(--rule) solid var(--ink); background: none; }
 .product { display: grid; }
 .product > * { padding: clamp(1.75rem, 4vw, 3.25rem) var(--pad); border-top: var(--rule) solid var(--ink); }
