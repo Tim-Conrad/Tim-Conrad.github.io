@@ -32,6 +32,8 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |
 | `tools/reels/` | Scripts that film the two games and cut the reels |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |
+| `DESIGN.md` | How the site looks and sounds: colours, type, layout, components and the wording rules |
+| `CLAUDE.md` | Instructions for Claude Code in this repository |
 | `.claude/skills/updating-product-reels/` | Working guide for Claude Code: how to take the reels and pictures again |
 
 ## Preview locally
