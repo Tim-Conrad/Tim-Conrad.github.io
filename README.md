@@ -12,6 +12,8 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | Thoughts | `/thoughts/` | Ideas I work through and come back to; each in `/thoughts/<slug>/` with a status, sources, revisions and feedback |
 | Thought | `/thoughts/humans-md/` | A humans.md for working with models (animated diagrams, the file `HUMANS.md` to download) |
 | Thought | `/thoughts/encrypted-patches/` | Encrypted patches, unlocked on patch day (inline SVG diagrams) |
+| Tools | `/tools/` | Tools I published; each in `/tools/<slug>/` with an intro and the README of its latest release |
+| Tool | `/tools/papercuts/` | Papercuts: one place where my agents and I report friction |
 | Write-up | `/research/cve-2022-46166/` | CVE-2022-46166: template injection in Spring Boot Admin |
 | Kleinbahn | `/projects/kleinbahn/` | Reel, live demo from `tiny-train.beacon.host`, features, stills |
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
@@ -27,7 +29,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | Path | What it is |
 | --- | --- |
 | `index.html`, `404.html` | Front page and not-found page |
-| `research/`, `projects/`, `thoughts/` | One folder with an `index.html` per page |
+| `research/`, `projects/`, `thoughts/`, `tools/` | One folder with an `index.html` per page |
 | `blog/`, `CVE/` | Redirects from old addresses |
 | `assets/site.css` | All styles and the colour tokens of both themes |
 | `assets/theme.js` | Applies the saved theme before the first paint |
@@ -81,7 +83,7 @@ GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the 
 
 1. Merge a change into `master`.
 2. The workflow `.github/workflows/deploy.yml` runs `scripts/deploy.sh`.
-3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and the feeds from the pages with `scripts/gen-feeds.py`, and pushes. `scripts/`, `.claude/`, `.github/` and this README stay on `master`.
+3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and the feeds from the pages with `scripts/gen-feeds.py`, puts the README of each tool's latest release into its page with `scripts/gen-tools.py`, and pushes. `scripts/`, `.claude/`, `.github/` and this README stay on `master`.
 
 To ship a pull request in one step, run `scripts/ship.sh [<pr>]`. It merges the PR, puts this clone on `master`, waits for the deploy and the Pages build, and checks that t7d.dev serves each site file of the PR. It runs no checks: look at the pages first.
 

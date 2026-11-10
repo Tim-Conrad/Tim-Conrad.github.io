@@ -19,8 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check the pages
         run: python3 scripts/check.py
+      - name: Install the Markdown renderer for the tool pages
+        run: pip install markdown==3.11.3
       - name: Publish the site files to gh-pages
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: scripts/deploy.sh

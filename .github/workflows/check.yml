@@ -13,3 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: CSP rules and sitemap
         run: python3 scripts/check.py
+      - name: Tests of the tool page generator
+        run: |
+          pip install markdown==3.11.3
+          python3 -m unittest scripts/test_gen_tools.py

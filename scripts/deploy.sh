@@ -7,7 +7,7 @@
 # encrypted sites there, one folder per site (sealed/<site>/). This script keeps that folder as it is.
 set -euo pipefail
 
-SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets thoughts blog research projects CVE)
+SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets thoughts tools blog research projects CVE)
 
 root=$(git rev-parse --show-toplevel)
 src=$(git -C "$root" rev-parse HEAD)
@@ -23,6 +23,8 @@ fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
 # llms.txt and the RSS feed of the thoughts are made from the published pages, never by hand
 python3 "$root/scripts/gen-feeds.py" "$tree"
+# each tool page shows the README of the latest release of its repo; a failed fetch stops the deploy
+python3 "$root/scripts/gen-tools.py" "$tree"
 git add -A
 
 if git diff --cached --quiet; then
