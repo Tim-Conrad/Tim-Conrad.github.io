@@ -35,7 +35,7 @@ All of them write to a work folder: `$REELS_WORK`, or `.reels/` in this repo (gi
 | Cut a reel | `python3 tools/reels/build.py kb` and `python3 tools/reels/build.py wz ../wortzauber` | 1 to 2 min each |
 | Put it on the site | `python3 tools/reels/build.py publish` | 1 min |
 
-`publish` writes `assets/projects/<game>-reel.mp4` (web size), `-poster.jpg`, `-1.jpg` to `-4.jpg`, and `wortzauber-phone.jpg`. `kleinbahn-phone.jpg` is a separate step (below).
+`publish` writes `assets/projects/<game>-reel.mp4` (web size), `-poster.jpg`, `-1.jpg` to `-4.jpg`, `-loop.webp` (the gameplay loop of the game box on the front page) and `wortzauber-phone.jpg`. `kleinbahn-phone.jpg` is a separate step (below).
 
 ## Kleinbahn
 Before the first run: `npm install` in `../tiny-train`.
@@ -74,4 +74,4 @@ Before a run: start the dev server in `../wortzauber` with `python3 devserver.py
 - The product pages have a strict Content-Security-Policy. A new demo host needs its own `frame-src` entry in that page's `<meta http-equiv>` line, or the phone frame stays empty.
 - The phone frame loads the demo only after a tap, and the page says so. Do not make it load on page open: the site promises no third-party request before that.
 - Whether beacon.host lets the page embed the game was not tested from the cloud container (the host is blocked there). After a deploy, press "Play it here" on the live page once. If the frame stays empty, the "Open it full screen" link is the fallback.
-- A changed reel length moves nothing on the page, but a changed first shot changes the poster: look at the card on the front page too.
+- The game boxes on the front page show `<game>-loop.webp`: the Kleinbahn train shot, and the Wortzauber tracing followed by the apple. Which shot and how fast is at the top of `build.py` (`KB_LOOP`, `LOOP_TRACE_S`). Keep each loop near 1 MB, and check that the alt text in `index.html` still describes it. `<game>-1.jpg` is the still for visitors with reduced motion.

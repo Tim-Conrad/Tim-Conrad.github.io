@@ -8,7 +8,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 
 | Page | Path | Content |
 | --- | --- | --- |
-| Front page | `/` | Overview, the CVE summary, the two games, the disclosure timeline, the PGP key, contact |
+| Front page | `/` | Overview, the CVE summary, the two games, the PGP key, contact |
 | Write-up | `/research/cve-2022-46166/` | CVE-2022-46166: template injection in Spring Boot Admin |
 | Kleinbahn | `/projects/kleinbahn/` | Reel, live demo from `tiny-train.beacon.host`, features, stills |
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
@@ -26,7 +26,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `assets/site.js` | Theme toggle, copy buttons, the table of contents, the tap-to-play demo |
 | `assets/fonts/` | Site fonts (SIL Open Font License, see `OFL.txt`) |
 | `assets/img/` | Pictures and the recording of the write-up |
-| `assets/projects/` | Reels, posters, stills and phone pictures of the product pages |
+| `assets/projects/` | Reels, posters, stills, phone pictures and gameplay loops of the two games |
 | `assets/og.png` | Social preview image |
 | `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` | Hosting and crawler files |
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |

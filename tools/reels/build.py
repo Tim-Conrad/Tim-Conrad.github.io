@@ -3,7 +3,7 @@
 
   build.py kb                       frames + overlays        -> <work>/kleinbahn-reel.mp4
   build.py wz <path to wortzauber>  recordings + overlays    -> <work>/wortzauber-reel.mp4 (with the meadow music)
-  build.py publish                  both reels               -> assets/projects/ (web video, poster, four stills each)
+  build.py publish                  both reels               -> assets/projects/ (web video, poster, four stills and a gameplay loop each)
 
 <work> is $REELS_WORK, or .reels/ in the site repo. The timeline of each reel is the `parts` list of kb() and wz().
 """
@@ -20,6 +20,10 @@ KB_PICS = [('a-wide', 60), ('b-train', 60), ('c-town', 70), ('f-launch', 60), ('
 WZ_PICS = [('meadow', 'apple', 1.0), ('meadow', 'traced', -3.0), ('quest', 'start', 2.5), ('castle', 'start', 2.0), ('map', 'start', 2.5)]
 # The picture inside the landscape phone frame of the Wortzauber page, cropped to the phone's 874:402 shape.
 WZ_PHONE = ('quest', 'start', 2.5)
+# The gameplay loops of the cards on the front page (animated WebP, 640x360, 12 frames per second).
+# Kleinbahn: one shot. Wortzauber: the tracing at LOOP_TRACE_S seconds, then the apple appearing.
+KB_LOOP = 'b-train'
+LOOP_TRACE_S = 4.5
 
 
 def run(args):
@@ -145,6 +149,22 @@ def publish():
     for tag, pic in zip(tags, WZ_PICS):
         run(grab(*pic) + [f'{out}/wortzauber-{tag}.jpg'])
     run(grab(*WZ_PHONE) + ['-vf', 'crop=1280:589:0:66,scale=1748:804:flags=neighbor', f'{out}/wortzauber-phone.jpg'])
+    loops(out, marks)
+
+
+def loops(out, marks):
+    webp = ['-c:v', 'libwebp', '-loop', '0', '-q:v', '62', '-compression_level', '6', '-an']
+    run(['-framerate', '24', '-i', f'{S}/kb/frames/{KB_LOOP}/%04d.jpg', '-vf', 'fps=12,scale=640:360:flags=lanczos'] + webp + [f'{out}/kleinbahn-loop.webp'])
+    m = marks['meadow']
+    vid = glob.glob(f'{S}/wz/rec/v-meadow/*.webm')[0]
+    a, b = m['trace'] - 0.3, m['traced'] + 0.3
+    c, d = m['closed'] - 0.2, m['apple'] + 1.2
+    speed = (b - a) / LOOP_TRACE_S
+    chain = (f'[0:v]trim={a:.3f}:{b:.3f},setpts=(PTS-STARTPTS)/{speed:.4f}[t];[0:v]trim={c:.3f}:{d:.3f},setpts=PTS-STARTPTS[e];'
+             '[t][e]concat=n=2:v=1,fps=12,scale=640:360:flags=lanczos[v]')
+    run(['-i', vid, '-filter_complex', chain, '-map', '[v]'] + webp + [f'{out}/wortzauber-loop.webp'])
+    for g in ('kleinbahn', 'wortzauber'):
+        print(g, 'loop', os.path.getsize(f'{out}/{g}-loop.webp') // 1024, 'KB')
 
 
 if __name__ == '__main__':
