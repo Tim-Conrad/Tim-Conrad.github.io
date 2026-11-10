@@ -2,7 +2,7 @@
 """Assemble the product reels and publish them into the site.
 
   build.py kb                       frames + overlays        -> <work>/kleinbahn-reel.mp4
-  build.py wz <path to wortzauber>  recordings + overlays    -> <work>/wortzauber-reel.mp4 (with the meadow music)
+  build.py wz <path to wortzauber>  recordings + overlays    -> <work>/wortzauber-reel.mp4
   build.py publish                  both reels               -> assets/projects/ (web video, poster, four stills and a gameplay loop each)
 
 <work> is $REELS_WORK, or .reels/ in the site repo. The timeline of each reel is the `parts` list of kb() and wz().
@@ -127,7 +127,7 @@ def wz(repo):
         clip('08-free', 'free-writing', *span('free-writing'), [('c-free', 0.3, 'end')]),
         clip('09-map', 'map', *span('map'), [('c-map', 0.3, 2.6), ('end', 3.0, None)], freeze=3.4, fade_out=True),
     ]
-    concat(parts, S + '/wortzauber-reel.mp4', audio=os.path.join(repo, 'audio', 'music', 'meadow.mp3'))
+    concat(parts, S + '/wortzauber-reel.mp4')
 
 
 def publish():
@@ -137,9 +137,8 @@ def publish():
         src = f'{S}/{name}-reel.mp4'
         if not os.path.exists(src):
             print('missing', src); continue
-        audio = ['-c:a', 'aac', '-b:a', '112k'] if name == 'wortzauber' else ['-an']
         run(['-i', src, '-c:v', 'libx264', '-crf', '26', '-preset', 'slow', '-maxrate', '1800k', '-bufsize', '3600k',
-             '-pix_fmt', 'yuv420p', '-movflags', '+faststart'] + audio + [f'{out}/{name}-reel.mp4'])
+             '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', f'{out}/{name}-reel.mp4'])
         print(name, 'published', os.path.getsize(f'{out}/{name}-reel.mp4') // 1024, 'KB')
     tags = ['poster', '1', '2', '3', '4']
     for tag, (shot, frame) in zip(tags, KB_PICS):
