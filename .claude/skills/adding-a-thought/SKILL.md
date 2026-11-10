@@ -66,3 +66,7 @@ Follow CLAUDE.md: serve the site (`python3 -m http.server 8000`), look at 1440, 
 - Change the status only as Tim says.
 - Feedback: quote or summarise what people said, with a link to the post, and what it changed. If it changed nothing, say so.
 - Keep the old start date in `article:published_time`.
+
+## Sharing a thought
+
+To draft X and LinkedIn posts for a thought and bring the replies back, use the skill `sharing-a-thought` from `Tim-Conrad/Tim-Conrad-Skills`. It records each post and the feedback in the thought's Feedback section, with the revision rules above.
