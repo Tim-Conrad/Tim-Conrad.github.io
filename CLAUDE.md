@@ -15,6 +15,7 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - `assets/theme.js`, `assets/site.js` - the only scripts.
 - `assets/projects/` - reels, posters and stills of the two games.
 - `tools/deploy.sh`, `.github/workflows/deploy.yml` - the deploy to `gh-pages`.
+- `/sealed/<site>/` (only on `gh-pages`) - encrypted sites that the sealed admin app (`Tim-Conrad/sealed`) pushes. Their login page uses `assets/site.css` (`.sealed`).
 - `tools/reels/` - the scripts that film the games and cut the reels.
 
 ## Rules for every task
@@ -23,7 +24,8 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - Claim only what is true. Do not invent facts about Tim, the research or the games.
 - Do not rewrite the text of the write-up under `research/`. It is Tim's own.
 - Keep the Content-Security-Policy of each page strict: no inline scripts or styles, no `style=""` attributes, and no request to another site on page load.
-- `master` is the source. Never edit `gh-pages` by hand: the workflow publishes it after every push to `master`.
+- `master` is the source. Never edit `gh-pages` by hand: the workflow publishes it after every push to `master`, and the sealed admin app publishes `sealed/` on it. `tools/deploy.sh` must keep `sealed/`.
+- Classes and scripts that the sealed login page uses (`.sealed`, `.label`, `.btn`, `.nav`, `#theme-toggle`, `/assets/site.js`) are used by another repository too. Keep them, or change `client/themes/t7d/login.html` in sealed with them.
 
 <important if="you change a page, a style, a component or any wording">
 Read `DESIGN.md` first. After the change, serve the site and look at it at 1440, 390 and 320 px wide, in the light and the dark theme. The page must not scroll sideways, and the browser console must show no errors.

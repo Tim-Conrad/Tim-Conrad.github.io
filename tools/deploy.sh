@@ -2,6 +2,9 @@
 # Publishes the site files of the current commit to the gh-pages branch, which GitHub Pages serves at t7d.dev.
 # Only the site goes there: tools/, .claude/, .github/ and the README stay on master.
 # The workflow .github/workflows/deploy.yml runs this on every push to master. To run it by hand: tools/deploy.sh
+#
+# The folder sealed/ on gh-pages is not from master: the admin app of sealed (Tim-Conrad/sealed) pushes the
+# encrypted sites there, one folder per site (sealed/<site>/). This script keeps that folder as it is.
 set -euo pipefail
 
 SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets research projects CVE)
@@ -14,6 +17,9 @@ git -C "$root" fetch -q origin gh-pages
 git -C "$root" worktree add -q --detach "$tree" origin/gh-pages
 cd "$tree"
 git rm -rq --ignore-unmatch .
+if git cat-file -e HEAD:sealed 2>/dev/null; then
+  git checkout -q HEAD -- sealed
+fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
 git add -A
 
