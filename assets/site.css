@@ -335,6 +335,20 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .dg .dot { fill: var(--ink); }
 .dg .arr { fill: var(--ink); }
 .fig-wide { overflow-x: auto; }
+/* diagrams with steps (site.js): without the script the full list shows */
+.steps__list { margin: 0; padding-left: 1.3rem; display: grid; gap: .3rem; font-size: .9375rem; }
+.steps--on .steps__list { list-style: none; padding-left: 0; }
+.steps--on .steps__list li { display: none; }
+.steps--on .steps__list li.is-now { display: block; }
+.steps__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; position: sticky; left: 0; }
+.steps__at { font: 500 var(--step--1)/1.4 var(--mono); letter-spacing: .04em; color: var(--muted); margin-left: .25rem; }
+.btn--s { padding: .4rem .75rem; font-size: .875rem; }
+.btn:disabled { opacity: .35; cursor: default; }
+.btn--ghost:disabled:hover { background: none; color: var(--ink); }
+.dg [data-step] { transition: opacity .45s ease; }
+.dg .is-past { opacity: .4; }
+.dg .is-later { opacity: .07; }
+@media (prefers-reduced-motion: reduce) { .dg [data-step] { transition: none; } }
 .fig-wide .dg { min-width: 34rem; }
 
 /* ---------- 404 ---------- */
