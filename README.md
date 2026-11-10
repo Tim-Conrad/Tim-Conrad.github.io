@@ -36,6 +36,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` | Hosting and crawler files |
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |
 | `tools/reels/` | Scripts that film the two games and cut the reels |
+| `tools/review/`, `docker-compose.dev.yml` | The review site: live reload and a note tab. Never published |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |
 | `DESIGN.md` | How the site looks and sounds: colours, type, layout, components and the wording rules |
 | `CLAUDE.md` | Instructions for Claude Code in this repository |
@@ -48,6 +49,20 @@ python3 -m http.server 8000
 ```
 
 Then open <http://localhost:8000>. All paths are absolute, so serve from the repository root.
+
+For live reload and the note tab, run `python3 tools/review/devserver.py` instead (port 8000).
+
+## Review site
+
+The review site serves this clone with live reload and a tab »Note« at the right edge. A note keeps the page, the width, the theme and the part that you pointed at. It is a JSON file in `.review/notes/`, and git ignores that folder. The site files on `gh-pages` do not change: `tools/deploy.sh` never publishes `tools/`.
+
+To run it in a container behind a login proxy:
+
+1. Make the notes folder: `mkdir -p .review/notes`.
+2. Write the host name into `.env`: `REVIEW_HOST=<host>`.
+3. Start the stack: `docker-compose -p t7d-review -f docker-compose.dev.yml up -d`.
+
+`tools/review/show.py <id>` opens the page of a note and frames its part in a picture. A handled note goes to `.review/notes/done/` with an `"answer"` field, which the tab shows under »My notes«. Tests: `python3 -m unittest tools/review/test_devserver.py`.
 
 ## Deploy
 

@@ -37,6 +37,22 @@ Read `DESIGN.md` first. After the change, serve the site and look at it at 1440,
 Run `python3 -m http.server 8000` in the repository root and open `http://localhost:8000`. All paths are absolute, so serve from the root.
 </important>
 
+<important if="Tim mentions notes or feedback on the site, .review/notes/ has files, or you change tools/review/ or docker-compose.dev.yml">
+Tim writes notes on the review site: the tab »Note« at the right edge. The review site is this clone, served by `tools/review/devserver.py` in the container `t7d-review` (`docker-compose.dev.yml`, host name in `.env` as `REVIEW_HOST`). It shows the checked-out branch at once and loads the page again when a file changes. A note is a JSON file in `.review/notes/`.
+
+1. At the start of a session, list `.review/notes/*.json`. Tell Tim how many notes are open.
+2. Read the note: `note`, `path`, `viewport`, `theme`, `scroll`, `target` (`selector`, `text`, `rect`), `selection`, `branch`, `commit`.
+3. Run `uv run --no-project --with playwright python3 tools/review/show.py <id>` (more ids in one call). Look at `.review/notes/<id>.png`. The red frame is the part that Tim pointed at.
+4. Do the work with the rules of this file: a branch, `DESIGN.md`, the look at three widths.
+5. After the fix, run `show.py <id> --suffix after` and compare the two pictures.
+6. Add an `"answer"` field to the note: what changed, and the commit. Move the note to `.review/notes/done/`. Tim sees the answer under »My notes« in the tab.
+
+- Keep notes and their pictures out of git. `.review/` and `.env` are ignored.
+- A change to `devserver.py` needs `docker restart t7d-review`. A change to `review.js` or `review.css` needs only a page load.
+- The server adds only `connect-src 'self'` to the CSP of a page. Keep it that way, so that the review site keeps the rules of the real site.
+- Tests: `python3 -m unittest tools/review/test_devserver.py`.
+</important>
+
 <important if="you add a page, or a top-level file or folder that belongs to the site">
 - Copy the `<head>` of an existing page, with its Content-Security-Policy line.
 - Add the URL to `sitemap.xml`.
