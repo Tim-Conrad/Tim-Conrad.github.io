@@ -21,6 +21,8 @@ if git cat-file -e HEAD:sealed 2>/dev/null; then
   git checkout -q HEAD -- sealed
 fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
+# llms.txt and the RSS feed of the blog are made from the published pages, never by hand
+python3 "$root/tools/gen-feeds.py" "$tree"
 git add -A
 
 if git diff --cached --quiet; then

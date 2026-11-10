@@ -24,7 +24,7 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - Follow `DESIGN.md`. The two rules that matter most: the site is black and white with colour only in pictures and videos, and the wording is plain with no slogans or overstatement.
 - Claim only what is true. Do not invent facts about Tim, the research or the games.
 - Do not rewrite the text of the write-up under `research/`. It is Tim's own.
-- A new blog post goes into `blog/<slug>/`, at the top of the list in `blog/index.html` and of the Blog section of `index.html`, and into `sitemap.xml`. Copy the `<head>` of the existing post.
+- A new blog post goes into `blog/<slug>/`, at the top of the list in `blog/index.html` and of the Blog section of `index.html`, and into `sitemap.xml`. Copy the `<head>` of the existing post, with its description and `article:published_time`: `llms.txt` and the RSS feed are made from them at deploy time (`tools/gen-feeds.py`). Do not commit those two files.
 - Keep the Content-Security-Policy of each page strict: no inline scripts or styles, no `style=""` attributes, and no request to another site on page load.
 - `master` is the source. Never edit `gh-pages` by hand: the workflow publishes it after every push to `master`, and the sealed admin app publishes `sealed/` on it. `tools/deploy.sh` must keep `sealed/`.
 - Classes and scripts that the sealed login page uses (`.sealed`, `.label`, `.btn`, `.nav`, `#theme-toggle`, `/assets/site.js`) are used by another repository too. Keep them, or change `client/themes/t7d/login.html` in sealed with them.
