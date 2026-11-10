@@ -92,111 +92,40 @@
 
   <section class="changes" id="changes" aria-labelledby="changes-h">
     <h2 id="changes-h">How it changed</h2>
-    <p class="changes__intro">One entry per merged pull request that changed play, oldest first. Each clip is filmed from the game at the state of that pull request.</p>
+    <p class="changes__intro">One entry per merged pull request that changed play, newest first. Each clip is filmed from the game at the state of that pull request.</p>
     <ol class="tl">
     <li>
       <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-start.jpg" width="640" height="360" aria-label="The island as it was imported, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-start.mp4" type="video/mp4">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr14.jpg" width="640" height="360" aria-label="Every player steers, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr14.mp4" type="video/mp4">
         </video>
       </div>
       <div class="tl__text">
-        <p class="label">7 Nov 2026 · Starting point</p>
-        <h3>The island as it was imported</h3>
-        <p>The first commit of this repository brought the game with its earlier work: trains, towns, the seasons and events such as this volcano.</p>
-      </div>
-    </li>
-    <li>
-      <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr1.jpg" width="640" height="360" aria-label="Shared play, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr1.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #1</p>
-        <h3>Shared play</h3>
-        <p>One player hosts and friends join by link or QR code. In the clip a second player plants trees, and they appear on the host’s island.</p>
+        <p class="label">10 Nov 2026 · PR #14</p>
+        <h3>Every player steers</h3>
+        <p>In shared play every player can steer a plane, the airship, a car or a boat. In the clip a second player, Mia, flies a plane, and the host follows her.</p>
         <ul class="tl__also">
-          <li>Remote edits go into the undo history, so an undo takes back only your own change.</li>
-          <li>A guest never saves. Its own island comes back when it leaves.</li>
-          <li>Every message from another player is checked.</li>
+          <li>A plane or the airship has one pilot at a time.</li>
+          <li>A chip for each player shows what the player does. A tap follows the player.</li>
+          <li>An arrow at the screen edge points to each player out of sight.</li>
         </ul>
       </div>
     </li>
     <li>
       <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr2.jpg" width="640" height="360" aria-label="The host decides when things move, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr2.mp4" type="video/mp4">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr13.jpg" width="640" height="360" aria-label="An airfield, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr13.mp4" type="video/mp4">
         </video>
       </div>
       <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #2</p>
-        <h3>The host decides when things move</h3>
-        <p>Eruptions, launches and flights start on the host and reach every guest. Here the game is a guest: the host starts an eruption, and the guest’s volcano erupts with the same lava.</p>
+        <p class="label">10 Nov 2026 · PR #13</p>
+        <h3>An airfield</h3>
+        <p>A runway, hangars, a tower and five planes that take off, fly a route with a loop and land in turn. The clip shows one of them in its loop.</p>
         <ul class="tl__also">
-          <li>Airships and balloons keep the host’s position.</li>
-          <li>Trains keep their place on the host’s path.</li>
-        </ul>
-      </div>
-    </li>
-    <li>
-      <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr3.jpg" width="640" height="360" aria-label="See the other players, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr3.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #3</p>
-        <h3>See the other players</h3>
-        <p>A pin in each player’s colour stands where that player looks. In the clip the pin of a guest moves across the island.</p>
-        <ul class="tl__also">
-          <li>Follow another player’s view.</li>
-          <li>The host can make a guest view only, or send it away.</li>
-        </ul>
-      </div>
-    </li>
-    <li>
-      <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr7.jpg" width="640" height="360" aria-label="Player names, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr7.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #7</p>
-        <h3>Player names</h3>
-        <p>A player can give a name. It shows in the player list and in the follow bar: here the host follows Mia.</p>
-      </div>
-    </li>
-    <li>
-      <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr8.jpg" width="640" height="360" aria-label="Rooms that survive a reload, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr8.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #8</p>
-        <h3>Rooms that survive a reload</h3>
-        <p>When the host stops, every guest goes home at once. In the clip the guest is on the host’s island without trees, the host closes the room, and the guest’s own island comes back.</p>
-        <ul class="tl__also">
-          <li>A host that reloads opens the same room again.</li>
-          <li>A guest that loses the host waits and joins again by itself.</li>
-        </ul>
-      </div>
-    </li>
-    <li>
-      <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr9.jpg" width="640" height="360" aria-label="New icons, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr9.mp4" type="video/mp4">
-        </video>
-      </div>
-      <div class="tl__text">
-        <p class="label">8 Nov 2026 · PR #9</p>
-        <h3>New icons</h3>
-        <p>All 60 icons were drawn again, centred and sized for phones. The clip opens the build dial.</p>
-        <ul class="tl__also">
-          <li>Each dial item shows its name under the icon.</li>
-          <li>Larger touch targets.</li>
-          <li>The dial no longer runs past the screen edge.</li>
+          <li>One plane tows a banner.</li>
+          <li>Pilot mode: fly a plane or the airship with one stick.</li>
+          <li>Drive a car, a bicycle or a boat yourself.</li>
+          <li>Cars drive only to places their road network reaches.</li>
         </ul>
       </div>
     </li>
@@ -219,20 +148,108 @@
     </li>
     <li>
       <div class="player">
-        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr13.jpg" width="640" height="360" aria-label="An airfield, silent clip">
-          <source src="/assets/projects/timeline/kleinbahn-pr13.mp4" type="video/mp4">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr9.jpg" width="640" height="360" aria-label="New icons, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr9.mp4" type="video/mp4">
         </video>
       </div>
       <div class="tl__text">
-        <p class="label">10 Nov 2026 · PR #13</p>
-        <h3>An airfield</h3>
-        <p>A runway, hangars, a tower and five planes that take off, fly a route with a loop and land in turn. The clip shows one of them in its loop.</p>
+        <p class="label">8 Nov 2026 · PR #9</p>
+        <h3>New icons</h3>
+        <p>All 60 icons were drawn again, centred and sized for phones. The clip opens the build dial.</p>
         <ul class="tl__also">
-          <li>One plane tows a banner.</li>
-          <li>Pilot mode: fly a plane or the airship with one stick.</li>
-          <li>Drive a car, a bicycle or a boat yourself.</li>
-          <li>Cars drive only to places their road network reaches.</li>
+          <li>Each dial item shows its name under the icon.</li>
+          <li>Larger touch targets.</li>
+          <li>The dial no longer runs past the screen edge.</li>
         </ul>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr8.jpg" width="640" height="360" aria-label="Rooms that survive a reload, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr8.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">8 Nov 2026 · PR #8</p>
+        <h3>Rooms that survive a reload</h3>
+        <p>When the host stops, every guest goes home at once. In the clip the guest is on the host’s island without trees, the host closes the room, and the guest’s own island comes back.</p>
+        <ul class="tl__also">
+          <li>A host that reloads opens the same room again.</li>
+          <li>A guest that loses the host waits and joins again by itself.</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr7.jpg" width="640" height="360" aria-label="Player names, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr7.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">8 Nov 2026 · PR #7</p>
+        <h3>Player names</h3>
+        <p>A player can give a name. It shows in the player list and in the follow bar: here the host follows Mia.</p>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr3.jpg" width="640" height="360" aria-label="See the other players, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr3.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">8 Nov 2026 · PR #3</p>
+        <h3>See the other players</h3>
+        <p>A pin in each player’s colour stands where that player looks. In the clip the pin of a guest moves across the island.</p>
+        <ul class="tl__also">
+          <li>Follow another player’s view.</li>
+          <li>The host can make a guest view only, or send it away.</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr2.jpg" width="640" height="360" aria-label="The host decides when things move, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr2.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">8 Nov 2026 · PR #2</p>
+        <h3>The host decides when things move</h3>
+        <p>Eruptions, launches and flights start on the host and reach every guest. Here the game is a guest: the host starts an eruption, and the guest’s volcano erupts with the same lava.</p>
+        <ul class="tl__also">
+          <li>Airships and balloons keep the host’s position.</li>
+          <li>Trains keep their place on the host’s path.</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-pr1.jpg" width="640" height="360" aria-label="Shared play, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-pr1.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">8 Nov 2026 · PR #1</p>
+        <h3>Shared play</h3>
+        <p>One player hosts and friends join by link or QR code. In the clip a second player plants trees, and they appear on the host’s island.</p>
+        <ul class="tl__also">
+          <li>Remote edits go into the undo history, so an undo takes back only your own change.</li>
+          <li>A guest never saves. Its own island comes back when it leaves.</li>
+          <li>Every message from another player is checked.</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div class="player">
+        <video controls muted loop playsinline preload="none" poster="/assets/projects/timeline/kleinbahn-start.jpg" width="640" height="360" aria-label="The island as it was imported, silent clip">
+          <source src="/assets/projects/timeline/kleinbahn-start.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="tl__text">
+        <p class="label">7 Nov 2026 · Starting point</p>
+        <h3>The island as it was imported</h3>
+        <p>The first commit of this repository brought the game with its earlier work: trains, towns, the seasons and events such as this volcano.</p>
       </div>
     </li>
     </ol>
