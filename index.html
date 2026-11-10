@@ -26,9 +26,10 @@
   <div class="wrap nav__in">
     <a class="brand" href="/">Tim Conrad</a>
     <nav class="nav__links" aria-label="Sections">
-      <a href="#research">Research</a>
-      <a href="#projects">Projects</a>
-      <a class="opt3" href="#verify">PGP key</a>
+      <a href="#games">Games</a>
+      <a href="/blog/">Blog</a>
+      <a class="opt3" href="#research">Research</a>
+      <a class="opt2" href="#verify">PGP key</a>
       <a class="opt2" href="#contact">Contact</a>
     </nav>
     <button class="toggle" id="theme-toggle" type="button">dark</button>
@@ -41,40 +42,22 @@
   <div class="hero__main">
     <p class="label">Sheet 1 · Overview</p>
     <h1>Tim Conrad</h1>
-    <p class="lede">I do security research and build browser games. This site holds one vulnerability write-up, my PGP key and two games.</p>
+    <p class="lede">I do security research and build browser games. This site holds two games, a blog, one vulnerability write-up and my PGP key.</p>
   </div>
   <dl class="tb">
     <div><dt>Site</dt><dd>t7d.dev</dd></div>
-    <div><dt>Contents</dt><dd>1 write-up, 2 games</dd></div>
+    <div><dt>Contents</dt><dd>2 games, 1 blog post, 1 write-up</dd></div>
     <div class="wide"><dt>Contact</dt><dd><a href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">LinkedIn</a>, <a href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a></dd></div>
     <div class="wide"><dt>PGP fingerprint</dt><dd class="mono">A886 6CB1 6B07 9685 5615<br>74B2 A91D ABBE C996 7390</dd></div>
   </dl>
 </section>
 
-<section class="section" id="research">
+<section class="section" id="games">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 2 · Research · CVE-2022-46166</p>
-      <h2>Remote code execution in Spring Boot Admin</h2>
-      <p>The Microsoft Teams notifier read one of its settings as an expression template. A signed-in user could change that setting in the web UI. I reported it in November 2022. The fix and the advisory followed 11 days later.</p>
-    </div>
-
-    <div class="btn-row"><a class="btn" href="/research/cve-2022-46166/">Read the write-up</a></div>
-
-    <dl class="facts">
-      <div><dt>Weakness</dt><dd>CWE-94, code injection</dd></div>
-      <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
-      <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GHSA-w3x5-427h-wfq6</a></dd></div>
-    </dl>
-  </div>
-</section>
-
-<section class="section" id="projects">
-  <div class="wrap">
-    <div class="section__head">
-      <p class="label">Sheet 3 · Projects</p>
-      <h2>Two games</h2>
-      <p>Both run in the browser, and both can be played on this site.</p>
+      <p class="label">Sheet 2 · Games</p>
+      <h2>Games</h2>
+      <p>Two games. Both run in the browser, and both can be played on this site.</p>
     </div>
     <div class="projects">
       <a class="proj" href="/projects/kleinbahn/">
@@ -99,10 +82,48 @@
   </div>
 </section>
 
+<section class="section" id="blog">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label">Sheet 3 · Blog</p>
+      <h2>Blog</h2>
+      <p>Notes on security ideas I am thinking through.</p>
+    </div>
+    <ul class="posts">
+      <li>
+        <a href="/blog/encrypted-patches/">
+          <span class="label">BLOG_DATE</span>
+          <span class="posts__title">BLOG_TITLE</span>
+          <span class="posts__sum">BLOG_SUM</span>
+        </a>
+      </li>
+    </ul>
+    <div class="btn-row"><a class="btn btn--ghost" href="/blog/">All posts</a></div>
+  </div>
+</section>
+
+<section class="section" id="research">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="label">Sheet 4 · Research · CVE-2022-46166 · 2022</p>
+      <h2>Remote code execution in Spring Boot Admin</h2>
+      <p>The Microsoft Teams notifier read one of its settings as an expression template. A signed-in user could change that setting in the web UI. I reported it in November 2022. The fix and the advisory followed 11 days later.</p>
+    </div>
+
+    <div class="btn-row"><a class="btn" href="/research/cve-2022-46166/">Read the write-up</a></div>
+
+    <dl class="facts">
+      <div><dt>Weakness</dt><dd>CWE-94, code injection</dd></div>
+      <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
+      <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GHSA-w3x5-427h-wfq6</a></dd></div>
+    </dl>
+  </div>
+</section>
+
 <section class="section" id="verify">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 4 · PGP key</p>
+      <p class="label">Sheet 5 · PGP key</p>
       <h2>PGP key</h2>
       <p>Use this key to verify anything published under my name. Compare the fingerprint before you trust the key.</p>
     </div>
@@ -128,7 +149,7 @@
 <section class="section" id="contact">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 5 · Contact</p>
+      <p class="label">Sheet 6 · Contact</p>
       <h2>Contact</h2>
       <p>Message me on LinkedIn. My code is on GitHub.</p>
     </div>
