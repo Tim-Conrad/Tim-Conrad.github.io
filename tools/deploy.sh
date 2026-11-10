@@ -7,7 +7,7 @@
 # encrypted sites there, one folder per site (sealed/<site>/). This script keeps that folder as it is.
 set -euo pipefail
 
-SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets research projects CVE)
+SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets blog research projects CVE)
 
 root=$(git rev-parse --show-toplevel)
 src=$(git -C "$root" rev-parse HEAD)

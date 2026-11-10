@@ -305,6 +305,11 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .posts a:hover .posts__title { text-decoration-thickness: 2px; }
 .posts a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
+.blog-list { padding-bottom: clamp(3rem, 7vw, 5rem); border-top: var(--rule) solid var(--ink); }
+.blog-list .posts { margin-top: 0; border-top: 0; }
+.refs { font-size: .9375rem; color: var(--muted); }
+.refs li:target { color: var(--ink); }
+
 /* diagrams: inline SVG drawn with the colour tokens, so they follow the theme */
 .dg { width: 100%; height: auto; display: block; border: var(--rule) solid var(--ink); background: var(--bg); }
 .dg text { font: 500 13px/1 var(--mono); fill: var(--ink); letter-spacing: .02em; }
@@ -319,8 +324,9 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .dg .bx-s { fill: var(--surface); stroke: var(--ink); stroke-width: 1; }
 .dg .bx-i { fill: var(--ink); stroke: var(--ink); stroke-width: 1.5; }
 .dg .bx-d { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 5 4; }
-.dg .hatch { fill: url(#hatch); stroke: var(--ink); stroke-width: 1; }
+.dg .gap { fill: url(#d3h); stroke: var(--ink); stroke-width: 1; stroke-dasharray: 5 4; }
 .dg .hatch-p { stroke: var(--muted); stroke-width: 1; }
+.dg .qr-w { fill: var(--bg); stroke: none; }
 .dg .dot { fill: var(--ink); }
 .dg .arr { fill: var(--ink); }
 .fig-wide { overflow-x: auto; }
