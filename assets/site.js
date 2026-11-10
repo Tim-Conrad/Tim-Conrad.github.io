@@ -126,9 +126,11 @@
       b.textContent = text; b.setAttribute('aria-label', label); bar.appendChild(b); return b;
     }
     var back = button('Previous step', '← Back'), next = button('Next step', 'Next →'), play = button('Play all steps', 'Play');
-    var status = document.createElement('span'); status.className = 'steps__at'; status.setAttribute('aria-live', 'polite');
-    bar.appendChild(status);
-    fig.insertBefore(bar, svg.nextSibling);
+    var panel = $('.steps__panel', fig) || fig, list = $('.steps__list', fig);
+    var status = document.createElement('p'); status.className = 'steps__at label'; status.setAttribute('aria-live', 'polite');
+    var hint = document.createElement('p'); hint.className = 'steps__hint';
+    hint.textContent = 'The whole picture. Press Next to go through it step by step, or Play.';
+    panel.insertBefore(status, list); panel.insertBefore(hint, list); panel.appendChild(bar);
     fig.classList.add('steps--on');
     function show(k) {
       at = k;
@@ -138,7 +140,8 @@
         p.classList.toggle('is-past', k > 0 && s < k && s > 0);
       });
       items.forEach(function (li, i) { li.classList.toggle('is-now', i === k - 1); });
-      status.textContent = k ? 'Step ' + k + ' of ' + n : 'All ' + n + ' steps \u00b7 Next or Play goes through them';
+      status.textContent = k ? 'Step ' + k + ' of ' + n : 'All ' + n + ' steps';
+      hint.hidden = k !== 0;
       back.disabled = k === 0; next.disabled = k === n;
     }
     function stop() {

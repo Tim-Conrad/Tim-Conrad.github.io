@@ -190,13 +190,15 @@
   <g data-step="5"><text x="576" y="326">5 decrypt, install</text></g>
   <g data-step="5"><text x="590" y="342" class="t-s">AES-GCM, key from 4</text></g>
 </svg>
-      <ol class="steps__list">
-        <li>The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
-        <li>Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
-        <li>Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
-        <li>At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
-        <li>The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
-      </ol>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
+          <li>Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
+          <li>Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
+          <li>At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
+          <li>The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
+        </ol>
+      </div>
       <figcaption>Fig. 3 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
     </figure>
     <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
@@ -244,12 +246,14 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <g data-step="4"><text x="536" y="340" class="t-s">patch key → install</text></g>
   <g data-step="4"><line class="ln" x1="458" y1="212" x2="535.8" y2="263.3"/><polygon class="arr" points="540,266 532.1,264.5 535.6,259.3"/></g>
 </svg>
-      <ol class="steps__list">
-        <li>drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
-        <li>Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
-        <li>At T enough of the organisations together make the value for T. Not every one is needed.</li>
-        <li>The value is public. It opens the lock, and everyone installs the patch.</li>
-      </ol>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
+          <li>Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
+          <li>At T enough of the organisations together make the value for T. Not every one is needed.</li>
+          <li>The value is public. It opens the lock, and everyone installs the patch.</li>
+        </ol>
+      </div>
       <figcaption>Fig. 4 · The lock points at a value that does not exist yet. Only the organisations together can make it, and only at T.</figcaption>
     </figure>
     <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
@@ -357,13 +361,15 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <g data-step="3"><rect class="bx-s" x="330" y="254" width="250" height="38"/><text x="344" y="278">encrypted release, signed</text><line class="ln" x1="455" y1="292" x2="455.0" y2="329.0"/><polygon class="arr" points="455,334 451.9,326.6 458.1,326.6"/><rect class="bx" x="330" y="336" width="250" height="54"/><text x="344" y="358">embargo list</text><text x="344" y="377" class="t-s">early key: test</text></g>
   <g data-step="4"><path class="ln" d="M520 176 L600 104"/><circle class="dot" cx="600" cy="104" r="7"/><text x="610" y="128" class="t-s">merge</text><rect class="bx-i" x="600" y="254" width="130" height="38"/><text x="612" y="278" class="t-inv">key + advisory</text><line class="ln" x1="665" y1="292" x2="665.0" y2="329.0"/><polygon class="arr" points="665,334 661.9,326.6 668.1,326.6"/><rect class="bx" x="600" y="336" width="140" height="54"/><text x="612" y="358">everyone</text><text x="612" y="377" class="t-s">applies at T</text></g>
 </svg>
-      <ol class="steps__list">
-        <li>The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
-        <li>Private CI builds and tests the branch. Its logs stay closed.</li>
-        <li>Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
-        <li>At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
-      </ol>
-      <figcaption>Fig. 7 · What a forge would need. Step through it, or look at the whole picture.</figcaption>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
+          <li>Private CI builds and tests the branch. Its logs stay closed.</li>
+          <li>Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
+          <li>At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
+        </ol>
+      </div>
+      <figcaption>Fig. 7 · What a forge would need for a private fix in a public repository.</figcaption>
     </figure>
     <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, so the list stays short and the embargo stays short.</p>
 
