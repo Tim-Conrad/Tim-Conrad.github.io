@@ -14,6 +14,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
 | PGP key | `/key.asc` | Public key, fingerprint `A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390` |
 | Old write-up URL | `/CVE/CVE-2022-46166/` | Redirects to the new write-up address |
+| Encrypted sites | `/sealed/<site>/` | Private games and files, encrypted with [sealed](https://github.com/Tim-Conrad/sealed). A login page, then the browser decrypts the site. Not linked, not in the sitemap, kept out of search engines by `robots.txt` |
 
 ## Layout of the repository
 
@@ -51,6 +52,8 @@ GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the 
 1. Merge a change into `master`.
 2. The workflow `.github/workflows/deploy.yml` runs `tools/deploy.sh`.
 3. The script copies the site files of that commit to `gh-pages` and pushes. `tools/`, `.claude/`, `.github/` and this README stay on `master`.
+
+The folder `sealed/` on `gh-pages` does not come from `master`. The admin app of sealed in the lab builds each encrypted site and pushes it to `gh-pages` as `sealed/<site>/`: a login page, a keyring and ciphertext, never the plain files. `tools/deploy.sh` keeps that folder as it is, and sealed changes nothing outside it. Users, passwords and access are managed in the sealed admin app, not here. The setup is in "Publish below t7d.dev" in the README of sealed.
 
 To deploy by hand, run `tools/deploy.sh` on `master`. A new top-level file or folder that belongs to the site must be added to the `SITE` list in that script, or it is not published.
 

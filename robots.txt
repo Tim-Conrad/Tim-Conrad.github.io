@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /sealed/
 
 Sitemap: https://t7d.dev/sitemap.xml
