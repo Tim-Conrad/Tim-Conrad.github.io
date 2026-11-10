@@ -1,0 +1,25 @@
+# Tim Conrad
+
+> Tim Conrad does security research and builds browser games. This site holds two games, a blog, the CVE-2022-46166 write-up and a PGP key.
+
+The personal site of Tim Conrad: security research and browser games. Plain HTML with no tracking.
+Each page below is a normal HTML page; the blog has an RSS feed.
+
+## Games
+
+- [Kleinbahn](https://t7d.dev/projects/kleinbahn/): Kleinbahn is an island-railway sandbox in three.js, built for phones.
+- [Wortzauber](https://t7d.dev/projects/wortzauber/): Wortzauber is a letter-tracing word game for children, in German and English.
+
+## Blog
+
+- [Encrypted patches, unlocked on patch day](https://t7d.dev/blog/encrypted-patches/): Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.
+
+## Research
+
+- [CVE-2022-46166: Template injection in Spring Boot Admin](https://t7d.dev/research/cve-2022-46166/): How a theme colour setting in Spring Boot Admin's Microsoft Teams notifier led to remote code execution, with proof of concept, disclosure timeline and the fix.
+
+## Optional
+
+- [Blog RSS feed](https://t7d.dev/blog/feed.xml): every post, newest first
+- [PGP key](https://t7d.dev/key.asc): RSA 3072, fingerprint A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390
+- [Sitemap](https://t7d.dev/sitemap.xml)
