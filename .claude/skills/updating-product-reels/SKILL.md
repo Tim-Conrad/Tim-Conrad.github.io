@@ -57,7 +57,7 @@ Before a run: start the dev server in `../wortzauber` with `python3 devserver.py
 - Each take writes its cut points to `<work>/wz/rec/marks.json` (seconds from the start of its video). `build.py` cuts by these names, so a take can be filmed again alone with `--only`.
 - Run the dry run first and read the stills in `<work>/wz/dry/`. A take that prints `FAILED` saves `s-<take>-fail.png`.
 - The game is filmed in German (its default). The captions of the reel are English.
-- Rules of the game repo that hold here too: do not generate voice, music or images, and do not read the ElevenLabs key. The reel uses `audio/music/meadow.mp3`, which is already in the repo.
+- Rules of the game repo that hold here too: do not generate voice, music or images, and do not read the ElevenLabs key. The reels are silent: the site plays every video as a muted loop.
 
 ## Build and check
 1. `overlays.mjs` renders every title, caption and end card as a transparent 1280x720 PNG, in the fonts of each game (Fredoka and Nunito from `tools/reels/fonts/`, Andika from the Wortzauber repo).

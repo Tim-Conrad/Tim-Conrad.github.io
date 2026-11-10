@@ -85,6 +85,35 @@
     });
   });
 
+  /* ---- videos: silent loops with one play/pause button and a progress line ---- */
+  var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $$('.player').forEach(function (box) {
+    var v = $('video', box);
+    if (!v) return;
+    v.removeAttribute('controls');
+    v.muted = true; v.loop = true;
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'player__btn';
+    var bar = document.createElement('span'), fill = document.createElement('i');
+    bar.className = 'player__bar'; bar.appendChild(fill);
+    box.appendChild(bar); box.appendChild(btn);
+    var wanted = !still;               /* the visitor's choice; starts as "play" unless they asked for less motion */
+    function paint() { btn.textContent = v.paused ? 'Play' : 'Pause'; btn.setAttribute('aria-label', (v.paused ? 'Play' : 'Pause') + ' the video'); }
+    function play() { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    function toggle() { wanted = v.paused; if (wanted) play(); else v.pause(); }
+    btn.addEventListener('click', toggle);
+    v.addEventListener('click', toggle);
+    v.addEventListener('play', paint); v.addEventListener('pause', paint);
+    v.addEventListener('timeupdate', function () { if (v.duration) fill.style.width = (100 * v.currentTime / v.duration).toFixed(2) + '%'; });
+    paint();
+    /* play only while the video is on screen, so nothing downloads before it is seen */
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting && wanted) play(); else if (!e.isIntersecting) v.pause(); });
+      }, { threshold: 0.35 }).observe(box);
+    } else if (wanted) play();
+  });
+
   /* ---- 404: show the path that missed ---- */
   var lost = $('#lost-path');
   if (lost) lost.textContent = location.pathname;

@@ -75,7 +75,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 | Facts | `.facts`, `.tb` | Label and value pairs. |
 | Code block | `.code` | Dark in both themes, with a bar for the file name and a copy button. |
 | Game box | `.proj` | One framed box per game, and the whole box is the link to the details page. In this order: the name as a heading, a gameplay loop, one or two plain sentences, "Details and live demo". |
-| Video | `.reel` | 16:9, with controls and a poster. |
+| Video | `.player` | A silent loop with a poster. It plays while it is on screen. The only controls are one small Play/Pause button and a thin progress line. No sound, no native browser controls. |
 | Live demo | `.phone`, `[data-demo]` | Loads the game from its own host only after a tap. The note below says so. |
 
 ## Rules that are easy to break
@@ -84,7 +84,7 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 - **Links are underlined.** Colour cannot mark a link here.
 - **Keyboard focus is visible**: a 3 px ink outline.
 - **Phone first.** Check each change at 1440, 390 and 320 px wide, in both themes. The page must not scroll sideways. Wide tables and code scroll inside their own box.
-- **Motion.** The interface does not move, apart from smooth scrolling to a section. The one exception is the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element.
+- **Motion.** The interface does not move, apart from smooth scrolling to a section. The exceptions are recordings of real things: the videos, which loop silently and do not start by themselves for a visitor who asked for reduced motion, and the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element.
 - **Pictures.** Give every picture `width`, `height` and a plain `alt` text that describes what it shows.
 
 ## Where things are
