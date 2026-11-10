@@ -61,6 +61,7 @@
     </div>
     <div class="projects">
       <a class="proj" href="/projects/kleinbahn/">
+        <p class="label">three.js · sandbox</p>
         <h3>Kleinbahn</h3>
         <picture>
           <source media="(prefers-reduced-motion: reduce)" srcset="/assets/projects/kleinbahn-1.jpg">
@@ -70,6 +71,7 @@
         <span class="proj__more">Details and live demo</span>
       </a>
       <a class="proj" href="/projects/wortzauber/">
+        <p class="label">word game · German and English</p>
         <h3>Wortzauber</h3>
         <picture>
           <source media="(prefers-reduced-motion: reduce)" srcset="/assets/projects/wortzauber-1.jpg">
@@ -89,34 +91,48 @@
       <h2>Blog</h2>
       <p>Notes on security ideas I am thinking through.</p>
     </div>
-    <ul class="posts">
-      <li>
-        <a href="/blog/encrypted-patches/">
-          <span class="label"><time datetime="2026-11-10">10 Nov 2026</time></span>
-          <span class="posts__title">Encrypted patches, unlocked on patch day</span>
-          <span class="posts__sum">Ship a security update early as ciphertext and publish the key on patch day. What GTA and Steam already do, a design with signed keys, and the air-gapped case.</span>
-        </a>
-      </li>
-    </ul>
-    <div class="btn-row"><a class="btn btn--ghost" href="/blog/">All posts</a></div>
+    <div class="projects">
+      <a class="proj" href="/blog/encrypted-patches/">
+        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · updates · key release</p>
+        <h3>Encrypted patches, unlocked on patch day</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="bc-t">
+          <title id="bc-t">The encrypted bundle reaches every host before patch day; at T only the key is published.</title>
+          <text x="400" y="50" text-anchor="middle" class="t-h t-l">patch day T</text>
+          <line class="ln-s" x1="400" y1="66" x2="400" y2="300"/>
+          <rect class="bx-s" x="40" y="92" width="360" height="56"/>
+          <text x="60" y="128" class="t-l">encrypted bundle</text>
+          <rect class="bx-i" x="400" y="92" width="36" height="56"/>
+          <text x="452" y="128" class="t-l t-m">install</text>
+          <rect class="bx-i" x="406" y="176" width="220" height="56"/>
+          <text x="422" y="212" class="t-l t-inv">diff → exploit</text>
+          <g transform="translate(388,256)"><circle class="bx" cx="10" cy="10" r="9"/><line class="ln-t" x1="19" y1="10" x2="44" y2="10"/><line class="ln-t" x1="36" y1="10" x2="36" y2="18"/></g>
+          <text x="376" y="274" text-anchor="end" class="t-l t-m">key at T</text>
+          <line class="ln" x1="40" y1="314" x2="600" y2="314"/>
+          <text x="40" y="344" class="t-l t-m">−7 days</text>
+        </svg>
+        <p>Ship a security update early as ciphertext and publish the key on patch day. What GTA and Steam already do, a design with signed keys, and the air-gapped case.</p>
+        <span class="proj__more">Read the post</span>
+      </a>
+    </div>
   </div>
 </section>
 
 <section class="section" id="research">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 4 · Research · CVE-2022-46166 · 2022</p>
-      <h2>Remote code execution in Spring Boot Admin</h2>
-      <p>The Microsoft Teams notifier read one of its settings as an expression template. A signed-in user could change that setting in the web UI. I reported it in November 2022. The fix and the advisory followed 11 days later.</p>
+      <p class="label">Sheet 4 · Research</p>
+      <h2>Research</h2>
+      <p>Vulnerabilities I found and reported.</p>
     </div>
-
-    <div class="btn-row"><a class="btn" href="/research/cve-2022-46166/">Read the write-up</a></div>
-
-    <dl class="facts">
-      <div><dt>Weakness</dt><dd>CWE-94, code injection</dd></div>
-      <div><dt>Affected</dt><dd><a href="https://github.com/codecentric/spring-boot-admin" rel="noopener">codecentric/spring-boot-admin</a>, tested on 2.7.7</dd></div>
-      <div><dt>Advisory</dt><dd><a href="https://github.com/codecentric/spring-boot-admin/security/advisories/GHSA-w3x5-427h-wfq6" rel="noopener">GHSA-w3x5-427h-wfq6</a></dd></div>
-    </dl>
+    <div class="projects">
+      <a class="proj" href="/research/cve-2022-46166/">
+        <p class="label">CVE-2022-46166 · Dec 2022 · CWE-94</p>
+        <h3>Remote code execution in Spring Boot Admin</h3>
+        <img src="/assets/img/exploit-poster.jpg" width="1600" height="890" loading="lazy" decoding="async" alt="Spring Boot Admin in the browser: the applications page, at the start of the exploit recording.">
+        <p>The Microsoft Teams notifier read one of its settings as an expression template, and a signed-in user could change it. I reported it in November 2022; the fix and the advisory followed 11 days later.</p>
+        <span class="proj__more">Read the write-up</span>
+      </a>
+    </div>
   </div>
 </section>
 
