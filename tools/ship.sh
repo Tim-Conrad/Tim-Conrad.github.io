@@ -52,7 +52,7 @@ echo "   $(git log --oneline -1)"
 echo "== deploy of ${sha:0:7}"
 wait_run deploy.yml "$sha"
 git fetch -q origin gh-pages
-if ! git log origin/gh-pages --format=%s | grep -qx "Deploy ${sha:0:7}"; then
+if [ -z "$(git log origin/gh-pages -n 1 --format=%h --grep="^Deploy ${sha:0:7}\$")" ]; then   # no pipe: grep -q and pipefail fail on SIGPIPE
   echo "   the PR changed no site file: t7d.dev stays as it is"
   exit 0
 fi
