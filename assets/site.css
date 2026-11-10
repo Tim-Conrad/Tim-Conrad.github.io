@@ -304,7 +304,8 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .posts a { display: grid; gap: .35rem; padding: 1rem 0; text-decoration: none; color: var(--ink); }
 .posts__title { font: 600 var(--step-1)/1.2 var(--display); text-decoration: underline; text-underline-offset: .18em; text-decoration-thickness: 1px; }
 .posts__sum { color: var(--muted); max-width: 62ch; }
-.posts a:hover .posts__title { text-decoration-thickness: 2px; }
+.posts a:hover { background: var(--bg); color: var(--ink); }
+.posts a:hover .posts__title { text-decoration-thickness: 2.5px; }
 .posts a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
 .blog-list { padding-bottom: clamp(3rem, 7vw, 5rem); border-top: var(--rule) solid var(--ink); }
