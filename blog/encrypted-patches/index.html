@@ -205,6 +205,39 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <p>The key server is the weak spot. It can go down at the wrong moment, someone can force it to wait, or someone can leak the key early. There is a way to release a key on time without any server of the vendor.</p>
     <p>A public service called drand publishes a new signed number every three seconds, and each number has a sequence position. A group of independent organisations runs it together, the League of Entropy. No single member can make the number for a position alone: it takes enough of them together, and they make it only when that moment has come <a href="#s17">[17]</a>.</p>
     <p>The trick: you can lock data to a number that does not exist yet. The vendor picks the position that falls on patch day T and locks the patch key to it. Until T nobody, the vendor included, can open the lock. At T drand publishes the number, and that number opens it. The free tool tlock does exactly this <a href="#s17">[17]</a>.</p>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 380" role="img" aria-labelledby="d5t d5d">
+  <title id="d5t">How a drand number opens a patch key at patch day</title>
+  <desc id="d5d">Independent organisations make a new numbered value every three seconds; the value for a position exists only when enough of them have taken part, at that moment. Days before patch day the vendor locks the patch key to the value at position T, which does not exist yet. At T the organisations make that value, it is published, and anyone can use it to open the lock and install the patch.</desc>
+  <text x="20" y="34" class="t-h">League of Entropy</text>
+  <text x="250" y="34" class="t-s">independent organisations</text>
+  <rect class="bx" x="250" y="58" width="48" height="30"/><text x="274" y="78" text-anchor="middle" class="t-s">org A</text><rect class="bx" x="310" y="58" width="48" height="30"/><text x="334" y="78" text-anchor="middle" class="t-s">org B</text><rect class="bx" x="370" y="58" width="48" height="30"/><text x="394" y="78" text-anchor="middle" class="t-s">org C</text><rect class="bx" x="430" y="58" width="48" height="30"/><text x="454" y="78" text-anchor="middle" class="t-s">org D</text><rect class="bx" x="490" y="58" width="48" height="30"/><text x="514" y="78" text-anchor="middle" class="t-s">org E</text>
+  <line class="ln" x1="274" y1="88" x2="439.5" y2="165.9"/><polygon class="arr" points="444,168 436.0,167.7 438.7,162.0"/><line class="ln" x1="394" y1="88" x2="441.4" y2="163.8"/><polygon class="arr" points="444,168 437.5,163.4 442.7,160.1"/><line class="ln" x1="454" y1="88" x2="444.6" y2="163.0"/><polygon class="arr" points="444,168 441.8,160.3 448.0,161.1"/><line class="ln" x1="514" y1="88" x2="447.3" y2="164.2"/><polygon class="arr" points="444,168 446.5,160.4 451.2,164.5"/>
+  <line class="ln-s" x1="334" y1="88" x2="440.0" y2="165.1"/>
+  <text x="560" y="78" class="t-s">enough of them together</text>
+  <text x="560" y="94" class="t-s">make the value for T,</text>
+  <text x="560" y="110" class="t-s">only when T has come</text>
+  <text x="560" y="134" class="t-s">(B is not needed)</text>
+  <text x="20" y="195" class="t-h">drand values</text>
+  <rect class="bx-s" x="150" y="176" width="28" height="28"/><rect class="bx-s" x="190" y="176" width="28" height="28"/><rect class="bx-s" x="230" y="176" width="28" height="28"/><rect class="bx-s" x="270" y="176" width="28" height="28"/><rect class="bx-s" x="310" y="176" width="28" height="28"/><rect class="bx-s" x="350" y="176" width="28" height="28"/><rect class="bx-s" x="390" y="176" width="28" height="28"/><rect class="bx-i" x="424" y="170" width="40" height="40"/><text x="444" y="195" text-anchor="middle" class="t-inv">T</text><rect class="bx-d" x="470" y="176" width="28" height="28"/><rect class="bx-d" x="510" y="176" width="28" height="28"/><rect class="bx-d" x="550" y="176" width="28" height="28"/><rect class="bx-d" x="590" y="176" width="28" height="28"/><rect class="bx-d" x="630" y="176" width="28" height="28"/>
+  <text x="150" y="232" class="t-s">already published</text>
+  <text x="550" y="232" class="t-s">not made yet</text>
+  <text x="150" y="166" class="t-s">one every 3 seconds</text>
+  <rect class="bx" x="20" y="268" width="250" height="84"/>
+  <text x="36" y="290" class="t-h">Vendor · days before T</text>
+  <path class="ln" d="M40 314 V310 a5 5 0 0 1 10 0 V314"/><rect class="bx" x="36" y="314" width="18" height="13"/>
+  <text x="66" y="322">patch key, locked</text>
+  <text x="66" y="340" class="t-s">to the value at T</text>
+  <line class="ln-s" x1="240" y1="300" x2="425.5" y2="214.1"/><polygon class="arr" points="430,212 424.6,217.9 422.0,212.3"/>
+  <rect class="bx" x="490" y="268" width="250" height="84"/>
+  <text x="506" y="290" class="t-h">Everyone · at T</text>
+  <path class="ln" d="M510 314 V304 a5 5 0 0 1 10 0 V306"/><rect class="bx-i" x="506" y="314" width="18" height="13"/>
+  <text x="536" y="322">value T opens it</text>
+  <text x="536" y="340" class="t-s">patch key → install</text>
+  <line class="ln" x1="458" y1="212" x2="535.8" y2="263.3"/><polygon class="arr" points="540,266 532.1,264.5 535.6,259.3"/>
+</svg>
+      <figcaption>Fig. 4 · The lock points at a value that does not exist yet. Only the organisations together can make it, and only at T.</figcaption>
+    </figure>
     <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
     <ul>
       <li>The vendor still makes the key before it locks it, so someone inside can still leak it.</li>
@@ -250,7 +283,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="376" y="264" class="t-s">48 B drand no.</text>
   <line class="ln" x1="210" y1="232" x2="255.0" y2="232.0"/><polygon class="arr" points="260,232 252.6,235.1 252.6,228.9"/><line class="ln" x1="498" y1="232" x2="543.0" y2="232.0"/><polygon class="arr" points="548,232 540.6,235.1 540.6,228.9"/>
 </svg>
-      <figcaption>Fig. 4 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
+      <figcaption>Fig. 5 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
     </figure>
     <p>A checked drand number also proves that its moment has passed. A site without a reliable clock learns that it is at least that late.</p>
 
@@ -284,7 +317,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <line class="ln" x1="505" y1="298" x2="505" y2="310"/><text x="505" y="322" text-anchor="middle" class="t-s">T</text>
   <line class="ln" x1="709" y1="300" x2="709" y2="308"/><text x="709" y="322" text-anchor="middle" class="t-s">+6 days</text>
 </svg>
-      <figcaption>Fig. 5 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
+      <figcaption>Fig. 6 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
     </figure>
     <p>To make this normal, a forge such as GitHub or GitLab would need:</p>
     <ul>
