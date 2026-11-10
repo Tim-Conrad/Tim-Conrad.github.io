@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://t7d.dev/</loc></url>
   <url><loc>https://t7d.dev/thoughts/</loc></url>
+  <url><loc>https://t7d.dev/thoughts/sealed/</loc></url>
   <url><loc>https://t7d.dev/thoughts/decision-models/</loc></url>
   <url><loc>https://t7d.dev/thoughts/humans-md/</loc></url>
   <url><loc>https://t7d.dev/thoughts/encrypted-patches/</loc></url>
