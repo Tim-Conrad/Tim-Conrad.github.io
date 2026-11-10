@@ -46,7 +46,9 @@ for (const s of STAGES) {
     await page.waitForTimeout(800);
     const src = s.scene ? fs.readFileSync(path.join(wt, SCENES, s.scene + '.js'), 'utf8').replace(/^\s*\/\/.*$/gm, '') : s.setup;
     mark('setup');
-    const r = await Promise.race([page.evaluate(`(${src})()`), new Promise((_, no) => setTimeout(() => no(new Error('setup timeout')), 90000))]);
+    // soft: a stage whose scene ends on a check that times out, while the picture is already right
+    const r = await Promise.race([page.evaluate(`(${src})()`), new Promise((_, no) => setTimeout(() => no(new Error('setup timeout')), 90000))])
+      .catch(e => { if (s.soft) return 'soft: ' + e.message.split('\n')[0]; throw e; });
     mark('start');
     if (s.act) await Promise.race([page.evaluate(`(${s.act})()`), new Promise(ok => setTimeout(ok, 30000))]);
     await page.waitForTimeout(s.hold || 4000);

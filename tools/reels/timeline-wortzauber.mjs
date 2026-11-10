@@ -7,6 +7,7 @@
 //   hold:  ms to keep filming after the setup (and act)
 //   from:  'start' (default: the clip begins 2 s before the end of the setup) or 'setup' (from the start of the setup)
 //   max:   the longest clip in seconds; a longer span is sped up to fit
+//   soft:  go on when the scene's last check times out (the picture is right, the check waits for more)
 // The text of each stage lives in projects/wortzauber/index.html.
 const wait = ms => `await new Promise(r => setTimeout(r, ${ms}));`;
 const quest = `document.getElementById('dialBtn').click(); await WZ.until(() => document.getElementById('dQuest').offsetParent, 2000, 'dial');
@@ -33,12 +34,11 @@ export const STAGES = [
   { id: 'pr32', ref: 'ad915dc', scene: 'castle', hold: 4000 },
   // #38: the gate of the Thronsaal
   { id: 'pr38', ref: '7fbae22', setup: jump('castleDoor'), hold: 4000 },
-  // #39: the castle finale brings the verb ziehen and its page
-  { id: 'pr39', ref: '641e1ff', setup: jump('page'), hold: 4000 },
+  // #39: the castle finale brings the verb ziehen: it pulls the nearest loose thing (a summoned apple) to the hero
+  { id: 'pr39', ref: '641e1ff', setup: `async () => { WZ.useWord('Apfel'); ${wait(2500)} }`,
+    act: `async () => { WZ.useWord('ziehen'); ${wait(3000)} }`, hold: 1000 },
   // #41: the map
   { id: 'pr41', ref: 'fd951d0', setup: jump('map'), hold: 4000 },
-  // #42: the verb page as a torn page of the queen's book
-  { id: 'pr42', ref: 'b311367', setup: jump('page'), hold: 4000 },
   // #43: math for mana: a big spell asks for a sum first, the answer on the digit pad, then traced
   { id: 'pr43', ref: '23e7fbf', setup: `async () => { WZ.math.set({ on: true, ops: ['+'], max: 10 }); ${wait(800)} WZ.useWord('Elefant');
       await WZ.until(() => WZ.st.view === 'viewMath' && WZ.power(), 8000, 'math'); ${wait(1200)} }`,
@@ -54,7 +54,7 @@ export const STAGES = [
       __rm.send('hello', { name: 'Tom', hero: 'pfannen_paul' }); __rm.send('pos', { place: 'meadow', x: 300, face: -1, walk: false }); ${wait(1500)}
       __rm.send('summon', { id: 'wz-loopback:1', type: 'apple', word: 'Apfel', place: 'meadow', x: 380 }); ${wait(1500)} }`, hold: 1500 },
   { id: 'pr47', ref: '9838540', scene: 'together-castle', hold: 4000 },
-  { id: 'pr48', ref: '510ce65', scene: 'together-bakery', hold: 4000 },
+  { id: 'pr48', ref: '510ce65', scene: 'together-bakery', soft: true, hold: 3000 },
   { id: 'pr49', ref: '8d992cc', scene: 'together-poses', hold: 3500 },
   { id: 'pr50', ref: '08c7a71', scene: 'math-riddle', hold: 3500 },
   { id: 'pr51', ref: '882074b', scene: 'bakery-candles', hold: 3500 },
