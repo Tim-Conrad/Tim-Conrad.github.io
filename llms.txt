@@ -12,7 +12,7 @@ Each page below is a normal HTML page; the blog has an RSS feed.
 
 ## Blog
 
-- [Encrypted patches, unlocked on patch day](https://t7d.dev/blog/encrypted-patches/): Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.
+- [Encrypted patches, unlocked on patch day](https://t7d.dev/blog/encrypted-patches/): Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.
 
 ## Research
 

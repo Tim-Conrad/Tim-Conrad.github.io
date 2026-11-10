@@ -12,7 +12,7 @@
       <link>https://t7d.dev/blog/encrypted-patches/</link>
       <guid isPermaLink="true">https://t7d.dev/blog/encrypted-patches/</guid>
       <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
-      <description>Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.</description>
+      <description>Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.</description>
     </item>
   </channel>
 </rss>

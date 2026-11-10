@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Encrypted patches, unlocked on patch day · Tim Conrad</title>
-<meta name="description" content="Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.">
+<meta name="description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.">
 <link rel="canonical" href="https://t7d.dev/blog/encrypted-patches/">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Encrypted patches, unlocked on patch day">
-<meta property="og:description" content="Ship a security update early as ciphertext and publish the key at release time, so nobody can diff the fix before everyone can install it. What games already do, a design with signed keys, and the air-gapped case.">
+<meta property="og:description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.">
 <meta property="og:url" content="https://t7d.dev/blog/encrypted-patches/">
 <meta property="og:image" content="https://t7d.dev/assets/og.png">
 <meta property="article:published_time" content="2026-11-10">
@@ -43,7 +43,7 @@
 <header class="post-head">
   <a class="crumb" href="/blog/">← Blog</a>
   <h1>Encrypted patches, unlocked on patch day</h1>
-  <p class="sub">Ship the security update early as ciphertext, publish the key at release time, and nobody can diff the fix before everyone can install it.</p>
+  <p class="sub">Ship the fix early as ciphertext and publish the key at release time. Teams stage it in advance and apply it at the same moment, instead of racing attackers.</p>
   <p class="label">Tim Conrad · <time datetime="2026-11-10">10 Nov 2026</time> · Updates · Patch diffing · Key release</p>
 </header>
 
@@ -56,8 +56,9 @@
       <li><a href="#design">A design</a></li>
       <li><a href="#beacon">Without a key server</a></li>
       <li><a href="#airgap">Air-gapped sites</a></li>
+      <li><a href="#oss">Open source in private</a></li>
       <li><a href="#limits">What it does not fix</a></li>
-      <li><a href="#prior">Prior art</a></li>
+      <li><a href="#prior">Prior art and patents</a></li>
       <li><a href="#sources">Sources</a></li>
     </ol>
   </nav>
@@ -66,7 +67,7 @@
     <h2 id="problem">The problem</h2>
     <p>A security patch tells an attacker where the bug was. Compare the old and the new binary, and the fix points at the flaw. In 2008 Brumley and others built working exploits from five Windows patches in seconds to minutes, fully automated <a href="#s1">[1]</a>. Mandiant measured an average time-to-exploit of 5 days in 2023, down from 63 days in 2018 and 2019 <a href="#s2">[2]</a>.</p>
     <p>Most updates also roll out over time. The first host that downloads the patch starts the attacker's clock, while most hosts still wait. The authors of the 2008 paper called this out: staggered rollout can hurt overall security <a href="#s1">[1]</a>.</p>
-    <p>The idea of this post: ship the update days early, but encrypted. At patch day T, publish only the key. Every host already has the bundle, so it can install at once, and nobody could diff it before T.</p>
+    <p>The idea of this post: ship the fix days early, but encrypted. Teams download it, plan the change and stage it. At patch day T, only the key is published, and everyone applies the fix at the same moment. Nobody could diff it before T. The goal is not to win the race against the attackers, but to stop it from being a race.</p>
     <figure class="fig-wide">
       <svg class="dg" viewBox="0 0 760 300" role="img" aria-labelledby="d1t d1d">
   <title id="d1t">Timeline: today and with an encrypted pre-load</title>
@@ -224,6 +225,47 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     </figure>
     <p>A verified drand signature also proves that the time is at least the time of its round. A site without a trusted clock gets a lower bound for free.</p>
 
+    <h2 id="oss">Open source in private</h2>
+    <p>For an open-source project the hard part comes earlier: the fix has to be written and tested without showing it. Today a fix often leaks before the release. The Log4Shell fix sat in a public pull request for more than a week before the advisory <a href="#s18">[18]</a>, and researchers built Chrome exploits from public V8 fixes before they reached stable Chrome <a href="#s19">[19]</a>.</p>
+    <p>The tools for private work are thin. On GitHub, maintainers can open a temporary private fork from a security advisory. Only invited collaborators see it, but no CI runs there, branch protection does not apply, and merging and publishing are manual steps <a href="#s20">[20]</a>. On GitLab a merge request in a public project is public; private work needs a separate private fork <a href="#s21">[21]</a>. Distributions coordinate by mail: the linux-distros list allows an embargo of at most 14 days <a href="#s22">[22]</a>, and the kernel security team holds a fix back for at most 7 days, 14 in exceptional cases <a href="#s23">[23]</a>. The Git project comes closest to the idea of this post: it prepares signed tags in a private repository, sends a bundle to the distributions less than a week ahead, and pushes in public on release day <a href="#s24">[24]</a>. That bundle is plaintext and goes to a few.</p>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d4t d4d">
+  <title id="d4t">A security fix in an open-source project, from private work to release</title>
+  <desc id="d4d">The maintainers write and test the fix on a private branch with private CI. Days before T the project publishes the encrypted, signed build. The embargo list of distributions gets the key early to test. Everyone else stages the ciphertext. At T the key is published, everyone applies the fix, and the public repository gets the merge and the advisory.</desc>
+  <line class="ln-s" x1="505" y1="38" x2="505" y2="290"/>
+  <text x="505" y="26" text-anchor="middle" class="t-h">T · release</text>
+  <text x="20" y="73" class="t-h">Maintainers</text><text x="20" y="123" class="t-h">Release</text><text x="20" y="173" class="t-h">Embargo list</text><text x="20" y="223" class="t-h">Everyone</text><text x="20" y="273" class="t-h">Public repo</text>
+  <rect class="bx-s" x="165" y="56" width="238" height="26"/>
+  <text x="177" y="73">private branch, private CI</text>
+  <rect class="bx-s" x="301" y="106" width="204" height="26"/>
+  <text x="313" y="123">encrypted build, signed</text>
+  <rect class="bx-i" x="505" y="106" width="22" height="26"/>
+  <text x="537" y="123" class="t-s">key published</text>
+  <rect class="bx-i" x="335" y="156" width="170" height="26"/>
+  <text x="347" y="173" class="t-inv">early key: test</text>
+  <rect class="bx-s" x="335" y="206" width="170" height="26"/>
+  <text x="347" y="223">ciphertext staged</text>
+  <rect class="bx-i" x="505" y="206" width="22" height="26"/>
+  <text x="537" y="223" class="t-s">apply at T</text>
+  <rect class="bx-i" x="505" y="256" width="170" height="26"/>
+  <text x="517" y="273" class="t-inv">merge + advisory</text>
+  <line class="ln" x1="362.2" y1="82" x2="362.2" y2="99.0"/><polygon class="arr" points="362.2,104 359.1,96.6 365.3,96.6"/>
+  <line class="ln" x1="165" y1="304" x2="709" y2="304"/>
+  <line class="ln" x1="165" y1="300" x2="165" y2="308"/><text x="165" y="322" text-anchor="middle" class="t-s">−10 days</text>
+  <line class="ln" x1="505" y1="298" x2="505" y2="310"/><text x="505" y="322" text-anchor="middle" class="t-s">T</text>
+  <line class="ln" x1="709" y1="300" x2="709" y2="308"/><text x="709" y="322" text-anchor="middle" class="t-s">+6 days</text>
+</svg>
+      <figcaption>Fig. 4 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
+    </figure>
+    <p>To make this normal, a forge such as GitHub or GitLab would need:</p>
+    <ul>
+      <li>Private branches and pull requests inside the public repository, visible only to maintainers and a security role.</li>
+      <li>Private CI for those branches, with closed logs and no webhooks to outside apps.</li>
+      <li>Release artefacts that are published encrypted and signed, with the key held by the forge.</li>
+      <li>One action that, at T, publishes the key, merges the branch and publishes the advisory.</li>
+    </ul>
+    <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, as the 2012 leak from Microsoft's partner programme showed <a href="#s15">[15]</a>, so the list stays short and the embargo stays short.</p>
+
     <h2 id="limits">What it does not fix</h2>
     <ul>
       <li><b>Diffing after T.</b> At T the patch is public. The scheme moves the start line; it does not stop the race. It helps the hosts that install at once.</li>
@@ -231,12 +273,18 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li><b>Slow patching.</b> Organisations take weeks to install fixes <a href="#s14">[14]</a>. A host that waits a month gains nothing.</li>
       <li><b>Metadata.</b> File names and sizes still show which component changed. Padding and fixed bundles help, at a cost in bandwidth.</li>
       <li><b>Insiders.</b> The key exists before T. Create it late, keep it in an HSM, split it between people.</li>
-      <li><b>Testing.</b> Companies test patches before they roll them out. With this scheme they can test only after T, or the vendor gives some of them the key early, which brings back the leaks of early-access programmes <a href="#s15">[15]</a>.</li>
+      <li><b>Testing.</b> Companies test patches before they roll them out. Most can stage before T but test only after it. Early keys for a few, as embargo lists do today, bring back the risk of leaks <a href="#s15">[15]</a>.</li>
     </ul>
 
-    <h2 id="prior">Prior art</h2>
-    <p>The idea is not new. The 2008 paper on patch-based exploits reportedly proposed encrypted patches with a key released later <a href="#s16">[16]</a>, and Microsoft holds a patent on distributing an update encrypted and sending the key once enough machines have it <a href="#s17">[17]</a>. I found no vendor that does this for security patches today. What is new are the parts around it: TUF and Uptane for signed metadata, transparency logs, and a public beacon that can release a key on time without the vendor.</p>
-    <p>My conclusion: this is a tool for fleets that update by themselves and for fast offline sites, not a defence against patch diffing. It is cheap to add to an update system that already signs its metadata.</p>
+    <h2 id="prior">Prior art and patents</h2>
+    <p>The idea is not new. The 2008 paper on patch-based exploits reportedly proposed encrypted patches with a key released later <a href="#s16">[16]</a>. Steam pre-loaded Half-Life 2 in 2004, and time-lock puzzles go back to 1996. I found no vendor that does this for security patches today.</p>
+    <p>Microsoft has patents on it. This is my reading, not legal advice, and I could not open the claims or the fee records:</p>
+    <ul>
+      <li><b>US 7,876,902</b>, "Distribution of encrypted software update to reduce attack window", priority date 31 August 2006, granted 2011 <a href="#s17">[17]</a>. A US patent runs 20 years from filing, so it ends around 31 August 2026, later only if the patent office added term for its own delays, and earlier if a maintenance fee was not paid. Its description releases the key once enough machines have the update or after testing, not at a fixed time.</li>
+      <li><b>US 8,171,560</b>, "Secure content pre-distribution to designated systems", granted 2012 <a href="#s25">[25]</a>. It is closer to this post: content goes out encrypted and the key follows at a set moment. Filed around 2008, it may run to about 2028.</li>
+    </ul>
+    <p>So the design can be built from public parts, and a fixed release time, a transparency log and a public beacon in place of a vendor key server differ from the first patent's description. Whether that is enough depends on the claims. Anyone who wants to ship this as a product in the US before about 2028 should have a patent attorney read both patents first.</p>
+    <p>My conclusion: the tool is cheap for an update system that already signs its metadata. It does not stop patch diffing, but it lets every team have the fix ready when it becomes public, and that turns patch day from a race into a date.</p>
 
     <h2 id="sources">Sources</h2>
     <ol class="refs">
@@ -256,7 +304,15 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li id="s14">Qualys: <a href="https://www.qualys.com/2023-trurisk-research-report" rel="noopener">2023 TruRisk Research Report</a>.</li>
       <li id="s15">The Register: <a href="https://www.theregister.com/2012/03/16/microsoft_rdp_flaw_release/" rel="noopener">Microsoft RDP exploit code leak</a>, 2012.</li>
       <li id="s16">The Register: <a href="https://www.theregister.com/2008/04/25/patches_security_risk/?page=2" rel="noopener">Patches pose security risk</a>, 2008.</li>
-      <li id="s17">Microsoft: <a href="https://patents.google.com/patent/US7876902" rel="noopener">US 7,876,902 B2</a>.</li>
+      <li id="s17">Microsoft: <a href="https://patents.google.com/patent/US7876902" rel="noopener">US 7,876,902 B2</a>, Distribution of encrypted software update to reduce attack window.</li>
+      <li id="s18">P. Freitag: <a href="https://www.petefreitag.com/blog/log4shell-vulnerability/" rel="noopener">Log4Shell timeline</a>; Dark Reading: <a href="https://www.darkreading.com/cyberattacks-data-breaches/log4j-proved-public-disclosure-still-helps-attackers" rel="noopener">Log4j proved public disclosure still helps attackers</a>.</li>
+      <li id="s19">Exodus Intelligence: <a href="https://blog.exodusintel.com/2019/09/09/patch-gapping-chrome/" rel="noopener">Patch-gapping Google Chrome</a>, 2019.</li>
+      <li id="s20">GitHub Docs: <a href="https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork" rel="noopener">Collaborating in a temporary private fork</a>.</li>
+      <li id="s21">GitLab Docs: <a href="https://docs.gitlab.com/user/project/merge_requests/confidential/" rel="noopener">Confidential merge requests</a>.</li>
+      <li id="s22">Openwall: <a href="https://oss-security.openwall.org/wiki/mailing-lists/distros" rel="noopener">The distros mailing list</a>.</li>
+      <li id="s23">Linux kernel: <a href="https://docs.kernel.org/process/security-bugs.html" rel="noopener">Security bugs</a>.</li>
+      <li id="s24">Git: <a href="https://github.com/git/git/blob/master/Documentation/howto/coordinate-embargoed-releases.adoc" rel="noopener">How to coordinate embargoed releases</a>.</li>
+      <li id="s25">Microsoft: <a href="https://patents.google.com/patent/US8171560" rel="noopener">US 8,171,560 B2</a>, Secure content pre-distribution to designated systems.</li>
     </ol>
   </article>
 </div>
