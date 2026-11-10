@@ -98,7 +98,7 @@
     bar.className = 'player__bar'; bar.appendChild(fill);
     box.appendChild(bar); box.appendChild(btn);
     var wanted = !still;               /* the visitor's choice; starts as "play" unless they asked for less motion */
-    function paint() { btn.textContent = v.paused ? 'Play' : 'Pause'; btn.setAttribute('aria-label', (v.paused ? 'Play' : 'Pause') + ' the video'); }
+    function paint() { box.setAttribute('data-state', v.paused ? 'paused' : 'playing'); btn.setAttribute('aria-label', (v.paused ? 'Play' : 'Pause') + ' the video'); }
     function play() { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     function toggle() { wanted = v.paused; if (wanted) play(); else v.pause(); }
     btn.addEventListener('click', toggle);
