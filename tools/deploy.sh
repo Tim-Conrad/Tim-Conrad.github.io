@@ -7,7 +7,7 @@
 # encrypted sites there, one folder per site (sealed/<site>/). This script keeps that folder as it is.
 set -euo pipefail
 
-SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets blog research projects CVE)
+SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets thoughts blog research projects CVE)
 
 root=$(git rev-parse --show-toplevel)
 src=$(git -C "$root" rev-parse HEAD)
@@ -21,7 +21,7 @@ if git cat-file -e HEAD:sealed 2>/dev/null; then
   git checkout -q HEAD -- sealed
 fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
-# llms.txt and the RSS feed of the blog are made from the published pages, never by hand
+# llms.txt and the RSS feed of the thoughts are made from the published pages, never by hand
 python3 "$root/tools/gen-feeds.py" "$tree"
 git add -A
 

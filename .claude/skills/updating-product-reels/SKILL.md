@@ -66,7 +66,7 @@ Before a run: start the dev server in `../wortzauber` with `python3 devserver.py
    `ffmpeg -i <work>/kleinbahn-reel.mp4 -vf "fps=16/39,scale=320:180,tile=4x4" -frames:v 1 sheet.jpg` (16 pictures over a 39 s reel).
    Check that each caption sits on its own shot, that no caption covers a speech bubble or a panel, and that the end card is readable.
 4. `build.py publish`. The stills come from the sources, not from the reel, so they carry no caption. Which frames they are is at the top of `build.py` (`KB_PICS`, `WZ_PICS`, `WZ_PHONE`). If a shot or a take changed, check that the alt texts in `projects/<game>/index.html` still describe the pictures.
-5. Serve the site (`python3 -m http.server 8000` in this repo) and look at `/projects/kleinbahn/`, `/projects/wortzauber/` and `/#projects` at 1440 and 390 px wide. The page must not scroll sideways.
+5. Serve the site (`python3 -m http.server 8000` in this repo) and look at `/projects/kleinbahn/`, `/projects/wortzauber/` and `/#projects` at 1440, 390 and 320 px wide, in the light and the dark theme (CLAUDE.md). The page must not scroll sideways.
 6. Commit the files in `assets/projects/` with the change.
 
 ## Common mistakes

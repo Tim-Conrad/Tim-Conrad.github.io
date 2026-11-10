@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Writes /llms.txt and the RSS feed of the blog (/blog/feed.xml) from the pages of the site.
+"""Writes /llms.txt and the RSS feed of the thoughts (/thoughts/feed.xml) from the pages of the site.
 
   python3 tools/gen-feeds.py [<site folder>]
 
 The folder defaults to the repository root. tools/deploy.sh runs it on the published copy, so both files always
 match the pages and nobody edits them by hand. Everything comes from each page's <head>: <title>, the meta
 description, the canonical URL and article:published_time. A page is listed in its section by its folder:
-projects/ (games), blog/<slug>/ (posts), research/ (write-ups). Standard library only.
+projects/ (games), thoughts/<slug>/ (thoughts), research/ (write-ups). Standard library only.
+
+The thoughts were a blog at /blog/ until November 2026. The same feed is also written to /blog/feed.xml, so readers
+who follow the old address keep getting new thoughts.
 """
 import html, os, re, sys
 from datetime import datetime, timezone
@@ -48,22 +51,22 @@ def md_link(p):
 
 def llms():
     home = meta(os.path.join(ROOT, 'index.html'))
-    games, posts, research = pages('projects'), pages('blog'), pages('research')
+    games, posts, research = pages('projects'), pages('thoughts'), pages('research')
     lines = [f"# {home['title'] or 'Tim Conrad'}", '', f"> {home['desc']}", '',
              'The personal site of Tim Conrad: security research and browser games. Plain HTML with no tracking.',
-             'Each page below is a normal HTML page; the blog has an RSS feed.', '']
-    for name, items in (('Games', games), ('Blog', posts), ('Research', research)):
+             'Each page below is a normal HTML page; the thoughts have an RSS feed.', '']
+    for name, items in (('Games', games), ('Thoughts', posts), ('Research', research)):
         if items:
             lines += [f'## {name}', ''] + [md_link(p) for p in items] + ['']
     lines += ['## Optional', '',
-              f'- [Blog RSS feed]({SITE}/blog/feed.xml): every post, newest first',
+              f'- [Thoughts RSS feed]({SITE}/thoughts/feed.xml): every thought, newest first',
               f'- [PGP key]({SITE}/key.asc): RSA 3072, fingerprint A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390',
               f'- [Sitemap]({SITE}/sitemap.xml)', '']
     return '\n'.join(lines)
 
 
 def rss():
-    posts = pages('blog')
+    posts = pages('thoughts')
     def when(p):
         d = datetime.strptime(p['date'], '%Y-%m-%d').replace(tzinfo=timezone.utc) if p['date'] else datetime.now(timezone.utc)
         return format_datetime(d)
@@ -80,10 +83,10 @@ def rss():
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tim Conrad · Blog</title>
-    <link>{SITE}/blog/</link>
-    <atom:link href="{SITE}/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <description>Notes by Tim Conrad on security ideas.</description>
+    <title>Tim Conrad · Thoughts</title>
+    <link>{SITE}/thoughts/</link>
+    <atom:link href="{SITE}/thoughts/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Thoughts by Tim Conrad: ideas he is working through and comes back to.</description>
     <language>en</language>
     <lastBuildDate>{last}</lastBuildDate>
 {items}  </channel>
@@ -92,7 +95,7 @@ def rss():
 
 
 # the generated files, by their path on the site
-FILES = {'llms.txt': llms, 'blog/feed.xml': rss}
+FILES = {'llms.txt': llms, 'thoughts/feed.xml': rss, 'blog/feed.xml': rss}
 
 
 def build(root):

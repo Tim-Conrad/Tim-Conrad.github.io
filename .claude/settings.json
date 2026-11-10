@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "n=$(ls \"${CLAUDE_PROJECT_DIR:-.}\"/.review/notes/*.json 2>/dev/null | wc -l); if [ \"$n\" -gt 0 ]; then echo \"$n open review notes in .review/notes/ (skill handling-review-notes)\"; fi; true"
+          }
+        ]
+      }
+    ]
+  }
+}

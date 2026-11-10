@@ -8,14 +8,16 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 
 | Page | Path | Content |
 | --- | --- | --- |
-| Front page | `/` | Overview, the two games, the latest blog posts, the CVE summary, the PGP key, contact |
-| Blog | `/blog/` | List of posts; each post in `/blog/<slug>/` |
-| Post | `/blog/encrypted-patches/` | Encrypted patches, unlocked on patch day (three inline SVG diagrams) |
+| Front page | `/` | Overview, the two games, the latest thoughts, the CVE summary, the PGP key, contact |
+| Thoughts | `/thoughts/` | Ideas I work through and come back to; each in `/thoughts/<slug>/` with a status, sources, revisions and feedback |
+| Thought | `/thoughts/humans-md/` | A humans.md for working with models (animated diagrams, the file `HUMANS.md` to download) |
+| Thought | `/thoughts/encrypted-patches/` | Encrypted patches, unlocked on patch day (inline SVG diagrams) |
 | Write-up | `/research/cve-2022-46166/` | CVE-2022-46166: template injection in Spring Boot Admin |
 | Kleinbahn | `/projects/kleinbahn/` | Reel, live demo from `tiny-train.beacon.host`, features, stills |
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
 | llms.txt | `/llms.txt` | A summary of the site for language models (llmstxt.org format), made at deploy time |
-| RSS feed | `/blog/feed.xml` | The blog posts, newest first, made at deploy time |
+| RSS feed | `/thoughts/feed.xml` | The thoughts, newest first, made at deploy time. `/blog/feed.xml` is the same feed for readers of the old address |
+| Old blog URLs | `/blog/`, `/blog/encrypted-patches/` | Redirect to `/thoughts/` |
 | PGP key | `/key.asc` | Public key, fingerprint `A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390` |
 | Old write-up URL | `/CVE/CVE-2022-46166/` | Redirects to the new write-up address |
 | Encrypted sites | `/sealed/<site>/` | Private games and files, encrypted with [sealed](https://github.com/Tim-Conrad/sealed). A login page, then the browser decrypts the site. Not linked, not in the sitemap, kept out of search engines by `robots.txt` |
@@ -25,10 +27,11 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | Path | What it is |
 | --- | --- |
 | `index.html`, `404.html` | Front page and not-found page |
-| `research/`, `projects/`, `blog/`, `CVE/` | One folder with an `index.html` per page |
+| `research/`, `projects/`, `thoughts/` | One folder with an `index.html` per page |
+| `blog/`, `CVE/` | Redirects from old addresses |
 | `assets/site.css` | All styles and the colour tokens of both themes |
 | `assets/theme.js` | Applies the saved theme before the first paint |
-| `assets/site.js` | Theme toggle, copy buttons, the table of contents, the tap-to-play demo |
+| `assets/site.js` | Theme toggle, copy buttons, the table of contents, the tap-to-play demo, diagrams with steps and animated diagrams |
 | `assets/fonts/` | Site fonts (SIL Open Font License, see `OFL.txt`) |
 | `assets/img/` | Pictures and the recording of the write-up |
 | `assets/projects/` | Reels, posters, stills, phone pictures and gameplay loops of the two games |
@@ -36,12 +39,19 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` | Hosting and crawler files |
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |
 | `tools/ship.sh` | Merges a PR, waits for the deploy and checks t7d.dev |
+| `tools/preview-artifact.py` | Builds a page as a Claude artifact bundle, for a review before it is published |
 | `tools/reels/` | Scripts that film the two games and cut the reels |
 | `tools/review/`, `docker-compose.dev.yml` | The review site: live reload and a note tab. Never published |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |
 | `DESIGN.md` | How the site looks and sounds: colours, type, layout, components and the wording rules |
 | `CLAUDE.md` | Instructions for Claude Code in this repository |
 | `.claude/skills/updating-product-reels/` | Working guide for Claude Code: how to take the reels and pictures again |
+| `.claude/skills/adding-a-thought/` | Working guide for Claude Code: how to turn a link into a new thought, and how to revise one |
+| `.claude/skills/updating-game-timeline/` | Working guide for Claude Code: how to film the timeline clips of a game page |
+| `.claude/skills/handling-review-notes/` | Working guide for Claude Code: how to handle Tim's notes from the review site |
+| `.claude/rules/pages.md` | Rules for a new page; Claude Code loads them only when it works on an HTML page, the sitemap or the deploy script |
+| `.claude/settings.json` | A hook that prints the number of open review notes at the start of a session |
+| `tools/check.py` | Checks the CSP rules and the sitemap of every page; CI runs it |
 
 ## Preview locally
 
@@ -71,7 +81,7 @@ GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the 
 
 1. Merge a change into `master`.
 2. The workflow `.github/workflows/deploy.yml` runs `tools/deploy.sh`.
-3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and `blog/feed.xml` from the pages with `tools/gen-feeds.py`, and pushes. `tools/`, `.claude/`, `.github/` and this README stay on `master`.
+3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and the feeds from the pages with `tools/gen-feeds.py`, and pushes. `tools/`, `.claude/`, `.github/` and this README stay on `master`.
 
 To ship a pull request in one step, run `tools/ship.sh [<pr>]`. It merges the PR, puts this clone on `master`, waits for the deploy and the Pages build, and checks that t7d.dev serves each site file of the PR. It runs no checks: look at the pages first.
 
@@ -108,6 +118,4 @@ Each product page allows exactly one frame host. Add the new host to `frame-src`
 
 ### Design and wording
 
-The site is black ink on white paper (white on black in the dark theme), with a thin frame and a small label per section. The only colour is in the pictures and videos. Every colour is a token at the top of `assets/site.css`.
-
-The wording is plain. Say what a thing is and what it does. No slogans, no superlatives, and nothing the site does not hold.
+See `DESIGN.md`.

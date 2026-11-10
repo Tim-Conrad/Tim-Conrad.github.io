@@ -355,6 +355,62 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 @media (prefers-reduced-motion: reduce) { .dg [data-step] { transition: none; } }
 .fig-wide .dg { min-width: 34rem; }
 
+/* ---------- thoughts: status, dates, revisions ---------- */
+.tmeta { margin: 0; display: flex; flex-wrap: wrap; gap: .5rem 2rem; padding-top: .9rem; border-top: 1px solid var(--soft); }
+.tmeta div { display: grid; gap: .15rem; }
+.tmeta dt { font: 500 .68rem/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tmeta dd { margin: 0; font: 500 .875rem/1.5 var(--mono); }
+.status { display: inline-block; font: 500 var(--step--1)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: .3rem .45rem; border: 1px solid var(--ink); color: var(--ink); }
+.posts__meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.code pre.wrap-lines { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ---------- animated diagrams (site.js): figure.anim
+   site.js adds .anim--ready, then .is-in when the figure comes on screen: .draw lines draw, .grow / .grow-l bars grow, .pop parts appear (.d1-.d8 delay them).
+   data-state="a" / "b" from the switch buttons: .w-a shows in state a, .w-b in state b, .hi-a / .hi-b stay strong, the rest fades.
+   [data-pick] parts are buttons: they show their item of .pick__list. A visitor who asked for less motion gets the end state. */
+.anim--ready .draw { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.4s cubic-bezier(.6,0,.2,1); }
+.anim--ready .grow, .anim--ready .grow-l { transform: scaleX(0); transform-box: fill-box; transform-origin: left center; transition: transform 1.1s cubic-bezier(.3,0,.1,1); }
+.anim .grow-l { transform-origin: right center; transform-box: fill-box; }
+.anim--ready .pop { opacity: 0; transform: scale(.6); transform-box: fill-box; transform-origin: center; transition: opacity .5s ease, transform .6s cubic-bezier(.3,1.4,.5,1); }
+.anim--ready.is-in .draw { stroke-dashoffset: 0; }
+.anim--ready.is-in .grow, .anim--ready.is-in .grow-l, .anim--ready.is-in .pop { transform: none; opacity: 1; }
+.anim .d1 { transition-delay: .15s; } .anim .d2 { transition-delay: .3s; } .anim .d3 { transition-delay: .45s; } .anim .d4 { transition-delay: .6s; }
+.anim .d5 { transition-delay: .75s; } .anim .d6 { transition-delay: .9s; } .anim .d7 { transition-delay: 1.05s; } .anim .d8 { transition-delay: 1.2s; }
+.anim .w-a, .anim .w-b, .anim .fade { transition: opacity .5s ease; }
+.anim[data-state="a"] .w-b, .anim[data-state="b"] .w-a, .anim:not([data-state]) .w-b { opacity: 0; pointer-events: none; }
+.anim[data-state="a"] .hi-b, .anim[data-state="b"] .hi-a { opacity: .2; }
+.anim[data-state="b"] .off-b { opacity: .22; }
+.anim .lvl { transform-box: fill-box; transform-origin: left center; transition: transform .9s cubic-bezier(.3,0,.1,1); }
+.anim .lvl.s20 { transform: scaleX(.2); } .anim .lvl.s30 { transform: scaleX(.3); } .anim .lvl.s100 { transform: scaleX(1); }
+.anim[data-state="b"] .lvl.b100 { transform: scaleX(1); } .anim[data-state="b"] .lvl.b10 { transform: scaleX(.1); }
+.anim [data-pick] { cursor: pointer; pointer-events: bounding-box; }
+.anim [data-pick] .bx, .anim [data-pick] text { transition: fill .25s ease; }
+.anim [data-pick]:hover .bx, .anim [data-pick].is-on .bx { fill: var(--ink); }
+.anim [data-pick]:hover text, .anim [data-pick].is-on text { fill: var(--bg); }
+.anim [data-pick]:focus { outline: none; }
+.anim [data-pick]:focus-visible .bx { stroke-width: 4; }
+.anim .dot-pick { transition: r .25s ease; }
+.anim [data-pick]:hover .dot-pick, .anim [data-pick].is-on .dot-pick { r: 13; }
+.anim [data-pick]:hover .t-pick, .anim [data-pick].is-on .t-pick { fill: var(--ink); font-weight: 700; }
+.anim__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.anim__bar .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pick__panel { border: var(--rule) solid var(--ink); background: var(--surface); padding: .9rem 1rem 1rem; display: grid; gap: .55rem; margin-top: calc(var(--rule) * -1 - .6rem); }
+.pick__list { margin: 0; padding-left: 1.3rem; display: grid; gap: .3rem; font-size: .9688rem; line-height: 1.5; }
+.pick--on .pick__list { list-style: none; padding-left: 0; }
+.pick--on .pick__list li { display: none; }
+.pick--on .pick__list li.is-now { display: block; }
+.pick__list b { font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
+.prose .pick__list a { display: inline; border: 0; background: none; }
+.prose .pick__list a:hover { background: var(--ink); color: var(--bg); outline: 0; }
+.pick__hint { margin: 0; font-size: .9688rem; color: var(--muted); }
+.pick__hint[hidden] { display: none; }
+/* a figure can hold a wide drawing (.dg-w) and a narrow one for phones (.dg-n) */
+.anim .dg-n { display: none; }
+@media (max-width: 600px) { .anim .dg-w { display: none; } .anim .dg-n { display: block; } .fig-wide.anim { overflow-x: visible; } .fig-wide .dg-n { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .anim .draw, .anim .grow, .anim .grow-l, .anim .pop, .anim .w-a, .anim .w-b, .anim .fade, .anim .lvl { transition: none; }
+}
+
 /* ---------- 404 ---------- */
 .lost { min-height: 60vh; display: grid; align-content: center; gap: 1.25rem; padding-block: 3rem; }
 .lost h1 { font-size: clamp(5rem, 22vw, 14rem); line-height: .85; }
