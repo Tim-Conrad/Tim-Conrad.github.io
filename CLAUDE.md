@@ -16,7 +16,8 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - `assets/projects/` - reels, posters and stills of the two games.
 - `tools/deploy.sh`, `.github/workflows/deploy.yml` - the deploy to `gh-pages`.
 - `/sealed/<site>/` (only on `gh-pages`) - encrypted sites that the sealed admin app (`Tim-Conrad/sealed`) pushes. Their login page uses `assets/site.css` (`.sealed`).
-- `tools/reels/` - the scripts that film the games and cut the reels.
+- `tools/reels/` - the scripts that film the games and cut the reels, and `timeline.mjs` with its stages file, which films the timeline clips.
+- `assets/projects/timeline/` - the timeline clips and posters of the game pages.
 
 ## Rules for every task
 
@@ -44,6 +45,10 @@ Run `python3 -m http.server 8000` in the repository root and open `http://localh
 
 <important if="Kleinbahn or Wortzauber changed, or a reel, a poster, a still or a caption must change">
 Use the skill `updating-product-reels`. It needs the two game repositories (`Tim-Conrad/tiny-train` and `Tim-Conrad/wortzauber`) cloned next to this one.
+</important>
+
+<important if="a game got new merged pull requests, or its timeline ("How it changed") must grow or a timeline clip must be filmed again">
+Use the skill `updating-game-timeline`. It films one clip per PR at that PR's merge commit and needs the game repository cloned next to this one, with its full history.
 </important>
 
 <important if="you deploy, or the live site does not show a change">
