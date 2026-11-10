@@ -47,9 +47,11 @@ Do not read the code of every PR. Work from the git log.
 - The cheapest stage uses a layout-check scene of the game at that ref (`scene: 'castle'`): a feature PR often added its own scene, see `.claude/skills/checking-device-layouts/scenes/` in the game and `git log --diff-filter=A` on it. Else a short `setup` with `WZ.jump(...)` (from PR #31 on), `WZ.useWord(...)`, `Wall`, `Castle`, `Together.testLink()`; an `act` films the action itself.
 - The clips are silent. A PR that only adds sound goes into the "Not shown" line, and so does a change that opens only deep in a level.
 - The game is filmed in German. Do not generate voice, music or images, and do not read the ElevenLabs key.
+- Outside the cloud container: Playwright is not global. Link the `node_modules` of `../tiny-train` into this repo and add `/node_modules` to `.git/info/exclude`. If `ffmpeg` is not installed, put a wrapper on `PATH` that runs `ffmpeg` and `ffprobe` from the `linuxserver/ffmpeg` image, with the repo mounted at the same path.
 
 ## Common mistakes
 - Filming at the PR branch tip instead of the merge commit: use the merge (`%h` of the merge in step 2). The first entry ("Starting point") is the import commit.
 - A UI stage whose button has another id at that ref: look up the id in `index.html` at the ref.
 - A guest stage that sets the time only on the game: the host's clock wins. Set `__peer.world.env.time` too.
 - Committing frames or full-size clips: only `build.py timeline` output goes into `assets/`.
+- An old clip that starts late: before 2026-11-10, the marks of `timeline-wz.mjs` counted from the worktree start, not from the video start. A slow `git worktree add` moved every cut later by that time.

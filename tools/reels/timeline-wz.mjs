@@ -33,10 +33,12 @@ for (const s of STAGES) {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', '--mute-audio'] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'de-DE',
     ...(dry ? {} : { recordVideo: { dir, size: { width: 1280, height: 720 } } }) });
-  const marks = {}, mark = l => { marks[l] = (Date.now() - t0) / 1000; };
+  // the marks count from the start of the video: the page opens, not the worktree or the browser start
+  const marks = {}; let rec = 0; const mark = l => { marks[l] = (Date.now() - rec) / 1000; };
   const errs = [];
   try {
     await new Promise(r => setTimeout(r, 600));
+    rec = Date.now();
     const page = await ctx.newPage();
     page.on('pageerror', e => errs.push(e.message));
     await page.goto(`http://127.0.0.1:${P}/?dev=1&fresh=1`, { waitUntil: 'load' });
