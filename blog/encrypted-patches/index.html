@@ -65,8 +65,32 @@
 
   <article class="prose">
     <h2 id="problem">The problem</h2>
-    <p>A security patch tells an attacker where the bug was. Compare the old and the new binary, and the fix points at the flaw. In 2008 Brumley and others built working exploits from five Windows patches in seconds to minutes, fully automated <a href="#s1">[1]</a>. Mandiant measured an average time-to-exploit of 5 days in 2023, down from 63 days in 2018 and 2019 <a href="#s2">[2]</a>.</p>
-    <p>Most updates also roll out over time. The first host that downloads the patch starts the attacker's clock, while most hosts still wait. The authors of the 2008 paper called this out: staggered rollout can hurt overall security <a href="#s1">[1]</a>.</p>
+    <p>A security fix tells an attacker where the bug was. That was always true. What changed in the last year is the price of turning a fix into an exploit.</p>
+    <p>Keycloak is a good example. Between November 2025 and November 2026 the project tagged 47 releases, about one every eight days, across four supported lines, and fixed at least 50 CVEs <a href="#s1">[1]</a>. In August 2026 one of them, CVE-2026-18963, let an unauthenticated attacker take over accounts through the password-reset flow <a href="#s2">[2]</a>. The fixed builds carry tag dates a week before the CVE was published <a href="#s1">[1]</a>, and the public fix is a small change of 57 added lines <a href="#s3">[3]</a>. A public proof of concept credits Claude for "research and PoC development assistance" and ships "the annotated patch diff" <a href="#s4">[4]</a>. A team that runs Keycloak has to patch every week, and every patch is a map for someone else.</p>
+    <p>The numbers behind that feeling are from 2026:</p>
+    <ul>
+      <li>Anthropic gave its Mythos Preview model only public patches. The first working Firefox exploit came less than an hour after the patch; Windows kernel exploits cost about $2,000 each. Its summary: "The binding constraint to N-days is now just a few thousand dollars and API access" <a href="#s5">[5]</a>.</li>
+      <li>Elastic found the bug behind a Windows patch "within minutes" of reading the diff with an LLM; the exploit took hours instead of weeks <a href="#s6">[6]</a>.</li>
+      <li>Google counted 141 exploited vulnerabilities from January to August 2026, more than in all of 2025, and puts the growth in "the rapid weaponization of n-days" <a href="#s7">[7]</a>. Mandiant's estimate for the mean time-to-exploit in 2025 is minus seven days <a href="#s8">[8]</a>, and Rapid7 measured a median of five days from publication to the CISA list of exploited bugs <a href="#s9">[9]</a>.</li>
+    </ul>
+    <p>Finding a new bug with AI works, but it is a search, and search costs. XBOW spent about $40,000 on API calls for a six-day campaign that produced a full Chrome exploit chain <a href="#s10">[10]</a>. Anthropic's OpenBSD campaign took about 1,000 runs for under $20,000, and the FFmpeg one about $10,000 <a href="#s11">[11]</a>. A patch removes the search: it says where to look.</p>
+    <figure class="fig-wide">
+      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d0t d0d">
+  <title id="d0t">What it costs: finding new bugs against exploiting patched ones</title>
+  <desc id="d0d">Log scale. Finding new bugs, per campaign: XBOW Chrome full chain about 40,000 dollars; Anthropic OpenBSD about 1,000 runs under 20,000 dollars; Anthropic FFmpeg about 10,000 dollars. Exploiting a patched bug, per exploit: Windows kernel exploit about 2,000 dollars; Linux kernel n-day under 1,000 dollars; Windows crash proof of concept about 120 dollars.</desc>
+  <line class="ln-s" x1="330.0" y1="56" x2="330.0" y2="300"/><text x="330.0" y="320" text-anchor="middle" class="t-s">$100</text><line class="ln-s" x1="463.3" y1="56" x2="463.3" y2="300"/><text x="463.3" y="320" text-anchor="middle" class="t-s">$1k</text><line class="ln-s" x1="596.7" y1="56" x2="596.7" y2="300"/><text x="596.7" y="320" text-anchor="middle" class="t-s">$10k</text><line class="ln-s" x1="730.0" y1="56" x2="730.0" y2="300"/><text x="730.0" y="320" text-anchor="middle" class="t-s">$100k</text>
+  <text x="20" y="46" class="t-h">Find new bugs · per campaign</text>
+  <text x="20" y="194" class="t-h">Exploit a patched bug · per exploit</text>
+  <text x="20" y="87">XBOW · Chrome full chain, 6 days</text><rect class="bx-i" x="330" y="72" width="346.9" height="22"/><text x="684.9" y="88" class="t-s">~$40k</text>
+  <text x="20" y="119">Anthropic · OpenBSD, ~1,000 runs</text><rect class="bx-i" x="330" y="104" width="306.8" height="22"/><text x="644.8" y="120" class="t-s"><$20k</text>
+  <text x="20" y="151">Anthropic · FFmpeg, some 100 runs</text><rect class="bx-i" x="330" y="136" width="266.7" height="22"/><text x="604.7" y="152" class="t-s">~$10k</text>
+  <text x="20" y="227">Windows kernel exploit, from patch</text><rect class="bx-s" x="330" y="212" width="173.5" height="22"/><text x="511.5" y="228" class="t-s">~$2k</text>
+  <text x="20" y="259">Linux kernel n-day exploit</text><rect class="bx-s" x="330" y="244" width="133.3" height="22"/><text x="471.3" y="260" class="t-s"><$1k</text>
+  <text x="20" y="291">Windows crash PoC, from patch</text><rect class="bx-s" x="330" y="276" width="10.6" height="22"/><text x="348.6" y="292" class="t-s">~$120</text>
+  
+</svg>
+      <figcaption>Fig. 1 · Cost per result on a log scale, from <a href="#s5">[5]</a>, <a href="#s10">[10]</a> and <a href="#s11">[11]</a>. Discovery is a whole campaign, the n-day rows are one exploit each. Some discovery is cheaper: depthfirst reports 21 FFmpeg bugs for about $1,000 <a href="#s12">[12]</a>.</figcaption>
+    </figure>
     <p>The idea of this post: ship the fix days early, but encrypted. Teams download it, plan the change and stage it. At patch day T, only the key is published, and everyone applies the fix at the same moment. Nobody could diff it before T. The goal is not to win the race against the attackers, but to stop it from being a race.</p>
     <figure class="fig-wide">
       <svg class="dg" viewBox="0 0 760 300" role="img" aria-labelledby="d1t d1d">
@@ -97,14 +121,12 @@
   <line class="ln" x1="420" y1="268" x2="420" y2="280"/><text x="420" y="292" text-anchor="middle" class="t-s">T</text>
   <line class="ln" x1="700" y1="270" x2="700" y2="278"/><text x="700" y="292" text-anchor="middle" class="t-s">+7 days</text>
 </svg>
-      <figcaption>Fig. 1 · With a pre-load, the attacker and the defenders start at the same moment, and hosts that update by themselves are done within minutes.</figcaption>
+      <figcaption>Fig. 2 · With a pre-load, the attacker and the defenders start at the same moment, and hosts that update by themselves are done within minutes.</figcaption>
     </figure>
 
     <h2 id="games">What games do</h2>
-    <p>Games have done this for years. A pre-load puts the game on your disk before launch, and it opens only at release.</p>
-    <p>GTA V shows both sides. In August 2013 the European PlayStation Store let pre-order customers download the game weeks early. People mined the files and story details leaked. Sony apologised and moved the pre-load to four days before launch <a href="#s3">[3]</a>. Reports disagree on whether those files were encrypted at all. For the PC version in April 2015, the pre-load arrived a week early and stayed encrypted until launch; at launch many players then waited at "unpacking" while the game decrypted <a href="#s4">[4]</a>.</p>
-    <p>GTA Online does something else. Content for later updates ships early inside earlier updates, and Rockstar switches it on from the server ("tunables"). The archives are encrypted, but the keys are in the game itself, so dataminers list unreleased cars and missions weeks ahead <a href="#s5">[5]</a>. A server switch decides <em>when</em> content is available. It does not keep the content <em>secret</em> while the key sits on the device.</p>
-    <p>Steam is closer to what a patch needs. As SteamDB describes it, each depot is encrypted with AES-256 and one key that is the same for every user, so mirrors and caches can serve the same bytes, and only owners can ask for the key <a href="#s6">[6]</a>. A pre-loaded game stays shut until the publisher releases it. Consoles had the opposite failure: in 2020 players started Cyberpunk 2077 early on Xbox by setting the console to a New Zealand time zone <a href="#s7">[7]</a>.</p>
+    <p>Games have done this for years. A pre-load puts the game on your disk before launch, and it opens only at release. Steam, as SteamDB describes it, encrypts each depot with AES-256 and one key that is the same for every user, so mirrors and caches can serve the same bytes, and only owners can ask for the key <a href="#s13">[13]</a>.</p>
+    <p>GTA Online shows the other side. Rockstar ships the content of later updates early inside earlier ones and switches it on from its servers. The files are encrypted, but the keys are in the game, so dataminers read upcoming cars and missions long before they go live. A server switch decides <em>when</em> something is available. It does not keep it <em>secret</em> while the key sits on the device.</p>
     <p>For patches, four rules follow:</p>
     <ul>
       <li>The key is not on the device before T.</li>
@@ -114,11 +136,11 @@
     </ul>
 
     <h2 id="design">A design</h2>
-    <p>The update frameworks TUF and Uptane already solve most of this: an offline root key, roles with narrow rights, thresholds of signatures, and protection against rollback and freeze attacks <a href="#s8">[8]</a><a href="#s9">[9]</a>. Uptane even names patch diffing as an attacker goal and can carry wrapped keys for encrypted images. What they lack is a key that is published later. The design adds one role for that.</p>
+    <p>The update frameworks TUF and Uptane already solve most of this: an offline root key, roles with narrow rights, thresholds of signatures, and protection against rollback and freeze attacks <a href="#s14">[14]</a><a href="#s15">[15]</a>. Uptane even names patch diffing as an attacker goal and can carry wrapped keys for encrypted images. What they lack is a key that is published later. The design adds one role for that.</p>
     <ol>
       <li><b>Pre-load.</b> Days before T, the vendor publishes the encrypted bundle as an ordinary target. The manifest with its hash, size and release time is signed by the targets role under the organisation's root key. Clients download it and check the hash.</li>
       <li><b>Release.</b> At T a separate release role signs a short statement: patch id, hash of the ciphertext, the 32-byte content key. A threshold, say two of three officers, keeps one person from releasing early.</li>
-      <li><b>Log.</b> Every statement goes into an append-only transparency log, so a release before T, or a different key for some customers, can be seen <a href="#s10">[10]</a>.</li>
+      <li><b>Log.</b> Every statement goes into an append-only transparency log, so a release before T, or a different key for some customers, can be seen <a href="#s16">[16]</a>.</li>
       <li><b>Install.</b> The client checks the statement and the log entry, decrypts with the key and installs.</li>
     </ol>
     <figure class="fig-wide">
@@ -168,7 +190,7 @@
   <text x="576" y="326">5 decrypt, install</text>
   <text x="590" y="342" class="t-s">AES-GCM, key from 4</text>
 </svg>
-      <figcaption>Fig. 2 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
+      <figcaption>Fig. 3 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
     </figure>
     <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
     <div class="code">
@@ -180,11 +202,11 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <p>The signature covers the hash of the ciphertext from the manifest, so the key belongs to exactly one bundle. With a threshold, each officer adds a signature of 64 bytes.</p>
 
     <h2 id="beacon">Without a key server</h2>
-    <p>The key server is a single point that can fail, be forced to wait, or leak. Timelock encryption removes it. With tlock, data is encrypted to a future round of the drand beacon, run by the League of Entropy. At that round the network publishes a threshold BLS signature, and that signature is the decryption key <a href="#s11">[11]</a>. On drand's quicknet a round is 3 seconds and a signature is 48 bytes.</p>
-    <p>The vendor can wrap the content key twice: once for its own key server, once to the drand round at T. Then the patch opens at T even if the vendor's server is down. Two limits: the vendor still creates the key, so an insider can still leak it; and a timelocked key cannot be pulled back if the fix turns out to be broken. Kudelski Security used tlock for a vulnerability report in 2023; a date bug encrypted it to the first round, so it could be read at once <a href="#s12">[12]</a>. Test the round number.</p>
+    <p>The key server is a single point that can fail, be forced to wait, or leak. Timelock encryption removes it. With tlock, data is encrypted to a future round of the drand beacon, run by the League of Entropy. At that round the network publishes a threshold BLS signature, and that signature is the decryption key <a href="#s17">[17]</a>. On drand's quicknet a round is 3 seconds and a signature is 48 bytes.</p>
+    <p>The vendor can wrap the content key twice: once for its own key server, once to the drand round at T. Then the patch opens at T even if the vendor's server is down. Two limits: the vendor still creates the key, so an insider can still leak it; and a timelocked key cannot be pulled back if the fix turns out to be broken. Test the round number before you publish: a bug there opens the patch at once.</p>
 
     <h2 id="airgap">Air-gapped sites</h2>
-    <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand signature, which the site checks against a pinned group key <a href="#s11">[11]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s13">[13]</a>, or can be typed in as hex.</p>
+    <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand signature, which the site checks against a pinned group key <a href="#s17">[17]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s18">[18]</a>, or can be typed in as hex.</p>
     <figure class="fig-wide">
       <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d3t d3d">
   <title id="d3t">Updates for an air-gapped site</title>
@@ -221,13 +243,13 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="376" y="264" class="t-s">48 B drand sig</text>
   <line class="ln" x1="210" y1="232" x2="255.0" y2="232.0"/><polygon class="arr" points="260,232 252.6,235.1 252.6,228.9"/><line class="ln" x1="498" y1="232" x2="543.0" y2="232.0"/><polygon class="arr" points="548,232 540.6,235.1 540.6,228.9"/>
 </svg>
-      <figcaption>Fig. 3 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
+      <figcaption>Fig. 4 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
     </figure>
     <p>A verified drand signature also proves that the time is at least the time of its round. A site without a trusted clock gets a lower bound for free.</p>
 
     <h2 id="oss">Open source in private</h2>
-    <p>For an open-source project the hard part comes earlier: the fix has to be written and tested without showing it. Today a fix often leaks before the release. The Log4Shell fix sat in a public pull request for more than a week before the advisory <a href="#s18">[18]</a>, and researchers built Chrome exploits from public V8 fixes before they reached stable Chrome <a href="#s19">[19]</a>.</p>
-    <p>The tools for private work are thin. On GitHub, maintainers can open a temporary private fork from a security advisory. Only invited collaborators see it, but no CI runs there, branch protection does not apply, and merging and publishing are manual steps <a href="#s20">[20]</a>. On GitLab a merge request in a public project is public; private work needs a separate private fork <a href="#s21">[21]</a>. Distributions coordinate by mail: the linux-distros list allows an embargo of at most 14 days <a href="#s22">[22]</a>, and the kernel security team holds a fix back for at most 7 days, 14 in exceptional cases <a href="#s23">[23]</a>. The Git project comes closest to the idea of this post: it prepares signed tags in a private repository, sends a bundle to the distributions less than a week ahead, and pushes in public on release day <a href="#s24">[24]</a>. That bundle is plaintext and goes to a few.</p>
+    <p>For an open-source project the hard part comes earlier: the fix has to be written and tested without showing it. Today it often shows. In the Keycloak case the fixed builds were tagged a week before the CVE, the port to the main branch was a public pull request whose title does not mention security, and the proof of concept was written from that diff <a href="#s3">[3]</a><a href="#s4">[4]</a>.</p>
+    <p>The tools for private work are thin. On GitHub, maintainers can open a temporary private fork from a security advisory. Only invited collaborators see it, but no CI runs there, branch protection does not apply, and merging and publishing are manual steps <a href="#s19">[19]</a>. On GitLab a merge request in a public project is public; private work needs a separate private fork <a href="#s20">[20]</a>. Distributions coordinate by mail: the linux-distros list allows an embargo of at most 14 days <a href="#s21">[21]</a>, and the kernel security team holds a fix back for at most 7 days, 14 in exceptional cases <a href="#s22">[22]</a>. The Git project comes closest to the idea of this post: it prepares signed tags in a private repository, sends a bundle to the distributions less than a week ahead, and pushes in public on release day <a href="#s23">[23]</a>. That bundle is plaintext and goes to a few.</p>
     <figure class="fig-wide">
       <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d4t d4d">
   <title id="d4t">A security fix in an open-source project, from private work to release</title>
@@ -255,7 +277,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <line class="ln" x1="505" y1="298" x2="505" y2="310"/><text x="505" y="322" text-anchor="middle" class="t-s">T</text>
   <line class="ln" x1="709" y1="300" x2="709" y2="308"/><text x="709" y="322" text-anchor="middle" class="t-s">+6 days</text>
 </svg>
-      <figcaption>Fig. 4 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
+      <figcaption>Fig. 5 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
     </figure>
     <p>To make this normal, a forge such as GitHub or GitLab would need:</p>
     <ul>
@@ -264,54 +286,54 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li>Release artefacts that are published encrypted and signed, with the key held by the forge.</li>
       <li>One action that, at T, publishes the key, merges the branch and publishes the advisory.</li>
     </ul>
-    <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, as the 2012 leak from Microsoft's partner programme showed <a href="#s15">[15]</a>, so the list stays short and the embargo stays short.</p>
+    <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, so the list stays short and the embargo stays short.</p>
 
     <h2 id="limits">What it does not fix</h2>
     <ul>
       <li><b>Diffing after T.</b> At T the patch is public. The scheme moves the start line; it does not stop the race. It helps the hosts that install at once.</li>
-      <li><b>Zero-days.</b> Mandiant counted 70&nbsp;% of exploited vulnerabilities in 2023 as zero-days <a href="#s2">[2]</a>. No patch, nothing to encrypt.</li>
-      <li><b>Slow patching.</b> Organisations take weeks to install fixes <a href="#s14">[14]</a>. A host that waits a month gains nothing.</li>
+      <li><b>Zero-days.</b> They are still 62&nbsp;% of the vulnerabilities Google saw exploited in 2026 <a href="#s7">[7]</a>. No patch, nothing to encrypt. The scheme is for the part that grows fastest.</li>
+      <li><b>Slow patching.</b> A host that waits a month after T gains nothing. The scheme helps those who can apply at T.</li>
       <li><b>Metadata.</b> File names and sizes still show which component changed. Padding and fixed bundles help, at a cost in bandwidth.</li>
       <li><b>Insiders.</b> The key exists before T. Create it late, keep it in an HSM, split it between people.</li>
-      <li><b>Testing.</b> Companies test patches before they roll them out. Most can stage before T but test only after it. Early keys for a few, as embargo lists do today, bring back the risk of leaks <a href="#s15">[15]</a>.</li>
+      <li><b>Testing.</b> Companies test patches before they roll them out. Most can stage before T but test only after it. Early keys for a few, as embargo lists do today, bring back the risk of leaks.</li>
     </ul>
 
     <h2 id="prior">Prior art and patents</h2>
-    <p>The idea is not new. The 2008 paper on patch-based exploits reportedly proposed encrypted patches with a key released later <a href="#s16">[16]</a>. Steam pre-loaded Half-Life 2 in 2004, and time-lock puzzles go back to 1996. I found no vendor that does this for security patches today.</p>
-    <p>Microsoft has patents on it. This is my reading, not legal advice, and I could not open the claims or the fee records:</p>
+    <p>The idea is not new, and the patents below show it. I found no vendor that does it for security patches today.</p>
+    <p>Microsoft has patents on it. They are old, but they matter now. This is my reading, not legal advice, and I could not open the claims or the fee records:</p>
     <ul>
-      <li><b>US 7,876,902</b>, "Distribution of encrypted software update to reduce attack window", priority date 31 August 2006, granted 2011 <a href="#s17">[17]</a>. A US patent runs 20 years from filing, so it ends around 31 August 2026, later only if the patent office added term for its own delays, and earlier if a maintenance fee was not paid. Its description releases the key once enough machines have the update or after testing, not at a fixed time.</li>
+      <li><b>US 7,876,902</b>, "Distribution of encrypted software update to reduce attack window", priority date 31 August 2006, granted 2011 <a href="#s24">[24]</a>. A US patent runs 20 years from filing, so it ends around 31 August 2026, later only if the patent office added term for its own delays, and earlier if a maintenance fee was not paid. Its description releases the key once enough machines have the update or after testing, not at a fixed time.</li>
       <li><b>US 8,171,560</b>, "Secure content pre-distribution to designated systems", granted 2012 <a href="#s25">[25]</a>. It is closer to this post: content goes out encrypted and the key follows at a set moment. Filed around 2008, it may run to about 2028.</li>
     </ul>
     <p>So the design can be built from public parts, and a fixed release time, a transparency log and a public beacon in place of a vendor key server differ from the first patent's description. Whether that is enough depends on the claims. Anyone who wants to ship this as a product in the US before about 2028 should have a patent attorney read both patents first.</p>
-    <p>My conclusion: the tool is cheap for an update system that already signs its metadata. It does not stop patch diffing, but it lets every team have the fix ready when it becomes public, and that turns patch day from a race into a date.</p>
+    <p>My conclusion: the tool is cheap for an update system that already signs its metadata. It does not stop patch diffing, and with LLMs diffing is now cheap. It lets every team have the fix ready when it becomes public, and that turns patch day from a race into a date.</p>
 
     <h2 id="sources">Sources</h2>
     <ol class="refs">
-      <li id="s1">D. Brumley, P. Poosankam, D. Song, J. Zheng: <a href="https://bitblaze.cs.berkeley.edu/papers/apeg.pdf" rel="noopener">Automatic Patch-Based Exploit Generation is Possible</a>, IEEE S&amp;P 2008.</li>
-      <li id="s2">Mandiant: <a href="https://cloud.google.com/blog/topics/threat-intelligence/time-to-exploit-trends-2023" rel="noopener">How Low Can You Go? An Analysis of 2023 Time-to-Exploit Trends</a>, 2024.</li>
-      <li id="s3">GameSpot: <a href="https://www.gamespot.com/articles/sony-apologizes-to-rockstar-over-gtav-pre-load-leak/1100-6413639/" rel="noopener">Sony apologizes to Rockstar over GTA V pre-load leak</a>, 2013.</li>
-      <li id="s4">Attack of the Fanboy: <a href="https://attackofthefanboy.com/news/gta-v-launches-on-pc-download-and-unpacking-issues-plague-many/" rel="noopener">GTA V launches on PC, download and unpacking issues</a>, 2015.</li>
-      <li id="s5">Rockstar Intel: <a href="https://rockstarintel.com/gta-online-los-santos-drug-wars-all-unreleased-vehicles/" rel="noopener">Los Santos Drug Wars: all unreleased vehicles</a>, 2022; the RPF archive keys in community tools, for example <a href="https://docs.rs/crate/rage-rpf/0.5.1/source/src/archive.rs" rel="noopener">rage-rpf</a>.</li>
-      <li id="s6">SteamDB: <a href="https://steamdb.info/blog/steam-download-system" rel="noopener">How the Steam download system works</a>.</li>
-      <li id="s7">GamesRadar: <a href="https://www.gamesradar.com/uk/you-can-play-cyberpunk-2077-early-on-xbox-by-swapping-time-zones/" rel="noopener">You can play Cyberpunk 2077 early on Xbox by swapping time zones</a>, 2020.</li>
-      <li id="s8"><a href="https://github.com/theupdateframework/specification/blob/master/tuf-spec.md" rel="noopener">The Update Framework specification</a>.</li>
-      <li id="s9"><a href="https://github.com/uptane/uptane-standard/blob/master/uptane-standard.md" rel="noopener">Uptane Standard</a>.</li>
-      <li id="s10"><a href="https://datatracker.ietf.org/doc/html/rfc9162" rel="noopener">RFC 9162: Certificate Transparency 2.0</a>; <a href="https://docs.sigstore.dev/logging/overview/" rel="noopener">Sigstore Rekor</a>.</li>
-      <li id="s11">drand: <a href="https://github.com/drand/tlock" rel="noopener">tlock</a>; N. Gailly, K. Melissaris, Y. Romailler: <a href="https://eprint.iacr.org/2023/189" rel="noopener">tlock: practical timelock encryption from threshold BLS</a>, 2023.</li>
-      <li id="s12">Kudelski Security: <a href="https://research.kudelskisecurity.com/2023/01/09/announcing-a-timelocked-responsible-disclosure/" rel="noopener">Announcing a timelocked responsible disclosure</a> and <a href="https://research.kudelskisecurity.com/2023/02/22/releasing-a-timelocked-responsible-disclosure/" rel="noopener">Releasing a timelocked responsible disclosure</a>, 2023.</li>
-      <li id="s13">ISO/IEC 18004 capacity table, summarised by <a href="https://www.keyence.com/ss/products/auto_id/barcode_lecture/basic_2d/qr/" rel="noopener">Keyence</a>.</li>
-      <li id="s14">Qualys: <a href="https://www.qualys.com/2023-trurisk-research-report" rel="noopener">2023 TruRisk Research Report</a>.</li>
-      <li id="s15">The Register: <a href="https://www.theregister.com/2012/03/16/microsoft_rdp_flaw_release/" rel="noopener">Microsoft RDP exploit code leak</a>, 2012.</li>
-      <li id="s16">The Register: <a href="https://www.theregister.com/2008/04/25/patches_security_risk/?page=2" rel="noopener">Patches pose security risk</a>, 2008.</li>
-      <li id="s17">Microsoft: <a href="https://patents.google.com/patent/US7876902" rel="noopener">US 7,876,902 B2</a>, Distribution of encrypted software update to reduce attack window.</li>
-      <li id="s18">P. Freitag: <a href="https://www.petefreitag.com/blog/log4shell-vulnerability/" rel="noopener">Log4Shell timeline</a>; Dark Reading: <a href="https://www.darkreading.com/cyberattacks-data-breaches/log4j-proved-public-disclosure-still-helps-attackers" rel="noopener">Log4j proved public disclosure still helps attackers</a>.</li>
-      <li id="s19">Exodus Intelligence: <a href="https://blog.exodusintel.com/2019/09/09/patch-gapping-chrome/" rel="noopener">Patch-gapping Google Chrome</a>, 2019.</li>
-      <li id="s20">GitHub Docs: <a href="https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork" rel="noopener">Collaborating in a temporary private fork</a>.</li>
-      <li id="s21">GitLab Docs: <a href="https://docs.gitlab.com/user/project/merge_requests/confidential/" rel="noopener">Confidential merge requests</a>.</li>
-      <li id="s22">Openwall: <a href="https://oss-security.openwall.org/wiki/mailing-lists/distros" rel="noopener">The distros mailing list</a>.</li>
-      <li id="s23">Linux kernel: <a href="https://docs.kernel.org/process/security-bugs.html" rel="noopener">Security bugs</a>.</li>
-      <li id="s24">Git: <a href="https://github.com/git/git/blob/master/Documentation/howto/coordinate-embargoed-releases.adoc" rel="noopener">How to coordinate embargoed releases</a>.</li>
+      <li id="s1">Keycloak: <a href="https://github.com/keycloak/keycloak/tags" rel="noopener">tags</a> and <a href="https://github.com/keycloak/keycloak/security/advisories" rel="noopener">security advisories</a>, Nov 2025 to Nov 2026; <a href="https://github.com/advisories?query=keycloak+published%3A%3E%3D2025-11-10" rel="noopener">GitHub Advisory Database</a>.</li>
+      <li id="s2">The Hacker News: <a href="https://thehackernews.com/2026/08/critical-keycloak-password-reset-flaw.html" rel="noopener">Critical Keycloak password reset flaw</a>, Aug 2026; <a href="https://www.sentinelone.com/vulnerability-database/cve-2026-18963/" rel="noopener">SentinelOne: CVE-2026-18963</a>.</li>
+      <li id="s3">Keycloak: <a href="https://github.com/keycloak/keycloak/pull/51844" rel="noopener">pull request #51844</a>, Aug 2026.</li>
+      <li id="s4"><a href="https://github.com/Red-Darkin/CVE-2026-18963-keycloak" rel="noopener">Red-Darkin/CVE-2026-18963-keycloak</a>, 2026.</li>
+      <li id="s5">Anthropic: <a href="https://anthropic.com/research/n-days" rel="noopener">N-days to N-hours</a>, Jun 2026.</li>
+      <li id="s6">Elastic Security Labs: <a href="https://www.elastic.co/security-labs/blog/patch-diff-to-system" rel="noopener">Patch diff to SYSTEM</a>, Mar 2026.</li>
+      <li id="s7">Google Threat Intelligence: <a href="https://cloud.google.com/blog/topics/threat-intelligence/vulnerability-discovery-and-exploitation-trends-in-the-ai-era" rel="noopener">Vulnerability discovery and exploitation trends in the AI era</a>, Sep 2026.</li>
+      <li id="s8">Mandiant: <a href="https://cloud.google.com/blog/topics/threat-intelligence/m-trends-2026/" rel="noopener">M-Trends 2026</a>, Mar 2026.</li>
+      <li id="s9">Rapid7: <a href="https://www.rapid7.com/about/press-releases/rapid7-2026-global-threat-landscape-report-shows-exploited-high-and-critical-severity-vulnerabilities-surged-105-as-attack-timelines-collapsed" rel="noopener">2026 Global Threat Landscape Report</a>, 2026.</li>
+      <li id="s10">CSO Online: <a href="https://www.csoonline.com/article/4236599/xbow-spent-40k-on-ai-and-cracked-google-chrome-wide-open-2.html" rel="noopener">XBOW spent $40k on AI and cracked Google Chrome</a>, Oct 2026.</li>
+      <li id="s11">Anthropic: <a href="https://anthropic.com/research/mythos-preview" rel="noopener">Mythos Preview</a>, Apr 2026.</li>
+      <li id="s12">depthfirst: <a href="https://depthfirst.com/research/21-zero-days-in-ffmpeg" rel="noopener">21 zero-days in FFmpeg</a>, Jun 2026.</li>
+      <li id="s13">SteamDB: <a href="https://steamdb.info/blog/steam-download-system" rel="noopener">How the Steam download system works</a>.</li>
+      <li id="s14"><a href="https://github.com/theupdateframework/specification/blob/master/tuf-spec.md" rel="noopener">The Update Framework specification</a>.</li>
+      <li id="s15"><a href="https://github.com/uptane/uptane-standard/blob/master/uptane-standard.md" rel="noopener">Uptane Standard</a>.</li>
+      <li id="s16"><a href="https://datatracker.ietf.org/doc/html/rfc9162" rel="noopener">RFC 9162: Certificate Transparency 2.0</a>; <a href="https://docs.sigstore.dev/logging/overview/" rel="noopener">Sigstore Rekor</a>.</li>
+      <li id="s17">drand: <a href="https://github.com/drand/tlock" rel="noopener">tlock</a>.</li>
+      <li id="s18">ISO/IEC 18004 capacity table, summarised by <a href="https://www.keyence.com/ss/products/auto_id/barcode_lecture/basic_2d/qr/" rel="noopener">Keyence</a>.</li>
+      <li id="s19">GitHub Docs: <a href="https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork" rel="noopener">Collaborating in a temporary private fork</a>.</li>
+      <li id="s20">GitLab Docs: <a href="https://docs.gitlab.com/user/project/merge_requests/confidential/" rel="noopener">Confidential merge requests</a>.</li>
+      <li id="s21">Openwall: <a href="https://oss-security.openwall.org/wiki/mailing-lists/distros" rel="noopener">The distros mailing list</a>.</li>
+      <li id="s22">Linux kernel: <a href="https://docs.kernel.org/process/security-bugs.html" rel="noopener">Security bugs</a>.</li>
+      <li id="s23">Git: <a href="https://github.com/git/git/blob/master/Documentation/howto/coordinate-embargoed-releases.adoc" rel="noopener">How to coordinate embargoed releases</a>.</li>
+      <li id="s24">Microsoft: <a href="https://patents.google.com/patent/US7876902" rel="noopener">US 7,876,902 B2</a>, Distribution of encrypted software update to reduce attack window.</li>
       <li id="s25">Microsoft: <a href="https://patents.google.com/patent/US8171560" rel="noopener">US 8,171,560 B2</a>, Secure content pre-distribution to designated systems.</li>
     </ol>
   </article>
