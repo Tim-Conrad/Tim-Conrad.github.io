@@ -4,6 +4,7 @@
   build.py kb                       frames + overlays        -> <work>/kleinbahn-reel.mp4
   build.py wz <path to wortzauber>  recordings + overlays    -> <work>/wortzauber-reel.mp4
   build.py publish                  both reels               -> assets/projects/ (web video, poster, four stills and a gameplay loop each)
+  build.py timeline                 timeline frames          -> assets/projects/timeline/ (one small clip and poster per stage)
 
 <work> is $REELS_WORK, or .reels/ in the site repo. The timeline of each reel is the `parts` list of kb() and wz().
 """
@@ -166,9 +167,26 @@ def loops(out, marks):
         print(g, 'loop', os.path.getsize(f'{out}/{g}-loop.webp') // 1024, 'KB')
 
 
+def timeline():
+    """The clips of the development timeline (tools/reels/timeline.mjs): 640x360, silent, a poster at 60 %."""
+    out = os.path.join(SITE, 'assets', 'projects', 'timeline')
+    os.makedirs(out, exist_ok=True)
+    for d in sorted(glob.glob(f'{S}/tl/kb/*/')):
+        sid = os.path.basename(d.rstrip('/'))
+        frames = sorted(glob.glob(d + '*.jpg'))
+        if len(frames) < 24:
+            print('skip', sid, len(frames), 'frames'); continue
+        name = f'{out}/kleinbahn-{sid}'
+        run(['-framerate', '24', '-i', d + '%04d.jpg', '-vf', 'scale=640:360:flags=lanczos,format=yuv420p', '-c:v', 'libx264',
+             '-crf', '27', '-preset', 'slow', '-movflags', '+faststart', '-an', name + '.mp4'])
+        run(['-i', frames[int(len(frames) * 0.6)], '-vf', 'scale=640:360:flags=lanczos', '-q:v', '4', name + '.jpg'])
+        print(sid, os.path.getsize(name + '.mp4') // 1024, 'KB')
+
+
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
     if cmd == 'kb': kb()
     elif cmd == 'wz': wz(os.path.abspath(sys.argv[2]))
     elif cmd == 'publish': publish()
+    elif cmd == 'timeline': timeline()
     else: print(__doc__)
