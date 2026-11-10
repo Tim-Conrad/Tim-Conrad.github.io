@@ -60,6 +60,7 @@
       <li><a href="#taken">The name is taken</a></li>
       <li><a href="#change">Models change under me</a></li>
       <li><a href="#feel">Feel is a bad meter</a></li>
+      <li><a href="#measure">Measure without extra work</a></li>
       <li><a href="#agree">Agree first, then build</a></li>
       <li><a href="#sharp">Stay able to do it</a></li>
       <li><a href="#loop">When a new model ships</a></li>
@@ -260,8 +261,64 @@
       </svg>
       <figcaption>Fig. 3 · METR, early 2025: what 16 developers expected, what they believed afterwards, and what was measured <a href="#s7">[7]</a>.</figcaption>
     </figure>
-    <p>They expected to be 24% faster. Measured, they took 19% longer. Afterwards they still believed they had been 20% faster. METR has changed the study since: in February 2026 it called its newer numbers weak evidence, in part because developers no longer wanted to work without AI for the test <a href="#s8">[8]</a>. So the 19% is not the point for me. The gap between what people felt and what was measured is.</p>
-    <p>A rule follows from that: write down what a task took and what went wrong, not how fast it felt.</p>
+    <p>They expected to be 24% faster. Measured, they took 19% longer. Afterwards they still believed they had been 20% faster.</p>
+    <p>The number itself has aged. METR now marks the 2025 post as out of date. Its update from February 2026 says developers are likely faster than in early 2025, but calls its own data very weak evidence: many developers no longer wanted to work without AI for the test, and the timing breaks down when one person runs several agents at once <a href="#s8">[8]</a>. Other studies found gains: 21% faster in a randomised trial at Google, with a wide margin of error <a href="#s15">[15]</a>, and 26% more completed tasks in three field experiments with code completion <a href="#s16">[16]</a>.</p>
+    <p>What stays is the gap between felt and measured. In November 2026 METR put the speed-up of work at Anthropic at about 2x on well-specified tasks, and treated the staff's own estimate of about 12x as very loose evidence <a href="#s14">[14]</a>. People misjudge their own time in general: they plan too optimistically, and looking at how long past tasks took is what corrects it <a href="#s19">[19]</a>.</p>
+
+    <h2 id="measure">Measure without extra work</h2>
+    <p>I will not log my tasks by hand. I know myself. So the numbers have to come from what is already recorded.</p>
+    <p>Claude Code keeps a transcript of every session on my machine. Besides the conversation, it records the model of each answer, the time of each step, the tokens and their price, and the lines changed <a href="#s18">[18]</a>. Git adds the other half: Claude's commits carry the model's name in a trailer, and a revert or a fix two days later says something about the code that came before it.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 290" role="img" aria-labelledby="f7t f7d">
+        <title id="f7t">Two records that already exist, and four questions they answer</title>
+        <desc id="f7d">The session transcripts hold the model, time, tokens, cost, lines changed and corrections. Git holds the model trailer, reverts and fixes. The transcripts answer: am I faster, is the result good, how fast does the budget go, what keeps failing. Git also answers whether the result is good.</desc>
+        <rect class="bx-s" x="20" y="60" width="200" height="70"/>
+        <text x="36" y="88" class="t-h">Session transcripts</text>
+        <text x="36" y="108" class="t-s">model, time, tokens, cost,</text>
+        <text x="36" y="122" class="t-s">lines, corrections</text>
+        <rect class="bx-s" x="20" y="170" width="200" height="70"/>
+        <text x="36" y="198" class="t-h">Git history</text>
+        <text x="36" y="218" class="t-s">model trailer, reverts,</text>
+        <text x="36" y="232" class="t-s">fixes two days later</text>
+        <path class="ln draw d1" pathLength="1" d="M220 95 C320 95 320 52 410 52"/>
+        <path class="ln draw d2" pathLength="1" d="M220 95 C320 95 320 117 410 117"/>
+        <path class="ln draw d3" pathLength="1" d="M220 95 C320 95 320 182 410 182"/>
+        <path class="ln draw d4" pathLength="1" d="M220 95 C320 95 320 247 410 247"/>
+        <path class="ln draw d5" pathLength="1" d="M220 205 C320 205 320 117 410 117"/>
+        <g data-pick="fast" class="pop d2"><rect class="bx" x="410" y="30" width="250" height="44"/><text x="426" y="57">Am I faster?</text></g>
+        <g data-pick="good" class="pop d3"><rect class="bx" x="410" y="95" width="250" height="44"/><text x="426" y="122">Is the result good?</text></g>
+        <g data-pick="budget" class="pop d4"><rect class="bx" x="410" y="160" width="250" height="44"/><text x="426" y="187">How fast does the budget go?</text></g>
+        <g data-pick="fail" class="pop d5"><rect class="bx" x="410" y="225" width="250" height="44"/><text x="426" y="252">What keeps failing?</text></g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 390" role="img" aria-labelledby="f7nt">
+        <title id="f7nt">Two records that already exist, session transcripts and git history, and four questions they answer</title>
+        <rect class="bx-s" x="10" y="10" width="165" height="64"/>
+        <text x="22" y="36" class="t-h">Transcripts</text>
+        <text x="22" y="56" class="t-s">time, tokens, cost</text>
+        <rect class="bx-s" x="185" y="10" width="165" height="64"/>
+        <text x="197" y="36" class="t-h">Git history</text>
+        <text x="197" y="56" class="t-s">reverts, fixes</text>
+        <path class="ln draw d1" pathLength="1" d="M30 74 V360"/>
+        <path class="ln draw d2" pathLength="1" d="M30 150 H50 M30 220 H50 M30 290 H50 M30 360 H50"/>
+        <path class="ln draw d3" pathLength="1" d="M267 74 V100 H345 V220 H330"/>
+        <g data-pick="fast" class="pop d2"><rect class="bx" x="50" y="130" width="280" height="40"/><text x="66" y="155">Am I faster?</text></g>
+        <g data-pick="good" class="pop d3"><rect class="bx" x="50" y="200" width="280" height="40"/><text x="66" y="225">Is the result good?</text></g>
+        <g data-pick="budget" class="pop d4"><rect class="bx" x="50" y="270" width="280" height="40"/><text x="66" y="295">How fast does the budget go?</text></g>
+        <g data-pick="fail" class="pop d5"><rect class="bx" x="50" y="340" width="280" height="40"/><text x="66" y="365">What keeps failing?</text></g>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Tap a question to see what answers it.</p>
+        <ul class="pick__list">
+          <li data-k="fast"><b>Am I faster?</b> Active time per session and per month, and the lines changed, for each model. Activity, not value.</li>
+          <li data-k="good"><b>Is the result good?</b> Reverts, and fix commits on code that another commit changed two days before, counted against the model that wrote that code. Plus how often I had to correct the model in the session.</li>
+          <li data-k="budget"><b>How fast does the budget go?</b> Tokens and their price per month and model, and the price per active hour. On a subscription nothing is billed per token, but the number shows how fast the limits go.</li>
+          <li data-k="fail"><b>What keeps failing?</b> Corrections per ten prompts, interrupts, denied tools and tool errors, and a list of the sessions that went worst. Each of those gets one line on what went wrong: an unclear task, a missing or ignored rule, or a mistake of the model.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 7 · What is already recorded, and what it can answer.</figcaption>
+    </figure>
+    <p>The last question matters most to me. The sessions where I corrected the model most often are a small, personal eval set. After a month they say more about a model than my impression of it, and after a model switch they show whether my instructions still work.</p>
+    <p>I wrote this down as a skill for my agent, with a script that reads the transcripts and git and prints a report per month and model. The numbers are signs of activity and friction, not of value, and METR treats counts like these as an upper bound for the real gain <a href="#s17">[17]</a>. They are good for one thing: comparing my own months and models with each other. One catch: Claude Code deletes transcripts after 30 days unless I raise that limit <a href="#s18">[18]</a>.</p>
 
     <h2 id="agree">Agree first, then build</h2>
     <p>The best habit I picked up this year comes from Matt Pocock's skills for coding agents <a href="#s9">[9]</a>. Before any code, <code>/grill-me</code> makes the model ask me questions, round after round, until every branch of the plan is decided. Then a spec, then tickets, then the build test first, then a review. A small change skips the spec and the tickets.</p>
@@ -438,14 +495,14 @@
     <p>This is the first version. It is short on purpose: a rule I do not follow is worse than no rule.</p>
     <div class="code">
       <div class="code__bar"><span>HUMANS.md</span><button class="copy" type="button" data-copy="humans-file">copy</button></div>
-<pre id="humans-file" class="wrap-lines"><code><span class="l"># HUMANS.md</span><span class="l"> </span><span class="l">How I work with language models. The agent has its CLAUDE.md. This file is for me.</span><span class="l"> </span><span class="l">Version 0, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/</span><span class="l"> </span><span class="l">## With every model</span><span class="l"> </span><span class="l">1. Agree first. For anything bigger than a small fix, let the model ask me questions until the plan is clear. Keep the words we agreed on.</span><span class="l">2. Say what I want done. &quot;Change it&quot;, not &quot;can you suggest&quot;. Give the reason for a rule instead of capital letters.</span><span class="l">3. Give context as to a new colleague: the goal, the limits, where to look.</span><span class="l">4. Read what I merge. Tests show that it works. Reading shows that I understand it.</span><span class="l">5. When something breaks, look first myself, or ask for the explanation with the fix.</span><span class="l">6. Do some small work without a model, regularly, so I can still do it.</span><span class="l">7. Measure instead of feel. Note what a task took and what went wrong.</span><span class="l"> </span><span class="l">## When a new model ships</span><span class="l"> </span><span class="l">1. Read the model card and the vendor&#x27;s prompting guide. Look for what the model does more, what it does less, and what to remove.</span><span class="l">2. Do one real task without my CLAUDE.md files. Compare.</span><span class="l">3. Remove what the new model no longer needs: capitals, old workarounds, extra checks.</span><span class="l">4. Write one entry in the log.</span><span class="l">5. Two weeks later, read the entry again. Was it right?</span><span class="l"> </span><span class="l">## Log</span><span class="l"> </span><span class="l">| Date | Model | What the guide says changed | What I change | Two weeks later |</span><span class="l">| --- | --- | --- | --- | --- |</span><span class="l">| 10 Nov 2026 | Claude Opus 5.5 | Newer Claude models follow instructions literally, check their own work, and react strongly to words like CRITICAL | To try: remove capitals and &quot;verify each step&quot; lines from my CLAUDE.md files | |</span></code></pre>
+<pre id="humans-file" class="wrap-lines"><code><span class="l"># HUMANS.md</span><span class="l"> </span><span class="l">How I work with language models. The agent has its CLAUDE.md. This file is for me.</span><span class="l"> </span><span class="l">Version 0.1, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/</span><span class="l"> </span><span class="l">## With every model</span><span class="l"> </span><span class="l">1. Agree first. For anything bigger than a small fix, let the model ask me questions until the plan is clear. Keep the words we agreed on.</span><span class="l">2. Say what I want done. &quot;Change it&quot;, not &quot;can you suggest&quot;. Give the reason for a rule instead of capital letters.</span><span class="l">3. Give context as to a new colleague: the goal, the limits, where to look.</span><span class="l">4. Read what I merge. Tests show that it works. Reading shows that I understand it.</span><span class="l">5. When something breaks, look first myself, or ask for the explanation with the fix.</span><span class="l">6. Do some small work without a model, regularly, so I can still do it.</span><span class="l">7. Measure instead of feel, without extra work: once a month and after each model switch, read the report from the session transcripts and git. Look at the sessions that went worst.</span><span class="l"> </span><span class="l">## When a new model ships</span><span class="l"> </span><span class="l">1. Read the model card and the vendor&#x27;s prompting guide. Look for what the model does more, what it does less, and what to remove.</span><span class="l">2. Do one real task without my CLAUDE.md files. Compare.</span><span class="l">3. Remove what the new model no longer needs: capitals, old workarounds, extra checks.</span><span class="l">4. Write one entry in the log.</span><span class="l">5. Two weeks later, read the entry again. Was it right?</span><span class="l"> </span><span class="l">## Log</span><span class="l"> </span><span class="l">| Date | Model | What the guide says changed | What I change | Two weeks later |</span><span class="l">| --- | --- | --- | --- | --- |</span><span class="l">| 10 Nov 2026 | Claude Opus 5.5 | Newer Claude models follow instructions literally, check their own work, and react strongly to words like CRITICAL | To try: remove capitals and &quot;verify each step&quot; lines from my CLAUDE.md files | |</span></code></pre>
     </div>
     <div class="btn-row"><a class="btn" href="/thoughts/humans-md/HUMANS.md" download>Download HUMANS.md</a></div>
 
     <h2 id="open">Open questions</h2>
     <ul>
       <li>Should the agent read part of it too? "Ask me questions before a big change" could live in <code>CLAUDE.md</code> as well.</li>
-      <li>How do I measure a task without making every task slower?</li>
+      <li>Which of the numbers in the monthly report really track what I care about? I will know after a few months of it.</li>
       <li>Models now come out every few months. Is one log entry per model too much, or too little?</li>
       <li>Could a skill read a new model card and propose the changes to my <code>CLAUDE.md</code> files for me?</li>
     </ul>
@@ -471,10 +528,18 @@
       <li id="s11">Hao-Ping Lee and others: <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2025/01/lee_2025_ai_critical_thinking_survey.pdf" rel="noopener">The impact of generative AI on critical thinking</a>, CHI 2025.</li>
       <li id="s12">Lisanne Bainbridge: <a href="https://doi.org/10.1016/0005-1098(83)90046-8" rel="noopener">Ironies of automation</a>, Automatica, 1983.</li>
       <li id="s13">Auste Simkute and others: <a href="https://arxiv.org/abs/2402.11364" rel="noopener">Ironies of generative AI</a>, 2024.</li>
+      <li id="s14">METR: <a href="https://metr.org/blog/2026-11-05-anthropic-ai-rd-acceleration-assessment/" rel="noopener">Anthropic AI R&amp;D acceleration assessment</a>, Nov 2026.</li>
+      <li id="s15">Elise Paradis and others, Google: <a href="https://arxiv.org/abs/2410.12944" rel="noopener">How much does AI impact development speed? An enterprise-based randomized controlled trial</a>, ICSE 2025.</li>
+      <li id="s16">Kevin Zheyuan Cui and others: <a href="https://doi.org/10.1287/mnsc.2025.00535" rel="noopener">The effects of generative AI on high-skilled work: evidence from three field experiments with software developers</a>, Management Science.</li>
+      <li id="s17">METR: <a href="https://metr.org/notes/2026-02-17-exploratory-transcript-analysis-for-estimating-time-savings-from-coding-agents/" rel="noopener">Exploratory transcript analysis for estimating time savings from coding agents</a>, Feb 2026.</li>
+      <li id="s18">Claude Code docs: <a href="https://code.claude.com/docs/en/costs" rel="noopener">costs and usage</a>, <a href="https://code.claude.com/docs/en/claude-directory" rel="noopener">the .claude directory</a>, <a href="https://code.claude.com/docs/en/monitoring-usage" rel="noopener">monitoring</a>, read Nov 2026.</li>
+      <li id="s19">Roger Buehler, Dale Griffin, Michael Ross: Exploring the "planning fallacy", Journal of Personality and Social Psychology 67, 1994.</li>
     </ol>
+    <p class="refs">The METR pages <a href="#s8">[8]</a>, <a href="#s14">[14]</a> and <a href="#s17">[17]</a>, and the studies <a href="#s15">[15]</a> and <a href="#s16">[16]</a>, I could read only through summaries, not the full text. The numbers are as those summaries give them.</p>
 
     <h2 id="revisions">Revisions</h2>
     <ul class="dates">
+      <li><time datetime="2026-11-10">10 Nov 2026</time><span>Measurement: METR's 2025 numbers are out of date; added later studies, the gap between felt and measured, and a section on measuring from what Claude Code and git already record. Rule 7 of the file changed to match.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
     </ul>
 

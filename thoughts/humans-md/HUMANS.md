@@ -2,7 +2,7 @@
 
 How I work with language models. The agent has its CLAUDE.md. This file is for me.
 
-Version 0, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/
+Version 0.1, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/
 
 ## With every model
 
@@ -12,7 +12,7 @@ Version 0, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-
 4. Read what I merge. Tests show that it works. Reading shows that I understand it.
 5. When something breaks, look first myself, or ask for the explanation with the fix.
 6. Do some small work without a model, regularly, so I can still do it.
-7. Measure instead of feel. Note what a task took and what went wrong.
+7. Measure instead of feel, without extra work: once a month and after each model switch, read the report from the session transcripts and git. Look at the sessions that went worst.
 
 ## When a new model ships
 
