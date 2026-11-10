@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>When a small decision model can replace an LLM call · Tim Conrad</title>
+<meta name="description" content="Amazon replaced Claude Sonnet 4.6 with a small decision model for labelling tickets. How a decision model works, where the 98% saving comes from, what the post leaves out, and when the same move fits security work.">
+<link rel="canonical" href="https://t7d.dev/thoughts/decision-models/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="When a small decision model can replace an LLM call">
+<meta property="og:description" content="Amazon replaced Claude Sonnet 4.6 with a small decision model for labelling tickets. How a decision model works, where the 98% saving comes from, what the post leaves out, and when the same move fits security work.">
+<meta property="og:url" content="https://t7d.dev/thoughts/decision-models/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-10">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/thoughts/">← Thoughts</a>
+  <h1>When a small decision model can replace an LLM call</h1>
+  <p class="sub">Amazon replaced Claude Sonnet 4.6 with a small model that only picks from a list. What that kind of model is, where the saving comes from, and when the same move fits security work.</p>
+  <p class="label">Tim Conrad · Language models · Cost · Security work</p>
+  <dl class="tmeta">
+    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#itch">One model for everything</a></li>
+      <li><a href="#amazon">What Amazon did</a></li>
+      <li><a href="#decider">A model that only picks</a></li>
+      <li><a href="#cost">Where the 98% comes from</a></li>
+      <li><a href="#gaps">What the post leaves out</a></li>
+      <li><a href="#security">Security work has the same shape</a></li>
+      <li><a href="#steps">How I would try it</a></li>
+      <li><a href="#check">When to think about a specialised model</a></li>
+      <li><a href="#open">Open questions</a></li>
+      <li><a href="#start">Starting points</a></li>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#revisions">Revisions</a></li>
+      <li><a href="#feedback">Feedback</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="itch">One model for everything</h2>
+    <p>I use whatever model the session runs, and that is a frontier model, for everything. I rarely think about what one call costs. A large model that writes a paragraph of reasoning before it picks one word from a list of twenty is the same model that refactors a codebase.</p>
+    <p>A post from the Strands Agents team made me stop on that. Two Amazon engineers replaced Claude Sonnet 4.6 with a small decision model in a ticketing system, at a fraction of the cost <a href="#s1">[1]</a>. My question is how this applies to my own field, security work: at what point should I think about a specialised model, and how would I try one in practice?</p>
+
+    <h2 id="amazon">What Amazon did</h2>
+    <p>The post is by Carr Onstott, Mehul Jaiswal and the Strands Agents team, from 9 November 2026 <a href="#s1">[1]</a>. In short:</p>
+    <ul>
+      <li>The job: put each ticket of a large internal ticketing system into one of 20 categories. Tickets are customer escalations, capacity requests, automated alarms, security findings and more.</li>
+      <li>Before: Sonnet 4.6 with a long system prompt, writing JSON and reasoning for every ticket.</li>
+      <li>After: Strands Decider, built on Gemma 4 E4B, on a SageMaker instance with one A10G GPU. They first tried the 2B model; the E4B did clearly better on their test set.</li>
+      <li>They rewrote the 20 label descriptions as one- or two-sentence criteria, added a "none" option, and tuned how confident the model must be before a label is applied.</li>
+      <li>Results per ticket: 6,724 tokens became 2,010; the average call took 897 ms instead of 4,215 ms; the cost fell from $0.0222 to about $0.0005 at list prices. They call it 98% less, and "millions of dollars" a year.</li>
+    </ul>
+    <p>They are clear about the limits. It worked because the task is "a closed choice from a known catalog, the volume is high, and the latency of the old path mattered." If the labels need explanation text, the catalog changes weekly, or the context does not fit into a few thousand tokens, "a decision model probably can't replace the LLM's job" <a href="#s1">[1]</a>.</p>
+
+    <h2 id="decider">A model that only picks</h2>
+    <p>A decision model does not write text. It gets a state and a question with options, and returns a probability for each option and a confidence <a href="#s1">[1]</a>. The repository describes it as a model between an LLM and a classic classifier: more general than a classifier, and faster than an LLM <a href="#s2">[2]</a>. It answers three kinds of question: pick one option, yes or no, and a rating on a scale.</p>
+    <figure class="fig-wide anim" data-switch="LLM|Decision model">
+      <svg class="dg dg-w" viewBox="0 0 680 300" role="img" aria-labelledby="f1t f1d">
+        <title id="f1t">The same ticket, labelled by an LLM and by a decision model</title>
+        <desc id="f1d">A ticket goes into a model. The LLM reads a long prompt of 6,554 tokens and writes JSON with a label and its reasoning: 170 tokens out, 4.2 seconds on average. The decision model reads a short prompt of 2,009 tokens and returns one probability per label. The top label, capacity request at 0.71, is above the threshold, so it is applied: 1 token out, 0.9 seconds on average. The token and time figures are Amazon's; the probabilities are an example.</desc>
+        <text x="20" y="28" class="t-h">Ticket</text>
+        <rect class="bx" x="20" y="44" width="180" height="200"/>
+        <rect class="bx-s" x="36" y="64" width="140" height="10"/>
+        <rect class="bx-s" x="36" y="86" width="110" height="10"/>
+        <rect class="bx-s" x="36" y="108" width="130" height="10"/>
+        <rect class="bx-s" x="36" y="130" width="90" height="10"/>
+        <rect class="bx-s" x="36" y="152" width="120" height="10"/>
+        <text x="36" y="228" class="t-s">comments, alarms, logs</text>
+        <line class="ln" x1="208" y1="144" x2="228" y2="144"/><polygon class="arr" points="228,139 236,144 228,149"/>
+
+        <rect class="bx" x="240" y="104" width="150" height="80"/>
+        <text x="256" y="134" class="t-h w-a">LLM</text>
+        <text x="256" y="134" class="t-h w-b">Decision model</text>
+        <text x="256" y="160" class="t-s w-a">6,554 tokens in</text>
+        <text x="256" y="160" class="t-s w-b">2,009 tokens in</text>
+        <line class="ln" x1="398" y1="144" x2="418" y2="144"/><polygon class="arr" points="418,139 426,144 418,149"/>
+
+        <text x="430" y="28" class="t-h w-a">Writes an answer</text>
+        <text x="430" y="28" class="t-h w-b">Returns probabilities</text>
+        <rect class="bx" x="430" y="44" width="230" height="200"/>
+        <g class="w-a">
+          <text x="446" y="72" class="t-s">{"label": "capacity",</text>
+          <text x="446" y="94" class="t-s"> "reasoning": "The ticket</text>
+          <text x="446" y="116" class="t-s">  asks for more hosts in</text>
+          <text x="446" y="138" class="t-s">  one region before a</text>
+          <text x="446" y="160" class="t-s">  launch, so ..."}</text>
+          <text x="446" y="228" class="t-s">170 tokens out · 4.2 s</text>
+        </g>
+        <g class="w-b">
+          <text x="446" y="72" class="t-s">capacity</text>
+          <rect class="bx-i" x="540" y="62" width="78" height="12"/>
+          <text x="446" y="98" class="t-s">alarm</text>
+          <rect class="bx-s" x="540" y="88" width="15" height="12"/>
+          <text x="446" y="124" class="t-s">security</text>
+          <rect class="bx-s" x="540" y="114" width="9" height="12"/>
+          <text x="446" y="150" class="t-s">escalation</text>
+          <rect class="bx-s" x="540" y="140" width="6" height="12"/>
+          <text x="446" y="176" class="t-s">none</text>
+          <rect class="bx-s" x="540" y="166" width="2" height="12"/>
+          <line class="ln-s" x1="606" y1="54" x2="606" y2="186"/>
+          <text x="606" y="202" text-anchor="middle" class="t-s">threshold</text>
+          <text x="446" y="228" class="t-s">1 token out · 0.9 s</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 520" role="img" aria-labelledby="f1nt">
+        <title id="f1nt">The same ticket, labelled by an LLM and by a decision model</title>
+        <text x="10" y="24" class="t-h">Ticket</text>
+        <rect class="bx" x="10" y="38" width="340" height="70"/>
+        <rect class="bx-s" x="26" y="56" width="200" height="10"/>
+        <rect class="bx-s" x="26" y="78" width="150" height="10"/>
+        <line class="ln" x1="180" y1="112" x2="180" y2="126"/><polygon class="arr" points="175,126 180,134 185,126"/>
+        <rect class="bx" x="10" y="138" width="340" height="66"/>
+        <text x="26" y="166" class="t-h w-a">LLM</text>
+        <text x="26" y="166" class="t-h w-b">Decision model</text>
+        <text x="26" y="190" class="t-s w-a">6,554 tokens in</text>
+        <text x="26" y="190" class="t-s w-b">2,009 tokens in</text>
+        <line class="ln" x1="180" y1="208" x2="180" y2="222"/><polygon class="arr" points="175,222 180,230 185,222"/>
+        <rect class="bx" x="10" y="234" width="340" height="270"/>
+        <g class="w-a">
+          <text x="26" y="264" class="t-s">{"label": "capacity",</text>
+          <text x="26" y="288" class="t-s"> "reasoning": "The ticket asks</text>
+          <text x="26" y="312" class="t-s">  for more hosts in one region</text>
+          <text x="26" y="336" class="t-s">  before a launch, so ..."}</text>
+          <text x="26" y="484" class="t-s">170 tokens out · 4.2 s</text>
+        </g>
+        <g class="w-b">
+          <text x="26" y="264" class="t-s">capacity</text>
+          <rect class="bx-i" x="130" y="254" width="142" height="12"/>
+          <text x="26" y="294" class="t-s">alarm</text>
+          <rect class="bx-s" x="130" y="284" width="28" height="12"/>
+          <text x="26" y="324" class="t-s">security</text>
+          <rect class="bx-s" x="130" y="314" width="16" height="12"/>
+          <text x="26" y="354" class="t-s">escalation</text>
+          <rect class="bx-s" x="130" y="344" width="10" height="12"/>
+          <text x="26" y="384" class="t-s">none</text>
+          <rect class="bx-s" x="130" y="374" width="4" height="12"/>
+          <line class="ln-s" x1="250" y1="244" x2="250" y2="394"/>
+          <text x="250" y="414" text-anchor="middle" class="t-s">threshold</text>
+          <text x="26" y="484" class="t-s">1 token out · 0.9 s</text>
+        </g>
+      </svg>
+      <figcaption>Fig. 1 · An LLM writes an answer; a decision model returns one probability per label, and the top one counts only above a threshold. Tokens and times are Amazon's averages <a href="#s1">[1]</a>; the probabilities are an example.</figcaption>
+    </figure>
+    <p>The part I find most useful is the confidence. The repository says that on short classification tasks the model has never seen, answers with a confidence of 0.9 or more are right about 95% of the time; below that, "confirm or ask a person" <a href="#s2">[2]</a>. Its own evaluation adds a limit: on unseen tasks, picking an option is useful behind such a gate, rating on a scale is not <a href="#s3">[3]</a>. That gives a clean split: the model handles the clear cases, and the unclear ones go to a person or to the large model.</p>
+    <p>The repository is under Apache 2.0, and the models are open, from 2B to 26B parameters. The README says they can serve on a CPU <a href="#s2">[2]</a>. So I can try one on my own machine, without sending anything to a provider.</p>
+
+    <h2 id="cost">Where the 98% comes from</h2>
+    <p>The tokens per ticket fell by 70%, not 98%. The output went from 170 tokens to 1, and the prompt got shorter. Most of the saving comes from a change in what is paid for: Sonnet is paid per token, the decision model per instance-hour, $1.408 at list price <a href="#s1">[1]</a>.</p>
+    <p>An instance costs the same whether it is busy or idle. Amazon says one instance can handle about 5,600 tickets an hour, $250 per million tickets at full use, and about $500 with headroom for bursts <a href="#s1">[1]</a>. At their volume that is cheap. At mine it may not be.</p>
+    <p>My own sum, from the post's numbers: one instance-hour costs as much as about 63 Sonnet tickets ($1.408 ÷ $0.0222). Below about 63 tickets an hour, or about 46,000 a month, an instance that runs all the time costs more than calling Sonnet. That leaves out the engineering time, and the cheaper ways to run the model: on a CPU, on hardware I already have, or with an endpoint that scales to zero.</p>
+    <p>So the real lesson for a small setup is not the price. It is speed, keeping the data in house, and a confidence I can act on.</p>
+
+    <h2 id="gaps">What the post leaves out</h2>
+    <ul>
+      <li><b>No accuracy figure.</b> The post says the E4B was "beating production Sonnet" on a separate set of tickets, and "performed just as well". It gives no number, no count of disagreements, and does not say how each disagreement was judged, or by whom.</li>
+      <li><b>Two latencies.</b> One request took about 640 ms; the average call took 897 ms. The second probably includes the network and queueing, but the post does not say.</li>
+      <li><b>A vendor post.</b> It is written by the team that makes the model, on its own site, and ends with a link to the repository. That does not make it wrong. It means I want my own numbers before I believe "just as well".</li>
+    </ul>
+    <p>One detail I trust more because it does not sell anything: the order of the keys in the JSON input changed the answer. The same content with keys in a different order moved the probabilities by up to 0.19. They now sort the keys on every request <a href="#s1">[1]</a>.</p>
+
+    <h2 id="security">Security work has the same shape</h2>
+    <p>Much of security work is the same task as Amazon's: a closed choice from a known list, many times a day. For example:</p>
+    <ul>
+      <li>Scanner findings: real, false positive, or needs a person.</li>
+      <li>Alerts: which team, and how urgent.</li>
+      <li>Incoming vulnerability reports: which type from a fixed list, and is it a duplicate of a known report.</li>
+      <li>Dependency updates: does this change touch code we run, yes or no.</li>
+    </ul>
+    <p>Two things are different from ticket labels.</p>
+    <p>First, the data. Findings, alerts and reports are often exactly what should not leave the house. A small open model on my own hardware keeps them there. For many teams that matters more than the cost.</p>
+    <p>Second, the input is written by someone who may be an attacker. A report or a log line can carry text meant to steer the model. A decision model cannot write text or call tools, so the worst an injected instruction can do is move the label. That is still bad when the label decides that a finding is ignored. So the threshold should lean one way: when the model is unsure, the item goes to a person, and "dismiss" needs a higher confidence than "look at this".</p>
+
+    <h2 id="steps">How I would try it</h2>
+    <p>These steps are my reading of what Amazon did, put in order for a small setup. I have not done them yet.</p>
+    <ol>
+      <li><b>Find one decision.</b> One question with a fixed list of answers that an LLM or a person answers many times. Not a task that needs text.</li>
+      <li><b>Write the list down.</b> Each answer as one or two sentences that say when it applies. Add "none". This is useful even if no model ever reads it.</li>
+      <li><b>Collect a test set.</b> A few hundred real items with the answer I checked myself. Take them from the logs of the current way, not from memory.</li>
+      <li><b>Try the small model locally.</b> Install it, ask the question on the test set, and count how often it agrees with my answers at each confidence.</li>
+      <li><b>Pick the threshold.</b> Above it, the label is applied. Below it, the item goes to a person or to the large model. Set it per answer when one mistake costs more than another.</li>
+      <li><b>Run both on real traffic.</b> The old way decides, the new model only answers, and every disagreement gets read. Amazon calls this switch the part they would copy "regardless of model" <a href="#s1">[1]</a>.</li>
+      <li><b>Switch with a setting.</b> Keep the way back one change away. Amazon's took 45 seconds <a href="#s1">[1]</a>.</li>
+      <li><b>Keep the input the same.</b> Sort the keys, fix the format, and test again when the list of answers changes.</li>
+    </ol>
+
+    <h2 id="check">When to think about a specialised model</h2>
+    <p>My checklist, for now. The more of these are true, the more a decision model is worth a try:</p>
+    <ul>
+      <li>The answer is one item from a fixed list, a yes or no, or a rating. Nobody reads the reasoning.</li>
+      <li>The list changes rarely, not every week.</li>
+      <li>What the model needs to see fits into a few thousand tokens.</li>
+      <li>The same question comes up often: hundreds of times a day, not ten.</li>
+      <li>Speed matters, or the data should not leave the house.</li>
+      <li>I can say what each mistake costs, and route the unsure cases to a person.</li>
+      <li>I can run the old and the new way side by side before I switch.</li>
+    </ul>
+    <p>If only the first one is true, the frontier model stays. It is the default for a reason: it is the right tool for the tasks that are not a list.</p>
+
+    <h2 id="open">Open questions</h2>
+    <ul>
+      <li>How did Amazon judge the disagreements between Sonnet and the decision model, and how many were there?</li>
+      <li>How well does a 2B model do on German text, and on the jargon of security findings?</li>
+      <li>How easy is it to move the label with text written into a report or a log line? That needs a test of its own.</li>
+      <li>Below what volume is a CPU on my own hardware good enough, and how long does a call take there?</li>
+    </ul>
+
+    <h2 id="start">Starting points</h2>
+    <ul>
+      <li>Carr Onstott, Mehul Jaiswal, Strands Agents team: "Amazon saves millions by replacing Sonnet 4.6 with Strands Decider", 9 Nov 2026. It claims that a small decision model labels tickets as well as Sonnet 4.6 at 98% less cost <a href="#s1">[1]</a>.</li>
+      <li>My own question: how can I apply this in security work, and when should I think about a specialised model?</li>
+    </ul>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">Carr Onstott, Mehul Jaiswal, Strands Agents team: <a href="https://strandsagents.com/blog/amazon-saves-millions-replacing-sonnet-with-strands-decider/" rel="noopener">Amazon saves millions by replacing Sonnet 4.6 with Strands Decider</a>, 9 Nov 2026.</li>
+      <li id="s2">strands-labs: <a href="https://github.com/strands-labs/strands-decider" rel="noopener">strands-decider</a>, README, read at the commit of 6 Nov 2026.</li>
+      <li id="s3">strands-labs: <a href="https://github.com/strands-labs/strands-decider/blob/main/evaluation/results.md" rel="noopener">strands-decider, evaluation/results.md</a>, read at the commit of 6 Nov 2026.</li>
+    </ol>
+    <p class="refs">I read the post <a href="#s1">[1]</a> as text copied from the page. The numbers are as the post gives them, at us-east-1 list prices.</p>
+
+    <h2 id="revisions">Revisions</h2>
+    <ul class="dates">
+      <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
+    </ul>
+
+    <h2 id="feedback">Feedback</h2>
+    <p>Not shared yet. When I post about it, what people answer goes here, with what it changed.</p>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>

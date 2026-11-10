@@ -47,7 +47,7 @@
   </div>
   <dl class="tb">
     <div><dt>Site</dt><dd>t7d.dev</dd></div>
-    <div><dt>Contents</dt><dd>2 games, 2 thoughts, 1 write-up</dd></div>
+    <div><dt>Contents</dt><dd>2 games, 3 thoughts, 1 write-up</dd></div>
     <div class="wide"><dt>Contact</dt><dd><a href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">LinkedIn</a>, <a href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a></dd></div>
     <div class="wide"><dt>PGP fingerprint</dt><dd class="mono">A886 6CB1 6B07 9685 5615<br>74B2 A91D ABBE C996 7390</dd></div>
   </dl>
@@ -93,6 +93,30 @@
       <p>Ideas I am working through. Each one keeps its sources and a list of what changed. All of them are on <a href="/thoughts/">the list</a>, and in the <a href="/thoughts/feed.xml">RSS feed</a>.</p>
     </div>
     <div class="projects">
+      <a class="proj" href="/thoughts/decision-models/">
+        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · language models · cost</p>
+        <h3>When a small decision model can replace an LLM call</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="dm-t">
+          <title id="dm-t">An LLM writes an answer; a decision model returns one bar per label and picks the top one above a threshold.</title>
+          <rect class="bx" x="40" y="56" width="250" height="220"/>
+          <text x="62" y="98" class="t-l">LLM</text>
+          <rect class="bx-s" x="62" y="122" width="200" height="12"/>
+          <rect class="bx-s" x="62" y="148" width="180" height="12"/>
+          <rect class="bx-s" x="62" y="174" width="206" height="12"/>
+          <rect class="bx-s" x="62" y="200" width="150" height="12"/>
+          <rect class="bx-s" x="62" y="226" width="170" height="12"/>
+          <text x="40" y="316" class="t-l t-m">writes an answer</text>
+          <rect class="bx" x="350" y="56" width="250" height="220"/>
+          <rect class="bx-i" x="372" y="96" width="170" height="20"/>
+          <rect class="bx-s" x="372" y="134" width="40" height="20"/>
+          <rect class="bx-s" x="372" y="172" width="24" height="20"/>
+          <rect class="bx-s" x="372" y="210" width="12" height="20"/>
+          <line class="ln-s" x1="512" y1="80" x2="512" y2="250"/>
+          <text x="350" y="316" class="t-l t-m">picks from a list</text>
+        </svg>
+        <p>Amazon replaced Claude Sonnet 4.6 with a small model that only picks from a list. Where the saving comes from, and when the same move fits security work.</p>
+        <span class="proj__more">Read the thought</span>
+      </a>
       <a class="proj" href="/thoughts/humans-md/">
         <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · working with models</p>
         <h3>A humans.md for working with models</h3>
@@ -115,27 +139,6 @@
           <text x="350" y="316" class="t-l t-m">for me</text>
         </svg>
         <p>My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. A first version of that file, and what changes when a new model ships.</p>
-        <span class="proj__more">Read the thought</span>
-      </a>
-      <a class="proj" href="/thoughts/encrypted-patches/">
-        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · updates · key release</p>
-        <h3>Encrypted patches, unlocked on patch day</h3>
-        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="bc-t">
-          <title id="bc-t">The encrypted bundle reaches every host before patch day; at T only the key is published.</title>
-          <text x="400" y="50" text-anchor="middle" class="t-h t-l">patch day T</text>
-          <line class="ln-s" x1="400" y1="66" x2="400" y2="300"/>
-          <rect class="bx-s" x="40" y="92" width="360" height="56"/>
-          <text x="60" y="128" class="t-l">encrypted bundle</text>
-          <rect class="bx-i" x="400" y="92" width="36" height="56"/>
-          <text x="452" y="128" class="t-l t-m">install</text>
-          <rect class="bx-i" x="406" y="176" width="220" height="56"/>
-          <text x="422" y="212" class="t-l t-inv">diff → exploit</text>
-          <g transform="translate(388,256)"><circle class="bx" cx="10" cy="10" r="9"/><line class="ln-t" x1="19" y1="10" x2="44" y2="10"/><line class="ln-t" x1="36" y1="10" x2="36" y2="18"/></g>
-          <text x="376" y="274" text-anchor="end" class="t-l t-m">key at T</text>
-          <line class="ln" x1="40" y1="314" x2="600" y2="314"/>
-          <text x="40" y="344" class="t-l t-m">−7 days</text>
-        </svg>
-        <p>Ship a security fix early as ciphertext and publish the key on patch day, so teams can stage it and apply it together. Games, a design with signed keys, open source in private, and the patents.</p>
         <span class="proj__more">Read the thought</span>
       </a>
     </div>
