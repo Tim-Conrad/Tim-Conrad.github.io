@@ -56,9 +56,11 @@ Then:
 - Add the URL to `sitemap.xml`.
 - A file to download (like `HUMANS.md`) goes into the thought's folder.
 
-## 6. Check and ship
+## 6. Check, let Tim review, ship
 
-Follow CLAUDE.md: serve the site (`python3 -m http.server 8000`), look at 1440, 390 and 320 px in both themes, no sideways scroll, no console errors. Click every switch and pick, and look at the narrow drawings. Commit on the session's branch and push. `tools/ship.sh <pr>` merges and checks the live site when Tim asks for it.
+Follow CLAUDE.md: serve the site (`python3 -m http.server 8000`), look at 1440, 390 and 320 px in both themes, no sideways scroll, no console errors. Click every switch and pick, and look at the narrow drawings. Commit on the session's branch and push.
+
+Tim reviews a thought as a Claude artifact before it is published: run `python3 tools/preview-artifact.py thoughts/<slug> <scratchpad>/preview-<slug>` and publish its `index.html` with the Artifact tool, with every other printed file in `files`. After a change, build again and publish the same `file_path`, so the link stays the same. Comments on the artifact reach the session: answer them and change the page in the repository, never only in the bundle. `tools/ship.sh <pr>` merges and checks the live site when Tim asks for it.
 
 ## Revising a thought
 

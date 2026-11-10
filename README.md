@@ -39,6 +39,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` | Hosting and crawler files |
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |
 | `tools/ship.sh` | Merges a PR, waits for the deploy and checks t7d.dev |
+| `tools/preview-artifact.py` | Builds a page as a Claude artifact bundle, for a review before it is published |
 | `tools/reels/` | Scripts that film the two games and cut the reels |
 | `tools/review/`, `docker-compose.dev.yml` | The review site: live reload and a note tab. Never published |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |

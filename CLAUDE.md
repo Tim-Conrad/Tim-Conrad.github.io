@@ -35,6 +35,8 @@ Read `DESIGN.md` first. After the change, serve the site and look at it at 1440,
 
 <important if="you need to preview or check the site">
 Run `python3 -m http.server 8000` in the repository root and open `http://localhost:8000`. All paths are absolute, so serve from the root.
+
+For Tim's review, show a changed page as a Claude artifact, not a local server: `python3 tools/preview-artifact.py <page folder> <out dir>` builds the bundle; publish `<out dir>/index.html` with the Artifact tool and pass the other printed files in `files`. Republish the same `file_path` after each change, so the link stays.
 </important>
 
 <important if="Tim mentions notes or feedback on the site, .review/notes/ has files, or you change tools/review/ or docker-compose.dev.yml">
