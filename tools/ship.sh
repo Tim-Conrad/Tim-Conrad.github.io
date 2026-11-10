@@ -6,8 +6,8 @@
 # 2. This clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked files.
 # 3. The workflow "Deploy to gh-pages" of the merge commit must pass. It writes the commit "Deploy <sha>" on gh-pages,
 #    unless the PR changed no site file (tools/, docs): then the script ends here.
-# 4. The GitHub Pages build of that gh-pages commit must pass.
-# 5. Each site file of the PR must be on t7d.dev with the same content (a query string skips the CDN cache).
+# 4. The GitHub Pages build of the newest gh-pages commit must pass (a later deploy contains this one).
+# 5. Each site file of the PR must be on t7d.dev as it is on gh-pages now (a query string skips the CDN cache).
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")/.."
 REPO=Tim-Conrad/Tim-Conrad.github.io
@@ -52,7 +52,7 @@ echo "   $(git log --oneline -1)"
 echo "== deploy of ${sha:0:7}"
 wait_run deploy.yml "$sha"
 git fetch -q origin gh-pages
-if [ "$(git log -1 --format=%s origin/gh-pages)" != "Deploy ${sha:0:7}" ]; then
+if ! git log origin/gh-pages --format=%s | grep -qx "Deploy ${sha:0:7}"; then
   echo "   the PR changed no site file: t7d.dev stays as it is"
   exit 0
 fi
@@ -63,7 +63,7 @@ read -r -a site <<<"$(sed -n 's/^SITE=(\(.*\))$/\1/p' tools/deploy.sh)"
 mapfile -t files < <(git diff --name-only --diff-filter=AM "$sha^1" "$sha" -- "${site[@]}")
 bad=0
 for f in "${files[@]}"; do
-  want=$(git show "$sha:$f" | sha256sum | cut -c1-64) got=""
+  want=$(git show "origin/gh-pages:$f" 2>/dev/null | sha256sum | cut -c1-64) got=""
   for _ in 1 2 3 4 5 6; do
     got=$(curl -sfL "$SITE_URL/$f?ship=${sha:0:7}" | sha256sum | cut -c1-64) || true
     [ "$got" = "$want" ] && break
