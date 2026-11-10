@@ -70,4 +70,5 @@ Use the skill `updating-game-timeline`. It films one clip per PR at that PR's me
 
 <important if="you deploy, or the live site does not show a change">
 See "Deploy" in `README.md`. GitHub Pages serves the `gh-pages` branch at https://t7d.dev.
+To merge a PR and see it live, run `tools/ship.sh <pr>` after the checks of the change. If it stops, read its last line, fix the cause, and run it again: a merged PR skips the merge.
 </important>
