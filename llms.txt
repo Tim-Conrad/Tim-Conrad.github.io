@@ -1,18 +1,19 @@
 # Tim Conrad
 
-> Tim Conrad does security research and builds browser games. This site holds two games, a blog, the CVE-2022-46166 write-up and a PGP key.
+> Tim Conrad does security research and builds browser games. This site holds two games, his thoughts, the CVE-2022-46166 write-up and a PGP key.
 
 The personal site of Tim Conrad: security research and browser games. Plain HTML with no tracking.
-Each page below is a normal HTML page; the blog has an RSS feed.
+Each page below is a normal HTML page; the thoughts have an RSS feed.
 
 ## Games
 
 - [Kleinbahn](https://t7d.dev/projects/kleinbahn/): Kleinbahn is an island-railway sandbox in three.js, built for phones.
 - [Wortzauber](https://t7d.dev/projects/wortzauber/): Wortzauber is a letter-tracing word game for children, in German and English.
 
-## Blog
+## Thoughts
 
-- [Encrypted patches, unlocked on patch day](https://t7d.dev/blog/encrypted-patches/): Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.
+- [Encrypted patches, unlocked on patch day](https://t7d.dev/thoughts/encrypted-patches/): Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.
+- [A humans.md for working with models](https://t7d.dev/thoughts/humans-md/): My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. Who already uses the name humans.md, how models change under you, why feel is a bad meter, and a first version of the file, with a log for each new model.
 
 ## Research
 
@@ -20,6 +21,6 @@ Each page below is a normal HTML page; the blog has an RSS feed.
 
 ## Optional
 
-- [Blog RSS feed](https://t7d.dev/blog/feed.xml): every post, newest first
+- [Thoughts RSS feed](https://t7d.dev/thoughts/feed.xml): every thought, newest first
 - [PGP key](https://t7d.dev/key.asc): RSA 3072, fingerprint A886 6CB1 6B07 9685 5615 74B2 A91D ABBE C996 7390
 - [Sitemap](https://t7d.dev/sitemap.xml)

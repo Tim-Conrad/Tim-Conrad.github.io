@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tim Conrad · Blog</title>
-    <link>https://t7d.dev/blog/</link>
-    <atom:link href="https://t7d.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-    <description>Notes by Tim Conrad on security ideas.</description>
+    <title>Tim Conrad · Thoughts</title>
+    <link>https://t7d.dev/thoughts/</link>
+    <atom:link href="https://t7d.dev/thoughts/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Thoughts by Tim Conrad: ideas he is working through and comes back to.</description>
     <language>en</language>
     <lastBuildDate>Tue, 10 Nov 2026 00:00:00 +0000</lastBuildDate>
     <item>
       <title>Encrypted patches, unlocked on patch day</title>
-      <link>https://t7d.dev/blog/encrypted-patches/</link>
-      <guid isPermaLink="true">https://t7d.dev/blog/encrypted-patches/</guid>
+      <link>https://t7d.dev/thoughts/encrypted-patches/</link>
+      <guid isPermaLink="true">https://t7d.dev/thoughts/encrypted-patches/</guid>
       <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
       <description>Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.</description>
+    </item>
+    <item>
+      <title>A humans.md for working with models</title>
+      <link>https://t7d.dev/thoughts/humans-md/</link>
+      <guid isPermaLink="true">https://t7d.dev/thoughts/humans-md/</guid>
+      <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
+      <description>My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. Who already uses the name humans.md, how models change under you, why feel is a bad meter, and a first version of the file, with a log for each new model.</description>
     </item>
   </channel>
 </rss>

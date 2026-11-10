@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Tim Conrad</title>
-<meta name="description" content="Tim Conrad does security research and builds browser games. This site holds two games, a blog, the CVE-2022-46166 write-up and a PGP key.">
+<meta name="description" content="Tim Conrad does security research and builds browser games. This site holds two games, his thoughts, the CVE-2022-46166 write-up and a PGP key.">
 <link rel="canonical" href="https://t7d.dev/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Tim Conrad">
-<meta property="og:description" content="Tim Conrad does security research and builds browser games. This site holds two games, a blog, the CVE-2022-46166 write-up and a PGP key.">
+<meta property="og:description" content="Tim Conrad does security research and builds browser games. This site holds two games, his thoughts, the CVE-2022-46166 write-up and a PGP key.">
 <meta property="og:url" content="https://t7d.dev/">
 <meta property="og:image" content="https://t7d.dev/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Blog" href="/blog/feed.xml">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css">
@@ -28,7 +28,7 @@
     <a class="brand" href="/">Tim Conrad</a>
     <nav class="nav__links" aria-label="Sections">
       <a href="#games">Games</a>
-      <a href="/blog/">Blog</a>
+      <a href="/thoughts/">Thoughts</a>
       <a class="opt3" href="#research">Research</a>
       <a class="opt2" href="#verify">PGP key</a>
       <a class="opt2" href="#contact">Contact</a>
@@ -43,11 +43,11 @@
   <div class="hero__main">
     <p class="label">Sheet 1 · Overview</p>
     <h1>Tim Conrad</h1>
-    <p class="lede">I do security research and build browser games. This site holds two games, a blog, one vulnerability write-up and my PGP key.</p>
+    <p class="lede">I do security research and build browser games. This site holds two games, the ideas I am working through, one vulnerability write-up and my PGP key.</p>
   </div>
   <dl class="tb">
     <div><dt>Site</dt><dd>t7d.dev</dd></div>
-    <div><dt>Contents</dt><dd>2 games, 1 blog post, 1 write-up</dd></div>
+    <div><dt>Contents</dt><dd>2 games, 2 thoughts, 1 write-up</dd></div>
     <div class="wide"><dt>Contact</dt><dd><a href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">LinkedIn</a>, <a href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a></dd></div>
     <div class="wide"><dt>PGP fingerprint</dt><dd class="mono">A886 6CB1 6B07 9685 5615<br>74B2 A91D ABBE C996 7390</dd></div>
   </dl>
@@ -85,16 +85,40 @@
   </div>
 </section>
 
-<section class="section" id="blog">
+<section class="section" id="thoughts">
   <div class="wrap">
     <div class="section__head">
-      <p class="label">Sheet 3 · Blog</p>
-      <h2>Blog</h2>
-      <p>Notes on security ideas I am thinking through. Follow them with the <a href="/blog/feed.xml">RSS feed</a>.</p>
+      <p class="label">Sheet 3 · Thoughts</p>
+      <h2>Thoughts</h2>
+      <p>Ideas I am working through. Each one keeps its sources and a list of what changed. All of them are on <a href="/thoughts/">the list</a>, and in the <a href="/thoughts/feed.xml">RSS feed</a>.</p>
     </div>
     <div class="projects">
-      <a class="proj" href="/blog/encrypted-patches/">
-        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · updates · key release</p>
+      <a class="proj" href="/thoughts/humans-md/">
+        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · working with models</p>
+        <h3>A humans.md for working with models</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="hm-t">
+          <title id="hm-t">Two files side by side: CLAUDE.md for the agent, HUMANS.md for me, with a log per model.</title>
+          <rect class="bx" x="50" y="56" width="240" height="220"/>
+          <text x="72" y="98" class="t-l">CLAUDE.md</text>
+          <rect class="bx-s" x="72" y="122" width="190" height="12"/>
+          <rect class="bx-s" x="72" y="148" width="150" height="12"/>
+          <rect class="bx-s" x="72" y="174" width="170" height="12"/>
+          <rect class="bx-s" x="72" y="200" width="120" height="12"/>
+          <text x="50" y="316" class="t-l t-m">for the agent</text>
+          <rect class="bx-i" x="350" y="56" width="240" height="220"/>
+          <text x="372" y="98" class="t-l t-inv">HUMANS.md</text>
+          <rect class="bx" x="372" y="122" width="190" height="12"/>
+          <rect class="bx" x="372" y="148" width="150" height="12"/>
+          <rect class="bx" x="372" y="190" width="196" height="64"/>
+          <line class="ln" x1="372" y1="211" x2="568" y2="211"/>
+          <line class="ln" x1="372" y1="232" x2="568" y2="232"/>
+          <text x="350" y="316" class="t-l t-m">for me</text>
+        </svg>
+        <p>My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. A first version of that file, and what changes when a new model ships.</p>
+        <span class="proj__more">Read the thought</span>
+      </a>
+      <a class="proj" href="/thoughts/encrypted-patches/">
+        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · updates · key release</p>
         <h3>Encrypted patches, unlocked on patch day</h3>
         <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="bc-t">
           <title id="bc-t">The encrypted bundle reaches every host before patch day; at T only the key is published.</title>
@@ -112,7 +136,7 @@
           <text x="40" y="344" class="t-l t-m">−7 days</text>
         </svg>
         <p>Ship a security fix early as ciphertext and publish the key on patch day, so teams can stage it and apply it together. Games, a design with signed keys, open source in private, and the patents.</p>
-        <span class="proj__more">Read the post</span>
+        <span class="proj__more">Read the thought</span>
       </a>
     </div>
   </div>

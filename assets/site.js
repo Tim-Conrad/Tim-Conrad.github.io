@@ -158,6 +158,107 @@
     show(0);
   });
 
+  /* ---- animated diagrams: figure.anim (styles in site.css)
+     - on screen: the figure gets .is-in once, so its lines draw and its bars grow; [data-count] numbers count up.
+     - data-switch="Label A|Label B": two buttons set data-state="a" / "b". With data-switch-free the state starts empty
+       and a second press on the pressed button clears it.
+     - [data-pick="k"] parts of the SVG become buttons that show the item li[data-k="k"] of .pick__list.
+     - SVG animations (<animateMotion>) run only while the figure is on screen, with a Pause button. A visitor who asked
+       for less motion gets the end state, and the moving parts stand still until Play. Without the script the figure
+       shows its end state and the whole list. ---- */
+  $$('figure.anim').forEach(function (fig) {
+    fig.classList.add('anim--ready');
+    /* a figure can hold a wide and a narrow drawing; both follow the same state */
+    var svgs = $$('svg', fig).filter(function (s) { return typeof s.pauseAnimations === 'function' && $('animateMotion, animate, animateTransform', s); });
+    var counts = $$('[data-count]', fig);
+    var looping = svgs.length > 0;
+    var bar = null;
+    function getBar() {
+      if (bar) return bar;
+      bar = document.createElement('div'); bar.className = 'anim__bar';
+      var panel = $('.pick__panel', fig), cap = $('figcaption', fig);
+      if (panel) panel.appendChild(bar); else fig.insertBefore(bar, cap || null);
+      return bar;
+    }
+    function button(text) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn--ghost btn--s';
+      b.textContent = text; getBar().appendChild(b); return b;
+    }
+
+    /* counting numbers: they start at zero only when the script runs, so the page without it shows the real values */
+    function fmt(el, v) { el.textContent = (el.getAttribute('data-fmt') || '{}').replace('{}', String(v)); }
+    function count() {
+      counts.forEach(function (el) {
+        var to = +el.getAttribute('data-count'), t0 = null, dur = 1100;
+        if (still) { fmt(el, to); return; }
+        function tick(t) {
+          if (t0 === null) t0 = t;
+          var k = Math.min(1, (t - t0) / dur);
+          fmt(el, Math.round(to * (1 - Math.pow(1 - k, 3))));
+          if (k < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    /* switch between two states */
+    var sw = fig.getAttribute('data-switch');
+    if (sw) {
+      var free = fig.hasAttribute('data-switch-free'), btns = [];
+      var setState = function (k) {
+        if (k) fig.setAttribute('data-state', k); else fig.removeAttribute('data-state');
+        btns.forEach(function (b, i) { b.setAttribute('aria-pressed', String(['a', 'b'][i] === k)); });
+      };
+      sw.split('|').slice(0, 2).forEach(function (name, i) {
+        var k = ['a', 'b'][i], b = button(name);
+        b.addEventListener('click', function () { setState(free && fig.getAttribute('data-state') === k ? null : k); });
+        btns.push(b);
+      });
+      setState(free ? null : 'a');
+    }
+
+    /* pick a part of the diagram to read about it */
+    var picks = $$('[data-pick]', fig), items = $$('.pick__list li', fig);
+    if (picks.length && items.length) {
+      fig.classList.add('pick--on');
+      var hint = $('.pick__hint', fig);
+      var choose = function (k) {
+        picks.forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-pick') === k); });
+        items.forEach(function (li) { li.classList.toggle('is-now', li.getAttribute('data-k') === k); });
+        if (hint) hint.hidden = true;
+      };
+      picks.forEach(function (p) {
+        var k = p.getAttribute('data-pick');
+        var li = items.filter(function (x) { return x.getAttribute('data-k') === k; })[0], name = li && $('b', li);
+        p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button');
+        p.setAttribute('aria-label', 'Show: ' + (name ? name.textContent : k));
+        p.addEventListener('click', function () { choose(k); });
+        p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(k); } });
+      });
+    }
+
+    /* SVG animations run only while the figure is on screen */
+    var wanted = !still, seen = false, loopBtn = null;
+    function run() { svgs.forEach(function (s) { if (wanted && seen) s.unpauseAnimations(); else s.pauseAnimations(); }); }
+    function paintLoop() {
+      loopBtn.textContent = wanted ? 'Pause' : 'Play';
+      loopBtn.setAttribute('aria-label', (wanted ? 'Pause' : 'Play') + ' the animation');
+    }
+    if (looping) {
+      run();
+      loopBtn = button('Pause');
+      loopBtn.addEventListener('click', function () { wanted = !wanted; paintLoop(); run(); });
+      paintLoop();
+    }
+
+    function enter() { if (!fig.classList.contains('is-in')) { fig.classList.add('is-in'); count(); } }
+    if (still || !('IntersectionObserver' in window)) { enter(); seen = true; run(); return; }
+    counts.forEach(function (el) { fmt(el, 0); });
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) { seen = e.isIntersecting; if (seen) enter(); run(); });
+    }, { threshold: 0.3 }).observe(fig);
+  });
+
   /* ---- 404: show the path that missed ---- */
   var lost = $('#lost-path');
   if (lost) lost.textContent = location.pathname;

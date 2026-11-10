@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://t7d.dev/</loc></url>
-  <url><loc>https://t7d.dev/blog/</loc></url>
-  <url><loc>https://t7d.dev/blog/encrypted-patches/</loc></url>
+  <url><loc>https://t7d.dev/thoughts/</loc></url>
+  <url><loc>https://t7d.dev/thoughts/humans-md/</loc></url>
+  <url><loc>https://t7d.dev/thoughts/encrypted-patches/</loc></url>
   <url><loc>https://t7d.dev/research/cve-2022-46166/</loc></url>
   <url><loc>https://t7d.dev/projects/kleinbahn/</loc></url>
   <url><loc>https://t7d.dev/projects/wortzauber/</loc></url>
