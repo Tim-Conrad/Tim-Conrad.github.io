@@ -35,6 +35,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `assets/og.png` | Social preview image |
 | `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` | Hosting and crawler files |
 | `tools/deploy.sh` | Publishes the site files to `gh-pages` |
+| `tools/ship.sh` | Merges a PR, waits for the deploy and checks t7d.dev |
 | `tools/reels/` | Scripts that film the two games and cut the reels |
 | `tools/review/`, `docker-compose.dev.yml` | The review site: live reload and a note tab. Never published |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |
@@ -71,6 +72,8 @@ GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the 
 1. Merge a change into `master`.
 2. The workflow `.github/workflows/deploy.yml` runs `tools/deploy.sh`.
 3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and `blog/feed.xml` from the pages with `tools/gen-feeds.py`, and pushes. `tools/`, `.claude/`, `.github/` and this README stay on `master`.
+
+To ship a pull request in one step, run `tools/ship.sh [<pr>]`. It merges the PR, puts this clone on `master`, waits for the deploy and the Pages build, and checks that t7d.dev serves each site file of the PR. It runs no checks: look at the pages first.
 
 The folder `sealed/` on `gh-pages` does not come from `master`. The admin app of sealed in the lab builds each encrypted site and pushes it to `gh-pages` as `sealed/<site>/`: a login page, a keyring and ciphertext, never the plain files. `tools/deploy.sh` keeps that folder as it is, and sealed changes nothing outside it. Users, passwords and access are managed in the sealed admin app, not here. The setup is in "Publish below t7d.dev" in the README of sealed.
 
