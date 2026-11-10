@@ -47,6 +47,10 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `CLAUDE.md` | Instructions for Claude Code in this repository |
 | `.claude/skills/updating-product-reels/` | Working guide for Claude Code: how to take the reels and pictures again |
 | `.claude/skills/adding-a-thought/` | Working guide for Claude Code: how to turn a link into a new thought, and how to revise one |
+| `.claude/skills/updating-game-timeline/` | Working guide for Claude Code: how to film the timeline clips of a game page |
+| `.claude/skills/handling-review-notes/` | Working guide for Claude Code: how to handle Tim's notes from the review site |
+| `.claude/settings.json` | A hook that prints the number of open review notes at the start of a session |
+| `tools/check.py` | Checks the CSP rules and the sitemap of every page; CI runs it |
 
 ## Preview locally
 
@@ -113,6 +117,4 @@ Each product page allows exactly one frame host. Add the new host to `frame-src`
 
 ### Design and wording
 
-The site is black ink on white paper (white on black in the dark theme), with a thin frame and a small label per section. The only colour is in the pictures and videos. Every colour is a token at the top of `assets/site.css`.
-
-The wording is plain. Say what a thing is and what it does. No slogans, no superlatives, and nothing the site does not hold.
+See `DESIGN.md`.
