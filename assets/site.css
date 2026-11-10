@@ -289,6 +289,8 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 figure { margin: .5rem 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .6rem; }
 .prose figure a { border: var(--rule) solid var(--ink); display: block; background: var(--surface); }
 .prose figure a:hover { background: var(--surface); outline: 3px solid var(--ink); outline-offset: 3px; }
+.prose figcaption a { display: inline; border: 0; background: none; }
+.prose figcaption a:hover { background: var(--ink); color: var(--bg); outline: 0; }
 figure video { width: 100%; }
 figcaption { overflow-wrap: anywhere; font: 500 var(--step--1)/1.4 var(--mono); letter-spacing: .04em; color: var(--muted); }
 blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid var(--ink); color: var(--muted); }
