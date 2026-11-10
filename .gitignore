@@ -7,3 +7,6 @@ __pycache__/
 .review/
 .env
 .preview/
+
+# local drafts: never committed, never published (the repo is public)
+/drafts/

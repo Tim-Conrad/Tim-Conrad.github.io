@@ -14,6 +14,7 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - Claim only what is true. Do not invent facts about Tim, the research or the games.
 - Do not rewrite the text of the write-up under `research/`. It is Tim's own.
 - A new tool page: copy `tools/papercuts/index.html`, keep its `<!-- tool-readme: owner/name -->` placeholder, and add the tool to `tools/index.html`, the Tools section of `index.html` and `sitemap.xml`. `scripts/gen-tools.py` puts the README of the latest release into the page at deploy time. Never paste a README by hand. Test: `uv run --no-project --with markdown==3.11.3 python3 -m unittest scripts/test_gen_tools.py`.
+- `drafts/` holds local drafts. Git ignores it, and it is not in `SITE` or `sitemap.xml`. The repo is public, so a draft never goes into git. To publish a draft, move it to its real folder.
 - A new or revised thought: use the skill `adding-a-thought`. `llms.txt` and the feeds are made at deploy time (`scripts/gen-feeds.py`); do not commit them.
 - Keep the Content-Security-Policy of each page strict: no inline scripts or styles, no `style=""` attributes, and no request to another site on page load. `assets/theme.js` and `assets/site.js` are the only scripts.
 - `master` is the source. Never edit `gh-pages` by hand: the workflow publishes it after every push to `master`, and the sealed admin app (`Tim-Conrad/sealed`) publishes encrypted sites to `sealed/` on it, a folder that exists only there. `scripts/deploy.sh` must keep `sealed/`.
