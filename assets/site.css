@@ -288,6 +288,19 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .lost h1 { font-size: clamp(5rem, 22vw, 14rem); line-height: .85; }
 .lost p { font-size: var(--step-1); max-width: 40ch; }
 .lost code { overflow-wrap: anywhere; }
+.lost__sealed[hidden] { display: none; }
+
+/* ---------- login of an encrypted site below /sealed/ (the theme "t7d" of sealed) ---------- */
+.sealed { min-height: 60vh; display: grid; align-content: center; gap: 1rem; padding-block: 3rem; max-width: 34rem; }
+.sealed h1 { font-size: var(--step-3); line-height: .95; overflow-wrap: anywhere; }
+.sealed__hint { margin: 0; font-size: var(--step-1); color: var(--muted); max-width: 40ch; line-height: 1.45; }
+.sealed__form { display: grid; gap: .5rem; margin-top: .5rem; padding-top: 1rem; border-top: 1px solid var(--ink); }
+.sealed__form .label { margin-top: .5rem; }
+.sealed__form input { min-width: 0; font: inherit; color: var(--ink); background: var(--bg); border: var(--rule) solid var(--ink); border-radius: 0; padding: .7rem .8rem; }
+.sealed__form .btn-row { margin-top: 1rem; }
+.sealed__form .btn:disabled { opacity: .6; cursor: wait; }
+.sealed__msg { min-height: 1.5em; margin: 0; font: 500 var(--step--1)/1.5 var(--mono); letter-spacing: .04em; color: var(--muted); overflow-wrap: anywhere; }
+.sealed__msg.bad { color: var(--ink); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 @media print { .nav, .toc, .copy, .toggle, .demo { display: none !important; } body { border: 0; } }

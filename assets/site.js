@@ -117,4 +117,11 @@
   /* ---- 404: show the path that missed ---- */
   var lost = $('#lost-path');
   if (lost) lost.textContent = location.pathname;
+  /* an address below an encrypted site before the login: point to the login page of that site */
+  var sealed = /^\/sealed\/([a-z0-9][a-z0-9._-]*)\//.exec(location.pathname);
+  var lock = $('#lost-sealed');
+  if (lost && sealed && lock) {
+    $('#lost-sealed-link').setAttribute('href', '/sealed/' + sealed[1] + '/');
+    lock.hidden = false;
+  }
 })();
