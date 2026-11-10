@@ -168,20 +168,35 @@ def loops(out, marks):
 
 
 def timeline():
-    """The clips of the development timeline (tools/reels/timeline.mjs): 640x360, silent, a poster at 60 %."""
+    """The clips of the development timelines: 640x360, silent, a poster at 60 %.
+    Kleinbahn from the frames of tools/reels/timeline.mjs, Wortzauber from the recordings of tools/reels/timeline-wz.mjs."""
     out = os.path.join(SITE, 'assets', 'projects', 'timeline')
     os.makedirs(out, exist_ok=True)
+    enc = ['-c:v', 'libx264', '-crf', '27', '-preset', 'slow', '-movflags', '+faststart', '-an']
     for d in sorted(glob.glob(f'{S}/tl/kb/*/')):
         sid = os.path.basename(d.rstrip('/'))
         frames = sorted(glob.glob(d + '*.jpg'))
         if len(frames) < 24:
             print('skip', sid, len(frames), 'frames'); continue
         name = f'{out}/kleinbahn-{sid}'
-        run(['-framerate', '24', '-i', d + '%04d.jpg', '-vf', 'scale=640:360:flags=lanczos,format=yuv420p', '-c:v', 'libx264',
-             '-crf', '27', '-preset', 'slow', '-movflags', '+faststart', '-an', name + '.mp4'])
+        run(['-framerate', '24', '-i', d + '%04d.jpg', '-vf', 'scale=640:360:flags=lanczos,format=yuv420p'] + enc + [name + '.mp4'])
         run(['-i', frames[int(len(frames) * 0.6)], '-vf', 'scale=640:360:flags=lanczos', '-q:v', '4', name + '.jpg'])
-        print(sid, os.path.getsize(name + '.mp4') // 1024, 'KB')
-
+        print('kleinbahn', sid, os.path.getsize(name + '.mp4') // 1024, 'KB')
+    for d in sorted(glob.glob(f'{S}/tl/wz/*/')):
+        sid = os.path.basename(d.rstrip('/'))
+        if not os.path.exists(d + 'video.webm') or not os.path.exists(d + 'marks.json'):
+            print('skip', sid); continue
+        m = json.load(open(d + 'marks.json'))
+        if 'end' not in m:
+            print('skip', sid, 'no end mark'); continue
+        a = m['setup'] if m.get('from') == 'setup' else max(m['setup'], m['start'] - 2.0)
+        b = m['end']
+        speed = max(1.0, (b - a) / m.get('max', 9))
+        name = f'{out}/wortzauber-{sid}'
+        run(['-ss', f'{a:.3f}', '-t', f'{b - a:.3f}', '-i', d + 'video.webm', '-vf',
+             f'setpts=(PTS-STARTPTS)/{speed:.4f},fps=30,scale=640:360:flags=lanczos,format=yuv420p'] + enc + [name + '.mp4'])
+        run(['-ss', f'{a + (b - a) * 0.6:.3f}', '-i', d + 'video.webm', '-frames:v', '1', '-vf', 'scale=640:360:flags=lanczos', '-q:v', '4', name + '.jpg'])
+        print('wortzauber', sid, f'{(b - a) / speed:.1f}s', os.path.getsize(name + '.mp4') // 1024, 'KB')
 
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
