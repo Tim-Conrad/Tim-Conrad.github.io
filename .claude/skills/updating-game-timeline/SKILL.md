@@ -1,6 +1,6 @@
 ---
 name: updating-game-timeline
-description: Use when a game (Kleinbahn / tiny-train, later Wortzauber) got new merged pull requests and the "How it changed" timeline on its product page must grow, when a timeline clip must be filmed again, or when the timeline of another game must be started. Each entry is one merged PR with one short clip filmed at that PR's git state.
+description: Use when a game (Kleinbahn / tiny-train or Wortzauber) got new merged pull requests and the "How it changed" timeline on its product page must grow, when a timeline clip must be filmed again, or when the timeline of another game must be started. Each entry is one merged PR with one short clip filmed at that PR's git state.
 ---
 
 # Updating the game timeline
@@ -10,9 +10,8 @@ The product page of a game has a section "How it changed": one entry per merged 
 
 | Game | Stages | Clips | Page |
 | --- | --- | --- | --- |
-| Kleinbahn | `tools/reels/timeline-kleinbahn.mjs` | `assets/projects/timeline/kleinbahn-<id>.mp4` and `.jpg` | `projects/kleinbahn/index.html`, section `#changes` |
-
-Wortzauber has no timeline yet. Its game runs in real time, so it would use screen recordings like `wortzauber-takes.mjs`, at a worktree per PR.
+| Kleinbahn | `tools/reels/timeline-kleinbahn.mjs`, filmed by `timeline.mjs` | `assets/projects/timeline/kleinbahn-<id>.mp4` and `.jpg` | `projects/kleinbahn/index.html`, section `#changes` |
+| Wortzauber | `tools/reels/timeline-wortzauber.mjs`, filmed by `timeline-wz.mjs` | `assets/projects/timeline/wortzauber-<id>.mp4` and `.jpg` | `projects/wortzauber/index.html`, section `#changes` |
 
 ## Rules
 - **One clip per PR, the coolest change.** Pick the change a player sees and enjoys most: something that moves on the island beats a panel, a panel beats a fix. List the rest of the PR in one short line each.
@@ -41,6 +40,13 @@ Do not read the code of every PR. Work from the git log.
 - `net: 'guest'`: the game joins `__peer`, a host whose island is the game's own island without trees. `__peer.sync.event(k, id, e, d)` starts a host event (eruption, launch, fire); `__peer.sync.leave()` closes the room.
 - A name a stage uses must exist at that ref. If a stage prints `FAILED` or `ERR`, `git grep` the name at the ref.
 - Node 22 runs the script. Run nothing heavy next to it, and never next to a Wortzauber recording.
+
+## Wortzauber
+- The game runs in real time, so each stage is a screen recording: `node tools/reels/timeline-wz.mjs ../wortzauber [--dry] [--only pr65]`. `--dry` saves one still per stage into `<work>/tl/wz-dry/`; read them as one sheet before you record. All stages take about 5 minutes.
+- Each worktree is served with `python3 -m http.server` on its own port. That is fine here: every stage opens a fresh browser, so nothing is cached. (For normal work on the game, use its `devserver.py`.)
+- The cheapest stage uses a layout-check scene of the game at that ref (`scene: 'castle'`): a feature PR often added its own scene, see `.claude/skills/checking-device-layouts/scenes/` in the game and `git log --diff-filter=A` on it. Else a short `setup` with `WZ.jump(...)` (from PR #31 on), `WZ.useWord(...)`, `Wall`, `Castle`, `Together.testLink()`; an `act` films the action itself.
+- The clips are silent. A PR that only adds sound goes into the "Not shown" line, and so does a change that opens only deep in a level.
+- The game is filmed in German. Do not generate voice, music or images, and do not read the ElevenLabs key.
 
 ## Common mistakes
 - Filming at the PR branch tip instead of the merge commit: use the merge (`%h` of the merge in step 2). The first entry ("Starting point") is the import commit.
