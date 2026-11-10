@@ -2,6 +2,7 @@
 __pycache__/
 # made by tools/gen-feeds.py at deploy time
 /llms.txt
+/thoughts/feed.xml
 /blog/feed.xml
 .review/
 .env

@@ -12,7 +12,7 @@
 - /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
   the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
   <notes>/done/ with an "answer" field. The page shows the answer under "My notes".
-- /llms.txt and /blog/feed.xml are made on each request by tools/gen-feeds.py, as the deploy makes them for gh-pages.
+- /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by tools/gen-feeds.py, as the deploy makes them for gh-pages.
 - /.git, /.review, /.reels and /node_modules are not served.
 """
 import argparse
@@ -32,7 +32,8 @@ HIDDEN = (".git", ".review", ".reels", "node_modules", "__pycache__")
 MAX_BODY = 32 * 1024
 MAX_NOTE = 4000
 NOTE_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
-GENERATED = {"/llms.txt": "text/plain; charset=utf-8", "/blog/feed.xml": "application/rss+xml; charset=utf-8"}
+GENERATED = {"/llms.txt": "text/plain; charset=utf-8", "/thoughts/feed.xml": "application/rss+xml; charset=utf-8",
+             "/blog/feed.xml": "application/rss+xml; charset=utf-8"}
 
 
 def gen_feeds():

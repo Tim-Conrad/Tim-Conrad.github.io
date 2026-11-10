@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>A humans.md for working with models · Tim Conrad</title>
+<meta name="description" content="My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. Who already uses the name humans.md, how models change under you, why feel is a bad meter, and a first version of the file, with a log for each new model.">
+<link rel="canonical" href="https://t7d.dev/thoughts/humans-md/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A humans.md for working with models">
+<meta property="og:description" content="My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. Who already uses the name humans.md, how models change under you, why feel is a bad meter, and a first version of the file, with a log for each new model.">
+<meta property="og:url" content="https://t7d.dev/thoughts/humans-md/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-10">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/thoughts/">← Thoughts</a>
+  <h1>A humans.md for working with models</h1>
+  <p class="sub">My repositories tell the agent how to work with me. Nothing tells me how to work with the agent. A first version of that file, and what I found when I looked for one.</p>
+  <p class="label">Tim Conrad · Language models · Habits · Coding agents</p>
+  <dl class="tmeta">
+    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#missing">The missing file</a></li>
+      <li><a href="#taken">The name is taken</a></li>
+      <li><a href="#change">Models change under me</a></li>
+      <li><a href="#feel">Feel is a bad meter</a></li>
+      <li><a href="#agree">Agree first, then build</a></li>
+      <li><a href="#sharp">Stay able to do it</a></li>
+      <li><a href="#loop">When a new model ships</a></li>
+      <li><a href="#file">The file, version 0</a></li>
+      <li><a href="#open">Open questions</a></li>
+      <li><a href="#start">Starting points</a></li>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#revisions">Revisions</a></li>
+      <li><a href="#feedback">Feedback</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="missing">The missing file</h2>
+    <p>Every repository of mine has a <code>CLAUDE.md</code>. It tells the agent how to build the project, what to leave alone and how I want my commits. When the agent gets something wrong, I add a line.</p>
+    <p>There is no such file for me. When a new model comes out, I switch, try a few tasks and go by feel. Sometimes I start a task without any <code>CLAUDE.md</code>, to see whether the new model does better without my old rules. Mostly I just notice things.</p>
+    <p>That is a strange split. The model gets a written manual and a changelog. The person who drives it gets a hunch. This thought is about the other file: a <code>humans.md</code>, with rules for me, written down and changed when the model changes.</p>
+
+    <h2 id="taken">The name is taken</h2>
+    <p>I was not the first to think of it. I found three projects that use the name, and they mean three different things.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 640 380" role="img" aria-labelledby="f1t f1d">
+        <title id="f1t">Files called humans.md, by who reads them and what they are about</title>
+        <desc id="f1d">Horizontal axis: the agent reads it, or I read it. Vertical axis: how I work, or how the agent treats me. attogram/agents HUMANS.md, September 2025, is read by humans and is about how they work. thellmwhisperer/human.md, February 2026, is read by the agent and sets hours and breaks. cmdai-hq/HUMANS.md, October 2026, is read by the agent and says how to talk to me. The file in this thought sits next to attogram's and adds a log per model.</desc>
+        <line class="ln draw" pathLength="1" x1="40" y1="190" x2="600" y2="190"/>
+        <line class="ln draw d1" pathLength="1" x1="320" y1="30" x2="320" y2="350"/>
+        <text x="40" y="180" class="t-s">the agent reads it</text>
+        <text x="600" y="180" text-anchor="end" class="t-s">I read it</text>
+        <text x="330" y="40" class="t-s">about how I work</text>
+        <text x="330" y="346" class="t-s">about how the agent treats me</text>
+        <g data-pick="atto" class="pop d3">
+          <circle class="dot dot-pick" cx="530" cy="80" r="9"/>
+          <text x="514" y="76" text-anchor="end" class="t-pick">attogram/agents</text>
+          <text x="514" y="93" text-anchor="end" class="t-s">Sep 2025 · for humans</text>
+        </g>
+        <g data-pick="mine" class="pop d6">
+          <circle class="bx-d dot-pick" cx="480" cy="140" r="11"/>
+          <text x="462" y="136" text-anchor="end" class="t-pick">this file</text>
+          <text x="462" y="153" text-anchor="end" class="t-s">+ a log per model</text>
+        </g>
+        <g data-pick="cmd" class="pop d5">
+          <circle class="dot dot-pick" cx="130" cy="235" r="9"/>
+          <text x="146" y="231" class="t-pick">cmdai-hq/HUMANS.md</text>
+          <text x="146" y="248" class="t-s">Oct 2026 · how to reach me</text>
+        </g>
+        <g data-pick="llm" class="pop d4">
+          <circle class="dot dot-pick" cx="80" cy="292" r="9"/>
+          <text x="96" y="288" class="t-pick">thellmwhisperer/human.md</text>
+          <text x="96" y="305" class="t-s">Feb 2026 · hours and breaks</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 400" role="img" aria-labelledby="f1nt">
+        <title id="f1nt">Files called humans.md, by who reads them and what they are about</title>
+        <line class="ln draw" pathLength="1" x1="10" y1="200" x2="350" y2="200"/>
+        <line class="ln draw d1" pathLength="1" x1="180" y1="30" x2="180" y2="370"/>
+        <text x="10" y="190" class="t-s">agent reads it</text>
+        <text x="350" y="190" text-anchor="end" class="t-s">I read it</text>
+        <text x="188" y="42" class="t-s">about how I work</text>
+        <text x="188" y="364" class="t-s">about how it treats me</text>
+        <g data-pick="atto" class="pop d3"><circle class="dot dot-pick" cx="315" cy="80" r="9"/><text x="299" y="76" text-anchor="end" class="t-pick">attogram</text><text x="299" y="93" text-anchor="end" class="t-s">Sep 2025</text></g>
+        <g data-pick="mine" class="pop d6"><circle class="bx-d dot-pick" cx="322" cy="145" r="11"/><text x="304" y="141" text-anchor="end" class="t-pick">this file</text><text x="304" y="158" text-anchor="end" class="t-s">+ log per model</text></g>
+        <g data-pick="cmd" class="pop d5"><circle class="dot dot-pick" cx="34" cy="245" r="9"/><text x="50" y="241" class="t-pick">cmdai-hq</text><text x="50" y="258" class="t-s">Oct 2026</text></g>
+        <g data-pick="llm" class="pop d4"><circle class="dot dot-pick" cx="24" cy="305" r="9"/><text x="40" y="301" class="t-pick">thellmwhisperer</text><text x="40" y="318" class="t-s">Feb 2026</text></g>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Tap a point to read about that file.</p>
+        <ul class="pick__list">
+          <li data-k="atto"><b>attogram/agents, HUMANS.md</b>: the oldest one I can date, first added on 5 September 2025. It sits next to <code>AGENTS.md</code> and is for humans to read: treat agents as junior developers, give clear instructions, review their pull requests. It has one guide per agent, for Jules, Claude and Claude Code <a href="#s1">[1]</a>.</li>
+          <li data-k="llm"><b>thellmwhisperer/human.md</b>, February 2026: a file the agent reads. It holds your working hours, breaks and the longest session you allow, and a hook makes the agent tell you when to stop <a href="#s2">[2]</a>.</li>
+          <li data-k="cmd"><b>cmdai-hq/HUMANS.md</b>, October 2026: a profile in your home folder that tells your agents, and your colleagues' agents, how to write to you, when to ask you and when to interrupt you. "AGENTS.md is for your codebase. HUMANS.md is for you." <a href="#s3">[3]</a></li>
+          <li data-k="mine"><b>This file</b>: like attogram's, it is for me to read. What I could not find anywhere is the log: one entry for each new model, because the models change.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 1 · Three files with one name. Their places on the map are my reading of each project.</figcaption>
+    </figure>
+    <p>So "humans.md" is not my term, and it is not a standard either. Two of the three are files for the agent, about how it should treat me. Mine is the other way round: a file for me, about how I should work with it.</p>
+
+    <h2 id="change">Models change under me</h2>
+    <p>The vendors already write a kind of humans.md for every model. They call it a prompting guide, and the useful part is the section on what changed. Anthropic's guide puts the differences between models first <a href="#s4">[4]</a>. Three of its examples:</p>
+    <ul>
+      <li>Newer models listen more closely to the instructions. Capitals like "CRITICAL: You MUST", which once helped a model use a tool at all, now make it use the tool too often. The guide says to soften them.</li>
+      <li>Claude Opus 5 checks its own work. Old instructions to verify every step make it check again and again. The guide says to remove them.</li>
+      <li>Newer models take the words literally. "Can you suggest some changes?" can get suggestions and no changes.</li>
+    </ul>
+    <p>Other vendors say the same. OpenAI's guide for GPT-5.5 says to treat it as a new model family and to start from a fresh baseline, instead of carrying over every instruction from older prompts <a href="#s5">[5]</a>. Google recommends that Gemini 3 keep its default temperature of 1.0, although tuning the temperature was normal with older models <a href="#s6">[6]</a>.</p>
+    <figure class="fig-wide anim" data-switch="What I meant|What a newer model does">
+      <svg class="dg dg-w" viewBox="0 0 680 296" role="img" aria-labelledby="f2t f2d">
+        <title id="f2t">The same instruction, read by a newer model</title>
+        <desc id="f2d">Three instructions written for older models. CRITICAL: You MUST use the search tool: I meant that it searches when it helps; a newer model searches far too often. After each step, verify your work twice: I meant one more check; a newer model that checks its own work checks again and again. Can you suggest some changes: I meant that it changes the code; a literal model lists ideas and changes nothing.</desc>
+        <text x="20" y="28" class="t-h">Written for an older model</text>
+        <text x="370" y="28" class="t-h w-a">What I meant</text>
+        <text x="370" y="28" class="t-h w-b">What a newer model does</text>
+
+        <rect class="bx-s" x="20" y="44" width="300" height="68"/>
+        <text x="36" y="72">CRITICAL: You MUST use the</text>
+        <text x="36" y="92">search tool when it helps.</text>
+        <line class="ln" x1="328" y1="78" x2="358" y2="78"/><polygon class="arr" points="358,73 366,78 358,83"/>
+        <rect class="bx" x="370" y="44" width="290" height="68"/>
+        <text x="386" y="68" class="w-a">searches when it helps</text>
+        <text x="386" y="68" class="w-b">searches far too often</text>
+        <rect class="bx-s" x="386" y="78" width="258" height="10"/>
+        <rect class="bx-i lvl s30 b100" x="386" y="78" width="258" height="10"/>
+        <text x="386" y="104" class="t-s">how often it searches</text>
+
+        <rect class="bx-s" x="20" y="128" width="300" height="68"/>
+        <text x="36" y="156">After each step, verify your</text>
+        <text x="36" y="176">work twice.</text>
+        <line class="ln" x1="328" y1="162" x2="358" y2="162"/><polygon class="arr" points="358,157 366,162 358,167"/>
+        <rect class="bx" x="370" y="128" width="290" height="68"/>
+        <text x="386" y="152" class="w-a">checks once more</text>
+        <text x="386" y="152" class="w-b">checks again and again</text>
+        <rect class="bx-s" x="386" y="162" width="258" height="10"/>
+        <rect class="bx-i lvl s30 b100" x="386" y="162" width="258" height="10"/>
+        <text x="386" y="188" class="t-s">how often it checks</text>
+
+        <rect class="bx-s" x="20" y="212" width="300" height="68"/>
+        <text x="36" y="240">Can you suggest some</text>
+        <text x="36" y="260">changes?</text>
+        <line class="ln" x1="328" y1="246" x2="358" y2="246"/><polygon class="arr" points="358,241 366,246 358,251"/>
+        <rect class="bx" x="370" y="212" width="290" height="68"/>
+        <text x="386" y="236" class="w-a">changes the code</text>
+        <text x="386" y="236" class="w-b">lists ideas, changes nothing</text>
+        <rect class="bx-s" x="386" y="246" width="258" height="10"/>
+        <rect class="bx-i lvl s100 b10" x="386" y="246" width="258" height="10"/>
+        <text x="386" y="272" class="t-s">how much it changes</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 572" role="img" aria-labelledby="f2nt">
+        <title id="f2nt">The same instruction, read by a newer model</title>
+        <text x="10" y="24" class="t-h">Written for an older model</text>
+        <rect class="bx-s" x="10" y="40" width="340" height="60"/>
+        <text x="24" y="65">CRITICAL: You MUST use the</text>
+        <text x="24" y="85">search tool when it helps.</text>
+        <line class="ln" x1="180" y1="104" x2="180" y2="120"/><polygon class="arr" points="175,120 180,128 185,120"/>
+        <rect class="bx" x="10" y="132" width="340" height="68"/>
+        <text x="24" y="156" class="w-a">searches when it helps</text>
+        <text x="24" y="156" class="w-b">searches far too often</text>
+        <rect class="bx-s" x="24" y="166" width="312" height="10"/>
+        <rect class="bx-i lvl s30 b100" x="24" y="166" width="312" height="10"/>
+        <text x="24" y="192" class="t-s">how often it searches</text>
+        <rect class="bx-s" x="10" y="216" width="340" height="60"/>
+        <text x="24" y="241">After each step, verify your</text>
+        <text x="24" y="261">work twice.</text>
+        <line class="ln" x1="180" y1="280" x2="180" y2="296"/><polygon class="arr" points="175,296 180,304 185,296"/>
+        <rect class="bx" x="10" y="308" width="340" height="68"/>
+        <text x="24" y="332" class="w-a">checks once more</text>
+        <text x="24" y="332" class="w-b">checks again and again</text>
+        <rect class="bx-s" x="24" y="342" width="312" height="10"/>
+        <rect class="bx-i lvl s30 b100" x="24" y="342" width="312" height="10"/>
+        <text x="24" y="368" class="t-s">how often it checks</text>
+        <rect class="bx-s" x="10" y="392" width="340" height="60"/>
+        <text x="24" y="417">Can you suggest some</text>
+        <text x="24" y="437">changes?</text>
+        <line class="ln" x1="180" y1="456" x2="180" y2="472"/><polygon class="arr" points="175,472 180,480 185,472"/>
+        <rect class="bx" x="10" y="484" width="340" height="68"/>
+        <text x="24" y="508" class="w-a">changes the code</text>
+        <text x="24" y="508" class="w-b">lists ideas, changes nothing</text>
+        <rect class="bx-s" x="24" y="518" width="312" height="10"/>
+        <rect class="bx-i lvl s100 b10" x="24" y="518" width="312" height="10"/>
+        <text x="24" y="544" class="t-s">how much it changes</text>
+      </svg>
+      <figcaption>Fig. 2 · Switch between what I meant and what a newer model does with the same words. The examples are from Anthropic's guide <a href="#s4">[4]</a>, shortened. The bars show the direction, not a measurement.</figcaption>
+    </figure>
+    <p>A habit that helped with the last model can hurt with this one. And my trick of starting without a <code>CLAUDE.md</code> turns out to be the fresh baseline that OpenAI recommends. I just did it without knowing why.</p>
+
+    <h2 id="feel">Feel is a bad meter</h2>
+    <p>That I go by feel worries me because of one study. In early 2025 METR gave 16 experienced open-source developers real tasks in their own projects, some with AI tools and some without <a href="#s7">[7]</a>.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 250" role="img" aria-labelledby="f3t f3d">
+        <title id="f3t">Felt and measured speed in METR's 2025 study</title>
+        <desc id="f3d">Before the tasks the developers expected to be 24 percent faster with AI. Afterwards they believed they had been 20 percent faster. Measured, they took 19 percent longer.</desc>
+        <line class="ln" x1="360" y1="30" x2="360" y2="210"/>
+        <text x="20" y="65">Expected, before</text>
+        <rect class="bx-s grow d1" x="360" y="46" width="144" height="28"/>
+        <text x="514" y="65" data-count="24" data-fmt="{}% faster">24% faster</text>
+        <text x="20" y="123">Believed, after</text>
+        <rect class="bx-s grow d3" x="360" y="104" width="120" height="28"/>
+        <text x="490" y="123" data-count="20" data-fmt="{}% faster">20% faster</text>
+        <text x="20" y="181" class="t-h">Measured</text>
+        <rect class="bx-i grow-l d6" x="246" y="162" width="114" height="28"/>
+        <text x="238" y="181" text-anchor="end" data-count="19" data-fmt="{}% slower">19% slower</text>
+        <text x="352" y="232" text-anchor="end" class="t-s">← slower</text>
+        <text x="368" y="232" class="t-s">faster →</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 290" role="img" aria-labelledby="f3nt">
+        <title id="f3nt">Felt and measured speed in METR's 2025 study: expected 24 percent faster, believed 20 percent faster, measured 19 percent slower</title>
+        <line class="ln" x1="190" y1="36" x2="190" y2="250"/>
+        <text x="10" y="30">Expected, before</text>
+        <text x="350" y="30" text-anchor="end" data-count="24" data-fmt="{}% faster">24% faster</text>
+        <rect class="bx-s grow d1" x="190" y="40" width="120" height="24"/>
+        <text x="10" y="100">Believed, after</text>
+        <text x="350" y="100" text-anchor="end" data-count="20" data-fmt="{}% faster">20% faster</text>
+        <rect class="bx-s grow d3" x="190" y="110" width="100" height="24"/>
+        <text x="10" y="170" class="t-h">Measured</text>
+        <text x="350" y="170" text-anchor="end" data-count="19" data-fmt="{}% slower">19% slower</text>
+        <rect class="bx-i grow-l d6" x="95" y="180" width="95" height="24"/>
+        <text x="182" y="275" text-anchor="end" class="t-s">← slower</text>
+        <text x="198" y="275" class="t-s">faster →</text>
+      </svg>
+      <figcaption>Fig. 3 · METR, early 2025: what 16 developers expected, what they believed afterwards, and what was measured <a href="#s7">[7]</a>.</figcaption>
+    </figure>
+    <p>They expected to be 24% faster. Measured, they took 19% longer. Afterwards they still believed they had been 20% faster. METR has changed the study since: in February 2026 it called its newer numbers weak evidence, in part because developers no longer wanted to work without AI for the test <a href="#s8">[8]</a>. So the 19% is not the point for me. The gap between what people felt and what was measured is.</p>
+    <p>A rule follows from that: write down what a task took and what went wrong, not how fast it felt.</p>
+
+    <h2 id="agree">Agree first, then build</h2>
+    <p>The best habit I picked up this year comes from Matt Pocock's skills for coding agents <a href="#s9">[9]</a>. Before any code, <code>/grill-me</code> makes the model ask me questions, round after round, until every branch of the plan is decided. Then a spec, then tickets, then the build test first, then a review. A small change skips the spec and the tickets.</p>
+    <figure class="fig-wide anim" data-switch="Bigger change|Small change">
+      <svg class="dg dg-w" viewBox="0 0 720 230" role="img" aria-labelledby="f4t f4d">
+        <title id="f4t">Matt Pocock's flow from idea to merged change</title>
+        <desc id="f4d">Five steps: grill (/grill-me), spec (/to-spec), tickets (/to-tickets), build (/tdd) and review (/code-review). A bigger change goes through all five. A small change goes from grill straight to build.</desc>
+        <path id="f4-main" class="ln w-a" d="M70 100 H630"/>
+        <path id="f4-small" class="ln w-b" d="M70 100 H126 C170 215 390 215 434 100 H630"/>
+        <g data-pick="grill"><rect class="bx" x="14" y="78" width="112" height="44"/><text x="70" y="106" text-anchor="middle" class="t-h">Grill</text></g>
+        <g data-pick="spec" class="fade off-b"><rect class="bx" x="154" y="78" width="112" height="44"/><text x="210" y="106" text-anchor="middle" class="t-h">Spec</text></g>
+        <g data-pick="tickets" class="fade off-b"><rect class="bx" x="294" y="78" width="112" height="44"/><text x="350" y="106" text-anchor="middle" class="t-h">Tickets</text></g>
+        <g data-pick="build"><rect class="bx" x="434" y="78" width="112" height="44"/><text x="490" y="106" text-anchor="middle" class="t-h">Build</text></g>
+        <g data-pick="review"><rect class="bx" x="574" y="78" width="112" height="44"/><text x="630" y="106" text-anchor="middle" class="t-h">Review</text></g>
+        <text x="70" y="146" text-anchor="middle" class="t-s">/grill-me</text>
+        <text x="210" y="146" text-anchor="middle" class="t-s fade off-b">/to-spec</text>
+        <text x="350" y="146" text-anchor="middle" class="t-s fade off-b">/to-tickets</text>
+        <text x="490" y="146" text-anchor="middle" class="t-s">/tdd</text>
+        <text x="630" y="146" text-anchor="middle" class="t-s">/code-review</text>
+        <text x="20" y="40" class="t-s w-a">a bigger change: all five steps</text>
+        <text x="20" y="40" class="t-s w-b">a small change: from the questions straight to the build</text>
+        <circle class="bx-i w-a" r="7"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#f4-main"/></animateMotion></circle>
+        <circle class="bx-i w-b" r="7"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#f4-small"/></animateMotion></circle>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 410" role="img" aria-labelledby="f4nt">
+        <title id="f4nt">Matt Pocock's flow: grill, spec, tickets, build, review. A small change goes from grill straight to build.</title>
+        <path id="f4n-main" class="ln w-a" d="M150 40 V360"/>
+        <path id="f4n-small" class="ln w-b" d="M150 40 V60 C30 110 30 230 150 280 V360"/>
+        <g data-pick="grill"><rect class="bx" x="80" y="20" width="140" height="40"/><text x="150" y="46" text-anchor="middle" class="t-h">Grill</text></g>
+        <g data-pick="spec" class="fade off-b"><rect class="bx" x="80" y="100" width="140" height="40"/><text x="150" y="126" text-anchor="middle" class="t-h">Spec</text></g>
+        <g data-pick="tickets" class="fade off-b"><rect class="bx" x="80" y="180" width="140" height="40"/><text x="150" y="206" text-anchor="middle" class="t-h">Tickets</text></g>
+        <g data-pick="build"><rect class="bx" x="80" y="260" width="140" height="40"/><text x="150" y="286" text-anchor="middle" class="t-h">Build</text></g>
+        <g data-pick="review"><rect class="bx" x="80" y="340" width="140" height="40"/><text x="150" y="366" text-anchor="middle" class="t-h">Review</text></g>
+        <text x="232" y="45" class="t-s">/grill-me</text>
+        <text x="232" y="125" class="t-s fade off-b">/to-spec</text>
+        <text x="232" y="205" class="t-s fade off-b">/to-tickets</text>
+        <text x="232" y="285" class="t-s">/tdd</text>
+        <text x="232" y="365" class="t-s">/code-review</text>
+        <circle class="bx-i w-a" r="7"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#f4n-main"/></animateMotion></circle>
+        <circle class="bx-i w-b" r="7"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#f4n-small"/></animateMotion></circle>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Switch between a bigger and a small change, or tap a step.</p>
+        <ul class="pick__list">
+          <li data-k="grill"><b>Grill</b>: the model interviews me until the plan has no open branch. The variant <code>grill-with-docs</code> also writes the terms we settle into a glossary and the hard-to-reverse decisions into ADRs.</li>
+          <li data-k="spec"><b>Spec</b>: the agreed plan, written down.</li>
+          <li data-k="tickets"><b>Tickets</b>: the spec, cut into pieces that can be built one at a time.</li>
+          <li data-k="build"><b>Build</b>: test first, one ticket at a time.</li>
+          <li data-k="review"><b>Review</b>: a code review closes each change.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 4 · The main flow of Matt Pocock's skills <a href="#s9">[9]</a>. The README says they work with any model.</figcaption>
+    </figure>
+    <p>What I like about it: it turns the instructions around. I do not tell the model what to do in one long prompt. The model checks whether I know what I want. That works on the one part of the session that I control, and it works with every model.</p>
+
+    <h2 id="sharp">Stay able to do it</h2>
+    <p>The second rule that holds for every model is about me, not the model. In a study by Anthropic, 52 developers, most of them junior, learned a new Python library <a href="#s10">[10]</a>. The group with an AI assistant scored 50% on a quiz afterwards, the group that wrote the code by hand 67%. The AI group was not significantly faster.</p>
+    <p>How people used the AI mattered more than whether they used it:</p>
+    <figure class="fig-wide anim" data-switch="Asked to understand|Handed it over" data-switch-free>
+      <svg class="dg dg-w" viewBox="0 0 680 330" role="img" aria-labelledby="f5t f5d">
+        <title id="f5t">Quiz scores by how people used the AI</title>
+        <desc id="f5d">Asked to understand: generated code and then asked why, 86 percent, 2 people; asked for code with an explanation, 68 percent, 3 people; asked only about concepts, 65 percent, 7 people. Handed it over: handed over all the code, 39 percent, 4 people; slid into full reliance, 35 percent, 4 people; let the AI debug, 24 percent, 4 people. For comparison: the hand-coding group scored 67 percent, the whole AI group 50 percent.</desc>
+        <line class="ln-s" x1="538" y1="24" x2="538" y2="284"/>
+        <line class="ln-s" x1="470" y1="24" x2="470" y2="284"/>
+        <text x="538" y="300" text-anchor="middle" class="t-s">by hand: 67%</text>
+        <text x="470" y="316" text-anchor="middle" class="t-s">all with AI: 50%</text>
+        <g class="fade hi-a">
+          <text x="20" y="30" class="t-h">Asked to understand</text>
+          <text x="20" y="58" class="t-s">generated, then asked why (2)</text>
+          <rect class="bx-i grow d1" x="270" y="42" width="344" height="24"/>
+          <text x="622" y="59" data-count="86" data-fmt="{}%">86%</text>
+          <text x="20" y="94" class="t-s">asked for code + explanation (3)</text>
+          <rect class="bx-i grow d2" x="270" y="78" width="272" height="24"/>
+          <text x="550" y="95" data-count="68" data-fmt="{}%">68%</text>
+          <text x="20" y="130" class="t-s">asked only about concepts (7)</text>
+          <rect class="bx-i grow d3" x="270" y="114" width="260" height="24"/>
+          <text x="538" y="131" data-count="65" data-fmt="{}%">65%</text>
+        </g>
+        <g class="fade hi-b">
+          <text x="20" y="170" class="t-h">Handed it over</text>
+          <text x="20" y="198" class="t-s">handed over all the code (4)</text>
+          <rect class="bx-s grow d4" x="270" y="182" width="156" height="24"/>
+          <text x="434" y="199" data-count="39" data-fmt="{}%">39%</text>
+          <text x="20" y="234" class="t-s">slid into full reliance (4)</text>
+          <rect class="bx-s grow d5" x="270" y="218" width="140" height="24"/>
+          <text x="418" y="235" data-count="35" data-fmt="{}%">35%</text>
+          <text x="20" y="270" class="t-s">let the AI debug (4)</text>
+          <rect class="bx-s grow d6" x="270" y="254" width="96" height="24"/>
+          <text x="374" y="271" data-count="24" data-fmt="{}%">24%</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 380" role="img" aria-labelledby="f5nt">
+        <title id="f5nt">Quiz scores by how people used the AI</title>
+        <line class="ln-s" x1="251" y1="30" x2="251" y2="330"/>
+        <line class="ln-s" x1="190" y1="30" x2="190" y2="330"/>
+        <text x="251" y="350" text-anchor="middle" class="t-s">by hand: 67%</text>
+        <text x="190" y="368" text-anchor="middle" class="t-s">all with AI: 50%</text>
+        <g class="fade hi-a">
+          <text x="10" y="24" class="t-h">Asked to understand</text>
+          <text x="10" y="46" class="t-s">generated, then asked why (2)</text>
+          <rect class="bx-i grow d1" x="10" y="52" width="310" height="18"/>
+          <text x="326" y="66" data-count="86" data-fmt="{}%">86%</text>
+          <text x="10" y="90" class="t-s">asked for code + explanation (3)</text>
+          <rect class="bx-i grow d2" x="10" y="96" width="245" height="18"/>
+          <text x="261" y="110" data-count="68" data-fmt="{}%">68%</text>
+          <text x="10" y="134" class="t-s">asked only about concepts (7)</text>
+          <rect class="bx-i grow d3" x="10" y="140" width="234" height="18"/>
+          <text x="250" y="154" data-count="65" data-fmt="{}%">65%</text>
+        </g>
+        <g class="fade hi-b">
+          <text x="10" y="192" class="t-h">Handed it over</text>
+          <text x="10" y="214" class="t-s">handed over all the code (4)</text>
+          <rect class="bx-s grow d4" x="10" y="220" width="140" height="18"/>
+          <text x="156" y="234" data-count="39" data-fmt="{}%">39%</text>
+          <text x="10" y="258" class="t-s">slid into full reliance (4)</text>
+          <rect class="bx-s grow d5" x="10" y="264" width="126" height="18"/>
+          <text x="142" y="278" data-count="35" data-fmt="{}%">35%</text>
+          <text x="10" y="302" class="t-s">let the AI debug (4)</text>
+          <rect class="bx-s grow d6" x="10" y="308" width="86" height="18"/>
+          <text x="102" y="322" data-count="24" data-fmt="{}%">24%</text>
+        </g>
+      </svg>
+      <figcaption>Fig. 5 · Quiz scores by pattern of use, number of people in brackets <a href="#s10">[10]</a>. The groups are tiny, and the authors say this shows no cause.</figcaption>
+    </figure>
+    <p>Those who asked why scored like the hand coders. Those who handed the work over scored below 40%. The groups have two to seven people each, so this is a hint, not a result. It matches a survey of 319 knowledge workers by Microsoft Research and Carnegie Mellon: the more people trusted the AI, the less critical thinking they reported, and the more they trusted themselves, the more <a href="#s11">[11]</a>. Their work moved from doing the task to overseeing it.</p>
+    <p>The authors warn that a skill used only in the rare hard case decays. That is an old finding. In 1983 Lisanne Bainbridge called it one of the ironies of automation: the machine takes the routine work, and the human keeps the hard cases without the practice they need <a href="#s12">[12]</a>. Simkute and others found the same ironies in generative AI <a href="#s13">[13]</a>.</p>
+    <p>So: when something breaks, I look first myself, or I ask for the explanation along with the fix. And I keep some small work without a model.</p>
+
+    <h2 id="loop">When a new model ships</h2>
+    <p>Put together, the file has two parts. One part holds for every model. The other is a loop that I run each time a model comes out.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 640 420" role="img" aria-labelledby="f6t f6d">
+        <title id="f6t">The loop for a new model</title>
+        <desc id="f6d">A circle of six steps: new model, read the card, fresh baseline, prune, work, write it down, then back to the next new model. In the middle: HUMANS.md, one entry per model.</desc>
+        <path id="f6-loop" class="ln draw" pathLength="1" d="M320 60 A150 150 0 1 1 319.9 60"/>
+        <text x="320" y="206" text-anchor="middle">HUMANS.md</text>
+        <text x="320" y="226" text-anchor="middle" class="t-s">one entry per model</text>
+        <g data-pick="new" class="pop d1"><rect class="bx" x="252" y="42" width="136" height="36"/><text x="320" y="65" text-anchor="middle">New model</text></g>
+        <g data-pick="card" class="pop d2"><rect class="bx" x="382" y="117" width="136" height="36"/><text x="450" y="140" text-anchor="middle">Read the card</text></g>
+        <g data-pick="base" class="pop d3"><rect class="bx" x="382" y="267" width="136" height="36"/><text x="450" y="290" text-anchor="middle">Fresh baseline</text></g>
+        <g data-pick="prune" class="pop d4"><rect class="bx" x="252" y="342" width="136" height="36"/><text x="320" y="365" text-anchor="middle">Prune</text></g>
+        <g data-pick="work" class="pop d5"><rect class="bx" x="122" y="267" width="136" height="36"/><text x="190" y="290" text-anchor="middle">Work</text></g>
+        <g data-pick="log" class="pop d6"><rect class="bx" x="122" y="117" width="136" height="36"/><text x="190" y="140" text-anchor="middle">Write it down</text></g>
+        <circle class="bx-i" r="8"><animateMotion dur="14s" repeatCount="indefinite"><mpath href="#f6-loop"/></animateMotion></circle>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 420" role="img" aria-labelledby="f6nt">
+        <title id="f6nt">The loop for a new model: new model, read the card, fresh baseline, prune, work, write it down</title>
+        <path id="f6n-loop" class="ln draw" pathLength="1" d="M180 90 A120 120 0 1 1 179.9 90"/>
+        <text x="180" y="206" text-anchor="middle">HUMANS.md</text>
+        <text x="180" y="226" text-anchor="middle" class="t-s">one entry per model</text>
+        <g data-pick="new" class="pop d1"><rect class="bx" x="122" y="74" width="116" height="32"/><text x="180" y="95" text-anchor="middle">New model</text></g>
+        <g data-pick="card" class="pop d2"><rect class="bx" x="226" y="134" width="116" height="32"/><text x="284" y="155" text-anchor="middle">Read the card</text></g>
+        <g data-pick="base" class="pop d3"><rect class="bx" x="226" y="254" width="116" height="32"/><text x="284" y="275" text-anchor="middle">Fresh baseline</text></g>
+        <g data-pick="prune" class="pop d4"><rect class="bx" x="122" y="314" width="116" height="32"/><text x="180" y="335" text-anchor="middle">Prune</text></g>
+        <g data-pick="work" class="pop d5"><rect class="bx" x="18" y="254" width="116" height="32"/><text x="76" y="275" text-anchor="middle">Work</text></g>
+        <g data-pick="log" class="pop d6"><rect class="bx" x="18" y="134" width="116" height="32"/><text x="76" y="155" text-anchor="middle">Write it down</text></g>
+        <circle class="bx-i" r="7"><animateMotion dur="14s" repeatCount="indefinite"><mpath href="#f6n-loop"/></animateMotion></circle>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Tap a step.</p>
+        <ul class="pick__list">
+          <li data-k="new"><b>New model</b>: a release, or a new default in the tool I use.</li>
+          <li data-k="card"><b>Read the card</b>: the model card and the vendor's prompting guide. I look for what the model does more, what it does less, and what the guide says to remove.</li>
+          <li data-k="base"><b>Fresh baseline</b>: one real task without my <code>CLAUDE.md</code> files, to see what the model does on its own.</li>
+          <li data-k="prune"><b>Prune</b>: remove what it no longer needs: capitals, old workarounds, extra checks.</li>
+          <li data-k="work"><b>Work</b>: with the rules that hold for every model: agree first, read what I merge, ask why.</li>
+          <li data-k="log"><b>Write it down</b>: one line in the log of <code>HUMANS.md</code>, and two weeks later a second look: was it right?</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 6 · The loop. The log keeps what I noticed, so the next model does not start from a hunch again.</figcaption>
+    </figure>
+
+    <h2 id="file">The file, version 0</h2>
+    <p>This is the first version. It is short on purpose: a rule I do not follow is worse than no rule.</p>
+    <div class="code">
+      <div class="code__bar"><span>HUMANS.md</span><button class="copy" type="button" data-copy="humans-file">copy</button></div>
+<pre id="humans-file" class="wrap-lines"><code><span class="l"># HUMANS.md</span><span class="l"> </span><span class="l">How I work with language models. The agent has its CLAUDE.md. This file is for me.</span><span class="l"> </span><span class="l">Version 0, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/</span><span class="l"> </span><span class="l">## With every model</span><span class="l"> </span><span class="l">1. Agree first. For anything bigger than a small fix, let the model ask me questions until the plan is clear. Keep the words we agreed on.</span><span class="l">2. Say what I want done. &quot;Change it&quot;, not &quot;can you suggest&quot;. Give the reason for a rule instead of capital letters.</span><span class="l">3. Give context as to a new colleague: the goal, the limits, where to look.</span><span class="l">4. Read what I merge. Tests show that it works. Reading shows that I understand it.</span><span class="l">5. When something breaks, look first myself, or ask for the explanation with the fix.</span><span class="l">6. Do some small work without a model, regularly, so I can still do it.</span><span class="l">7. Measure instead of feel. Note what a task took and what went wrong.</span><span class="l"> </span><span class="l">## When a new model ships</span><span class="l"> </span><span class="l">1. Read the model card and the vendor&#x27;s prompting guide. Look for what the model does more, what it does less, and what to remove.</span><span class="l">2. Do one real task without my CLAUDE.md files. Compare.</span><span class="l">3. Remove what the new model no longer needs: capitals, old workarounds, extra checks.</span><span class="l">4. Write one entry in the log.</span><span class="l">5. Two weeks later, read the entry again. Was it right?</span><span class="l"> </span><span class="l">## Log</span><span class="l"> </span><span class="l">| Date | Model | What the guide says changed | What I change | Two weeks later |</span><span class="l">| --- | --- | --- | --- | --- |</span><span class="l">| 10 Nov 2026 | Claude Opus 5.5 | Newer Claude models follow instructions literally, check their own work, and react strongly to words like CRITICAL | To try: remove capitals and &quot;verify each step&quot; lines from my CLAUDE.md files | |</span></code></pre>
+    </div>
+    <div class="btn-row"><a class="btn" href="/thoughts/humans-md/HUMANS.md" download>Download HUMANS.md</a></div>
+
+    <h2 id="open">Open questions</h2>
+    <ul>
+      <li>Should the agent read part of it too? "Ask me questions before a big change" could live in <code>CLAUDE.md</code> as well.</li>
+      <li>How do I measure a task without making every task slower?</li>
+      <li>Models now come out every few months. Is one log entry per model too much, or too little?</li>
+      <li>Could a skill read a new model card and propose the changes to my <code>CLAUDE.md</code> files for me?</li>
+    </ul>
+
+    <h2 id="start">Starting points</h2>
+    <ul>
+      <li>My own question: if the agent gets a <code>CLAUDE.md</code>, what would the human's file say?</li>
+      <li>Matt Pocock's skills, above all <code>/grill-me</code> <a href="#s9">[9]</a>.</li>
+    </ul>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">attogram: <a href="https://github.com/attogram/agents/blob/main/HUMANS.md" rel="noopener">agents, HUMANS.md</a>, first added 5 Sep 2025.</li>
+      <li id="s2">The LLM Whisperer: <a href="https://github.com/thellmwhisperer/human.md" rel="noopener">human.md</a>, Feb 2026.</li>
+      <li id="s3">cmdai: <a href="https://github.com/cmdai-hq/HUMANS.md" rel="noopener">HUMANS.md</a>, Oct 2026.</li>
+      <li id="s4">Anthropic: <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices" rel="noopener">Prompting best practices</a>, read Nov 2026.</li>
+      <li id="s5">OpenAI: <a href="https://developers.openai.com/api/docs/guides/gpt-5.5" rel="noopener">GPT-5.5 prompting guide</a>, Apr 2026.</li>
+      <li id="s6">Google: <a href="https://ai.google.dev/gemini-api/docs/gemini-3" rel="noopener">Gemini 3 developer guide</a>.</li>
+      <li id="s7">METR: <a href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/" rel="noopener">Measuring the impact of early-2025 AI on experienced open-source developer productivity</a>, Jul 2025.</li>
+      <li id="s8">METR: <a href="https://metr.org/blog/2026-02-24-uplift-update/" rel="noopener">We are changing our developer productivity experiment design</a>, Feb 2026.</li>
+      <li id="s9">Matt Pocock: <a href="https://github.com/mattpocock/skills" rel="noopener">skills</a>.</li>
+      <li id="s10">Shen and Tamkin, Anthropic: <a href="https://arxiv.org/abs/2601.20245" rel="noopener">arXiv 2601.20245</a>, Jan 2026, and <a href="https://www.anthropic.com/research/AI-assistance-coding-skills" rel="noopener">Anthropic's summary of the study</a>.</li>
+      <li id="s11">Hao-Ping Lee and others: <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2025/01/lee_2025_ai_critical_thinking_survey.pdf" rel="noopener">The impact of generative AI on critical thinking</a>, CHI 2025.</li>
+      <li id="s12">Lisanne Bainbridge: <a href="https://doi.org/10.1016/0005-1098(83)90046-8" rel="noopener">Ironies of automation</a>, Automatica, 1983.</li>
+      <li id="s13">Auste Simkute and others: <a href="https://arxiv.org/abs/2402.11364" rel="noopener">Ironies of generative AI</a>, 2024.</li>
+    </ol>
+
+    <h2 id="revisions">Revisions</h2>
+    <ul class="dates">
+      <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
+    </ul>
+
+    <h2 id="feedback">Feedback</h2>
+    <p>Not shared yet. When I post about it, what people answer goes here, with what it changed.</p>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>
