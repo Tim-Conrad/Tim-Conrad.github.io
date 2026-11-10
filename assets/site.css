@@ -218,7 +218,7 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 .shots figure { margin: 0; }
 .shots img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: var(--rule) solid var(--ink); }
 @media (max-width: 560px) { .shots { grid-template-columns: minmax(0, 1fr); } }
-.changes h2 { font-size: var(--step-2); }
+.changes h2 { font-size: var(--step-2); margin-bottom: .6rem; }
 .changes__intro, .changes__note { max-width: 60ch; color: var(--muted); }
 .changes__note { font: 500 var(--step--1)/1.5 var(--mono); letter-spacing: .04em; margin: 0; padding-top: 1.25rem; border-top: 1px solid var(--soft); }
 .tl { list-style: none; margin: 1.5rem 0 0; padding: 0; }
