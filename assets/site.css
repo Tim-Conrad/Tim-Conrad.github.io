@@ -187,6 +187,8 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 .proj h3 { font-size: var(--step-2); }
 .proj img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--ink); background: var(--surface); }
 .proj p { color: var(--muted); max-width: 46ch; }
+.proj .dg { aspect-ratio: 16 / 9; border-width: 1px; }
+.dg .t-l, .dg .t-h.t-l { font-size: 22px; }
 .proj__more { font-weight: 700; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 .reel { margin: 0; border: var(--rule) solid var(--ink); background: var(--code-bg); }
 .reel video { width: 100%; aspect-ratio: 16 / 9; display: block; }
