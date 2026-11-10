@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; frame-src https://wortzauber.beacon.host; base-uri 'none'; form-action 'none'">
 <title>Wortzauber · Tim Conrad</title>
-<meta name="description" content="Wortzauber is a letter-tracing word game for children, in German and English. Write a word, trace every letter, and it appears.">
+<meta name="description" content="Wortzauber is a letter-tracing word game for children, in German and English.">
 <link rel="canonical" href="https://t7d.dev/projects/wortzauber/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Wortzauber">
-<meta property="og:description" content="Wortzauber is a letter-tracing word game for children, in German and English. Write a word, trace every letter, and it appears.">
+<meta property="og:description" content="Wortzauber is a letter-tracing word game for children, in German and English.">
 <meta property="og:url" content="https://t7d.dev/projects/wortzauber/">
 <meta property="og:image" content="https://t7d.dev/assets/projects/wortzauber-poster.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="/assets/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css">
 <script src="/assets/theme.js"></script>
 <script src="/assets/site.js" defer></script>
@@ -24,25 +24,24 @@
 
 <header class="nav">
   <div class="wrap nav__in">
-    <a class="brand" href="/" aria-label="Tim Conrad, home">:wq</a>
+    <a class="brand" href="/">Tim Conrad</a>
     <nav class="nav__links" aria-label="Site">
       <a href="/#research">Research</a>
-      <a class="opt2" href="/#disclosure">Disclosure</a>
       <a href="/#projects">Projects</a>
-      <a class="opt3" href="/#verify">Verify</a>
-      <a class="opt" href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a>
+      <a class="opt3" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
     </nav>
     <button class="toggle" id="theme-toggle" type="button">dark</button>
   </div>
 </header>
 
-<main id="main" class="wrap">
+<main id="main">
 
-<header class="post-head">
-  <a class="crumb" href="/#projects">← ~/projects</a>
+<header class="post-head wrap">
+  <a class="crumb" href="/#projects">← Projects</a>
   <p class="label">Children · German and English · pixel art</p>
   <h1>Wortzauber</h1>
-  <p class="sub">A letter-tracing word game for children. Write a word, trace every letter, and it appears in the world.</p>
+  <p class="sub">A letter-tracing word game for children, in German and English.</p>
 </header>
 
 <div class="product">
@@ -54,8 +53,8 @@
 
   <section class="demo" aria-labelledby="play-h">
     <div class="demo__text">
-      <h2 id="play-h">Try the real thing</h2>
-      <p>This is the game itself, not a video. It is made for a phone held sideways, so it plays best full screen.</p>
+      <h2 id="play-h">Play it here</h2>
+      <p>This is the game, not a video. It is made for a phone held sideways, so it is easier to play full screen.</p>
     </div>
     <div class="phone phone--landscape">
       <div class="phone__screen" data-demo="https://wortzauber.beacon.host/" data-title="Wortzauber, live demo" data-allow="fullscreen; microphone">
@@ -69,16 +68,16 @@
 
   <div class="product__about">
     <div class="prose">
-      <p>In Wortzauber, words are magic. A child says, types or handwrites a word, then traces each letter along the school lines. When the last stroke is done, the thing they wrote appears, ready to be picked up and used.</p>
-      <p>There is a story to follow. The dragon has taken the Queen’s spell book, so the hero helps Berta the baker make her a cake, climbs through a dark mouse hole with a candle, and collects letters across the castle. A small hovering robot shows the way.</p>
-      <p>It is plain HTML and JavaScript with no build step and no dependencies. The reel shows the game as it runs, in German.</p>
+      <p>A child says, types or handwrites a word, then traces each letter along school lines. When the last stroke is done, the thing appears in the game and can be picked up and used.</p>
+      <p>The game has a story. A dragon has taken the Queen’s spell book. The hero helps Berta the baker make a cake, goes through a dark mouse hole with a candle, and collects letters in the castle. A small hovering robot gives hints.</p>
+      <p>It is plain HTML and JavaScript with no build step and no dependencies. The video shows the German version.</p>
     </div>
     <ul class="feats">
-      <li><b>Write, trace, appear</b><span>Every word is traced letter by letter, with a demo stroke and gentle help.</span></li>
+      <li><b>Write, trace, appear</b><span>Every word is traced letter by letter. The game shows each stroke first and helps when a child is stuck.</span></li>
       <li><b>Three ways to write</b><span>By voice, on a child-sized keyboard, or freely by hand.</span></li>
-      <li><b>A story world</b><span>Meadow, village street, bakery, mouse hole and castle, joined by a map.</span></li>
-      <li><b>Little sums</b><span>Maths riddles with apples and candles along the way.</span></li>
-      <li><b>Play together</b><span>Two children can share one adventure on two devices.</span></li>
+      <li><b>Places</b><span>Meadow, village street, bakery, mouse hole and castle, joined by a map.</span></li>
+      <li><b>Sums</b><span>Maths riddles with apples and candles.</span></li>
+      <li><b>Play together</b><span>Two children can play the same game on two devices.</span></li>
     </ul>
   </div>
 
@@ -99,8 +98,8 @@
 
 <footer class="foot">
   <div class="wrap">
-    <span>Tim Conrad. No cookies, no trackers. Nothing loads from another site until you press play.</span>
-    <span>:wq</span>
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers. The live demo loads from another site only after you press play.</span>
   </div>
 </footer>
 

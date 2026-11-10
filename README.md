@@ -8,7 +8,7 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 
 | Page | Path | Content |
 | --- | --- | --- |
-| Front page | `/` | Introduction, the `site.theme_color` editor, the featured advisory, the disclosure timeline, projects, the PGP fingerprint, contact |
+| Front page | `/` | Overview, the CVE summary, the two games, the disclosure timeline, the PGP key, contact |
 | Write-up | `/research/cve-2022-46166/` | CVE-2022-46166: template injection in Spring Boot Admin |
 | Kleinbahn | `/projects/kleinbahn/` | Reel, live demo from `tiny-train.beacon.host`, features, stills |
 | Wortzauber | `/projects/wortzauber/` | Reel, live demo from `wortzauber.beacon.host`, features, stills |
@@ -22,8 +22,8 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `index.html`, `404.html` | Front page and not-found page |
 | `research/`, `projects/`, `CVE/` | One folder with an `index.html` per page |
 | `assets/site.css` | All styles and the colour tokens of both themes |
-| `assets/theme.js` | Applies the saved theme and accent colour before the first paint |
-| `assets/site.js` | Theme toggle, the colour editor and its calculator, copy buttons, the table of contents, the tap-to-play demo |
+| `assets/theme.js` | Applies the saved theme before the first paint |
+| `assets/site.js` | Theme toggle, copy buttons, the table of contents, the tap-to-play demo |
 | `assets/fonts/` | Site fonts (SIL Open Font License, see `OFL.txt`) |
 | `assets/img/` | Pictures and the recording of the write-up |
 | `assets/projects/` | Reels, posters, stills and phone pictures of the product pages |
@@ -79,6 +79,8 @@ This needs Node with Playwright, ffmpeg, and both game repositories cloned next 
 
 Each product page allows exactly one frame host. Add the new host to `frame-src` in the `Content-Security-Policy` line of that page, or the phone frame stays empty.
 
-### Change the colours
+### Design and wording
 
-Every colour is a token at the top of `assets/site.css`, once for the light theme and twice for the dark theme (system setting and toggle). The accent is only ever used as a fill, because the visitor can change it in the colour editor.
+The site is black ink on white paper (white on black in the dark theme), with a thin frame and a small label per section. The only colour is in the pictures and videos. Every colour is a token at the top of `assets/site.css`.
+
+The wording is plain. Say what a thing is and what it does. No slogans, no superlatives, and nothing the site does not hold.

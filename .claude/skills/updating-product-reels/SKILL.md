@@ -20,6 +20,7 @@ Both game repos are private. Clone them next to this repo first (in a cloud sess
 - A visual change of the game (art, UI, a scene in a shot): film that game again, then build and publish.
 - Only a caption or a title: change the text in `tools/reels/overlays.mjs`, then run overlays, build and publish. No filming.
 - Only the page text: edit `projects/<game>/index.html`. The text must stay true to the game: read its `README.md` before you claim a feature.
+- Wording, on the pages and in the captions: plain and down to earth. A caption names what the shot shows ("Trains", "Shuttle launch"). No slogans and no superlatives.
 
 ## Tools
 All of them write to a work folder: `$REELS_WORK`, or `.reels/` in this repo (git ignores it). Use the scratchpad in a cloud session.
