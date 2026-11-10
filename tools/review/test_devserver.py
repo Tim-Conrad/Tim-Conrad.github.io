@@ -95,6 +95,19 @@ class Server(unittest.TestCase):
         self.assertEqual(code, 404)
         self.assertIn("Gone", body)
 
+    def test_feed_and_llms_are_made_on_request(self):
+        post = '<html><head><title>Post · Tim Conrad</title><meta name="description" content="About it."><link rel="canonical" href="https://t7d.dev/blog/p/"><meta property="article:published_time" content="2026-11-10"></head><body></body></html>'
+        os.makedirs(os.path.join(self.root, "blog", "p"))
+        with open(os.path.join(self.root, "blog", "p", "index.html"), "w") as f:
+            f.write(post)
+        code, headers, body = self.get("/blog/feed.xml")
+        self.assertEqual(code, 200)
+        self.assertIn("rss+xml", headers["Content-Type"])
+        self.assertIn("<title>Post</title>", body)
+        code, headers, body = self.get("/llms.txt")
+        self.assertEqual(code, 200)
+        self.assertIn("[Post](https://t7d.dev/blog/p/): About it.", body)
+
     def test_hidden_folders_are_not_served(self):
         for p in ("/.git/HEAD", "/.review/notes/", "/a/../.git/HEAD"):
             self.assertEqual(self.get(p)[0], 404, p)

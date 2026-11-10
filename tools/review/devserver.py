@@ -12,9 +12,11 @@
 - /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
   the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
   <notes>/done/ with an "answer" field. The page shows the answer under "My notes".
+- /llms.txt and /blog/feed.xml are made on each request by tools/gen-feeds.py, as the deploy makes them for gh-pages.
 - /.git, /.review, /.reels and /node_modules are not served.
 """
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -30,6 +32,17 @@ HIDDEN = (".git", ".review", ".reels", "node_modules", "__pycache__")
 MAX_BODY = 32 * 1024
 MAX_NOTE = 4000
 NOTE_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
+GENERATED = {"/llms.txt": "text/plain; charset=utf-8", "/blog/feed.xml": "application/rss+xml; charset=utf-8"}
+
+
+def gen_feeds():
+    """tools/gen-feeds.py as a module (its file name has a hyphen)."""
+    spec = importlib.util.spec_from_file_location("gen_feeds", os.path.join(HERE, "..", "gen-feeds.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 CSP = re.compile(r'(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([^"]*)(")', re.I)
 
 
@@ -157,6 +170,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.review_get(url[len(PREFIX):])
         if self.hidden():
             return self.not_found()
+        if url in GENERATED:
+            return self.send_generated(url)
         path = self.translate_path(self.path)
         if os.path.isdir(path):
             if not url.endswith("/"):
@@ -170,6 +185,14 @@ class Handler(SimpleHTTPRequestHandler):
         if not os.path.isfile(path):
             return self.not_found()
         return super().do_GET()
+
+    def send_generated(self, url):
+        body = gen_feeds().build(self.root)[url.lstrip("/")].encode()
+        self.send_response(200)
+        self.send_header("Content-Type", GENERATED[url])
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def not_found(self):
         page = os.path.join(self.root, "404.html")
