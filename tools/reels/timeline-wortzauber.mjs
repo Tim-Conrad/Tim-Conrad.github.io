@@ -68,4 +68,6 @@ export const STAGES = [
   { id: 'pr62', ref: '1cb6cb6', scene: 'castle', hold: 4500 },
   { id: 'pr63', ref: '2e2d52f', scene: 'castle-gate', hold: 4000 },
   { id: 'pr65', ref: 'ad5eaca', scene: 'free-writing', hold: 3500 },
+  // #72: the castle people call for help in their own voices: the merchant at his stall, the bubble points at him
+  { id: 'pr72', ref: '579d3c8', scene: 'castle-merchant', hold: 3000 },
 ];

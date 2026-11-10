@@ -180,7 +180,7 @@ def timeline():
             print('skip', sid, len(frames), 'frames'); continue
         name = f'{out}/kleinbahn-{sid}'
         run(['-framerate', '24', '-i', d + '%04d.jpg', '-vf', 'scale=640:360:flags=lanczos,format=yuv420p'] + enc + [name + '.mp4'])
-        run(['-i', frames[int(len(frames) * 0.6)], '-vf', 'scale=640:360:flags=lanczos', '-q:v', '4', name + '.jpg'])
+        run(['-i', frames[int(len(frames) * 0.6)], '-vf', 'scale=640:360:flags=lanczos,format=yuvj420p', '-q:v', '4', name + '.jpg'])
         print('kleinbahn', sid, os.path.getsize(name + '.mp4') // 1024, 'KB')
     for d in sorted(glob.glob(f'{S}/tl/wz/*/')):
         sid = os.path.basename(d.rstrip('/'))
@@ -195,7 +195,7 @@ def timeline():
         name = f'{out}/wortzauber-{sid}'
         run(['-ss', f'{a:.3f}', '-t', f'{b - a:.3f}', '-i', d + 'video.webm', '-vf',
              f'setpts=(PTS-STARTPTS)/{speed:.4f},fps=30,scale=640:360:flags=lanczos,format=yuv420p'] + enc + [name + '.mp4'])
-        run(['-ss', f'{a + (b - a) * 0.6:.3f}', '-i', d + 'video.webm', '-frames:v', '1', '-vf', 'scale=640:360:flags=lanczos', '-q:v', '4', name + '.jpg'])
+        run(['-ss', f'{a + (b - a) * 0.6:.3f}', '-i', d + 'video.webm', '-frames:v', '1', '-vf', 'scale=640:360:flags=lanczos,format=yuvj420p', '-q:v', '4', name + '.jpg'])
         print('wortzauber', sid, f'{(b - a) / speed:.1f}s', os.path.getsize(name + '.mp4') // 1024, 'KB')
 
 if __name__ == '__main__':
