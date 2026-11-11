@@ -48,7 +48,7 @@
   <dl class="tmeta">
     <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
     <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
-    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-11">11 Nov 2026</time></dd></div>
   </dl>
 </header>
 
@@ -363,7 +363,8 @@
     <p>A new password is different. It changes only the reader's entry, not the group keys. Devices that are logged in stay logged in. To log a reader out everywhere, I take away the access, or make a new key.</p>
 
     <h2 id="here">On this site</h2>
-    <p>A sealed site can live on its own host, or in a folder below another site. On t7d.dev, sealed sites live below <code>/sealed/</code>, with a login page in the look of this site. Each folder has its own worker, its own key store and its own cache, so several sealed sites can share one address without seeing each other's keys <a href="#s1">[1]</a>.</p>
+    <p>A sealed site can live on its own host, or in a folder below another site. On t7d.dev, sealed sites go below <code>/sealed/</code>, with a login page in the look of this site. Each folder has its own worker, its own key store and its own cache, so several sealed sites can share one address without seeing each other's keys <a href="#s1">[1]</a>.</p>
+    <p>You can try it: <a href="/sealed/demo/">the demo</a> is a small site with a picture, a sound and a bonus page. Log in as <code>reader</code> with the password <code>open-the-demo</code>, or as <code>member</code> with <code>open-the-bonus</code>; only <code>member</code> can open the bonus page. The demo protects nothing: its passwords and keys are public on purpose. A workflow in the sealed repository builds it and publishes it here after each change <a href="#s1">[1]</a>.</p>
     <p>The deploy of this site and the publishing of sealed each replace only their own part of the branch that GitHub Pages serves, so they do not overwrite each other. Search engines are asked to stay out of <code>/sealed/</code>.</p>
 
     <h2 id="staticrypt">Compared with StatiCrypt</h2>
@@ -396,7 +397,7 @@
 
     <h2 id="sources">Sources</h2>
     <ol class="refs">
-      <li id="s1">sealed, README. My own tool, in a private repository; read at the commit of 10 Nov 2026.</li>
+      <li id="s1">sealed, README. My own tool, in a private repository; read on 11 Nov 2026, with the changes for the demo.</li>
       <li id="s2">sealed, the crypto core, the service worker and the build (<code>client/core.js</code>, <code>client/sw.js</code>, <code>lib/build.mjs</code>), same commit.</li>
       <li id="s3">Robin Moisson: <a href="https://github.com/robinmoisson/staticrypt" rel="noopener">StatiCrypt</a>, README, read at the commit of 8 Jun 2026.</li>
       <li id="s4">OWASP: <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2" rel="noopener">Password Storage Cheat Sheet, PBKDF2</a>, as cited by StatiCrypt.</li>
@@ -404,6 +405,7 @@
 
     <h2 id="revisions">Revisions</h2>
     <ul class="dates">
+      <li><time datetime="2026-11-11">11 Nov 2026</time><span>Added the demo below <code>/sealed/demo/</code>, with its public passwords.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
     </ul>
 
