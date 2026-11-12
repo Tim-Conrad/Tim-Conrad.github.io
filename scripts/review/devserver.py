@@ -13,6 +13,9 @@
 - /__review/api/state: the branch and the commit of the chosen worktree,.
 - /__review/api/versions?branch=<b>: the branches, the rounds of the branch since master, and if the worktree has changes.
 - /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
+- POST /__review/api/approve with the header X-T7d-Review and JSON {branch, sha}: writes the approve request of the newest
+  round (approve.py) to --approve. GET /__review/api/approve: the status that the host writes to --approve-status.
+  This request is the only file that the server writes.
 - Env PAPERCUTS_URL (the relay of the papercuts widget): each page gets its script tag, and the origin of the URL goes into
   script-src, connect-src and img-src of the CSP. Without it, the page has no widget.
 - /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by scripts/gen-feeds.py, as the deploy makes them for gh-pages.
@@ -33,6 +36,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import approve  # noqa: E402
 import gitread  # noqa: E402
 from gitread import HIDDEN  # noqa: E402
 PREFIX = "/__review/"
@@ -118,6 +122,8 @@ class Handler(SimpleHTTPRequestHandler):
     root = "."
     widget = None   # the URL of the papercuts relay, or None for no widget
     worktrees = None   # the folder that holds the site worktrees, or None for any
+    approve_dir = None   # the folder of the approve request, default <root>/.review/approve
+    status_dir = None    # the folder of the approve status, default <root>/.review/approve-status
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")
@@ -254,6 +260,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.versions()
         if name == "api/text":
             return self.text()
+        if name == "api/approve":
+            return self.send_json(200, approve.read_status(self.status_dir or os.path.join(self.root, ".review", "approve-status")))
         self.send_error(404)
 
     def versions(self):
@@ -302,7 +310,28 @@ class Handler(SimpleHTTPRequestHandler):
             pass   # the page closed
 
     def do_POST(self):
-        self.send_error(404)   # the server has no write API
+        if self.path.split("?", 1)[0] != PREFIX + "api/approve":
+            return self.send_error(404)
+        # A page of another site cannot send this header without a CORS preflight, which this server never allows.
+        if not self.headers.get("X-T7d-Review"):
+            return self.send_json(403, {"error": "the header X-T7d-Review is missing"})
+        try:
+            size = int(self.headers.get("Content-Length") or 0)
+            if not 0 < size <= 4096:
+                raise ValueError
+            body = json.loads(self.rfile.read(size))
+            branch, sha = body["branch"], body["sha"]
+        except (ValueError, KeyError, TypeError):
+            return self.send_json(400, {"error": "the body must be JSON with branch and sha"})
+        offered = {w["branch"] for w in gitread.worktrees(self.root) if self.allowed(w["path"])}
+        if not isinstance(branch, str) or branch not in offered:
+            return self.send_json(400, {"error": "unknown branch"})
+        try:
+            req = approve.write_request(self.root, self.approve_dir or os.path.join(self.root, ".review", "approve"),
+                                        branch, sha, "button")
+        except approve.Refused as e:
+            return self.send_json(e.code, {"error": e.message})
+        return self.send_json(200, req)
 
 
 def main():
@@ -310,12 +339,16 @@ def main():
     ap.add_argument("--root", default=os.path.normpath(os.path.join(HERE, "..", "..")))
     ap.add_argument("--worktrees", default=os.environ.get("REVIEW_WORKTREES"),
                     help="offer only the worktrees below this folder (default: env REVIEW_WORKTREES, else any)")
+    ap.add_argument("--approve", help="the folder of the approve request (default: <root>/.review/approve)")
+    ap.add_argument("--approve-status", help="the folder of the approve status (default: <root>/.review/approve-status)")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args()
     root = os.path.abspath(a.root)
     handler = partial(type("H", (Handler,), {"root": root, "worktrees": a.worktrees and os.path.abspath(a.worktrees),
-                                       "widget": os.environ.get("PAPERCUTS_URL") or None}),
+                                       "widget": os.environ.get("PAPERCUTS_URL") or None,
+                                       "approve_dir": a.approve and os.path.abspath(a.approve),
+                                       "status_dir": a.approve_status and os.path.abspath(a.approve_status)}),
                       directory=root)
     srv = ThreadingHTTPServer((a.host, a.port), handler)
     srv.daemon_threads = True

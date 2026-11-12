@@ -117,6 +117,11 @@ class GitReadTest(unittest.TestCase):
     def test_show_of_bad_path_returns_none(self):
         self.assertIsNone(gitread.show(self.main, "master", "a\x00b"))
 
+    def test_branch_head_is_the_full_sha_or_none(self):
+        self.assertEqual(gitread.branch_head(self.main, "t/a"), gitread.rounds(self.main, "t/a")[-1]["sha"])
+        self.assertIsNone(gitread.branch_head(self.main, "nope"))
+        self.assertIsNone(gitread.branch_head(self.main, "--all"))
+
 
 if __name__ == "__main__":
     unittest.main()

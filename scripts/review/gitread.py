@@ -66,6 +66,14 @@ def head(path):
             "commit": commit.stdout.strip() or None if commit.returncode == 0 else None}
 
 
+def branch_head(main, branch):
+    """The full sha of the newest commit of branch, or None."""
+    if branch.startswith("-"):
+        return None
+    res = _git(main, "rev-parse", "--verify", "-q", "--end-of-options", "refs/heads/" + branch + "^{commit}")
+    return res.stdout.strip() or None if res.returncode == 0 else None
+
+
 def show(main, rev, path):
     if rev.startswith("-"):
         return None

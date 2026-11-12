@@ -19,9 +19,10 @@
   min-height: 40px; padding: 0 1rem; border: var(--rule, 1.5px) solid var(--ink, #111);
   background: var(--ink, #111); color: var(--bg, #fff); font: 600 0.75rem var(--mono, monospace); text-transform: uppercase; cursor: pointer;
 }
+.rv-approve:disabled { opacity: 0.45; cursor: default; }
 /* Find-in-page and focus stop above the sticky bar. The values are the height of the bar, closed and open. */
 html.rv-has-bar { scroll-padding-bottom: 4.5rem; }
-html.rv-has-bar.rv-bar-open { scroll-padding-bottom: 17rem; }
+html.rv-has-bar.rv-bar-open { scroll-padding-bottom: 20rem; }
 
 /* narrow screens: one row with the comparison and the switch, the selects open above it on a tap */
 .rv-more-toggle {
@@ -43,6 +44,8 @@ html.rv-has-bar.rv-bar-open { scroll-padding-bottom: 17rem; }
   .rv-more-toggle { display: none; }
   .rv-more, .rv-bar:not(.rv-open) .rv-more { display: contents; }
   .rv-more .rv-field { flex: 1 1 11rem; }
+  .rv-approve { order: 1; }
+  .rv-status { order: 2; }
 }
 .rv-status:empty { display: none; }
 .rv-status { min-width: 0; overflow-wrap: anywhere; color: var(--muted, #5c5c5c); font-size: 0.82rem; }

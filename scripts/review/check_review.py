@@ -6,8 +6,12 @@
 Makes a temporary git repo (master and the worktree t/a with two rounds), starts devserver.py on a free port and
 opens the pages in Chromium at 1440, 390 and 320 px, in the light and the dark theme. Exit code 1 if a check fails.
 Round 1 changes the heading. Round 2 changes one word, removes one paragraph, adds one and adds the page /new/.
+The worktree t/b has one round and a change that is not committed (Working).
+The Approve button: a route catches its POST, so nothing is written. A fake status file stands in for the host.
 """
 import argparse
+import datetime
+import json
 import os
 import re
 import shutil
@@ -32,6 +36,7 @@ P4 = "Round two adds this closing text."
 SIZES = ((1440, 900), (390, 844), (320, 640))
 WIDE = 960   # from this width the bar is one row with every select; below it the selects open on a tap
 MARKS = "ins.rv-add, del.rv-del, .rv-gone, .rv-newpage"
+PR = "https://github.com/Tim-Conrad/Tim-Conrad.github.io/pull/7"
 
 
 def page(title, paras):
@@ -78,6 +83,11 @@ def fixture(base):
     write(wt, "new/index.html", page("New", ["A page that round two adds."]))
     git(wt, "add", "-A")
     git(wt, "commit", "-m", "Change a word, remove and add a paragraph")
+    wt_b = os.path.join(wts, "t-b")
+    git(main, "worktree", "add", "-b", "t/b", wt_b)
+    write(wt_b, "index.html", page("Fixture B", [P1_OLD, P2, P3]))
+    git(wt_b, "commit", "-am", "B heading")
+    write(wt_b, "index.html", page("Fixture B", [P1_NEW, P2, P3]))   # Working: not committed
     return main, wts
 
 
@@ -87,9 +97,11 @@ def free_port():
         return s.getsockname()[1]
 
 
-def start(main, wts):
+def start(main, wts, status_dir):
     port = free_port()
+    # --approve names a folder that does not exist: if the route misses the POST, the server answers 503 and writes nothing
     proc = subprocess.Popen([sys.executable, os.path.join(HERE, "devserver.py"), "--root", main, "--worktrees", wts,
+                             "--approve", os.path.join(status_dir, "missing"), "--approve-status", status_dir,
                              "--port", str(port)], stdout=subprocess.DEVNULL)
     base = "http://127.0.0.1:%d" % port
     for _ in range(100):
@@ -154,7 +166,29 @@ def theme_now(pg):
                        "(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')")
 
 
-def run(base, shots):
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def fake_status(status_dir, **fields):
+    """The status file as approve-host.sh writes it, or none for fields == {}."""
+    path = os.path.join(status_dir, "status.json")
+    if not fields:
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    st = {"state": "running", "step": "", "line": "", "pr": None, "branch": "t/a", "sha": "", "time": now()}
+    st.update(fields)
+    with open(path, "w") as f:
+        json.dump(st, f)
+
+
+def approve_shown(pg):
+    open_bar(pg)
+    return pg.is_visible(".rv-approve")
+
+
+def run(base, shots, status_dir, head):
     c = Check()
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -186,6 +220,10 @@ def run(base, shots):
                 c.that("branch=t%2Fa" in pg.url or "branch=t/a" in pg.url, tag + ": the branch select loads t/a")
                 c.that(pg.input_value(".rv-to") == pg.eval_on_selector(".rv-to", "s => s.options[s.options.length - 1].value"),
                        tag + ": to is the newest round")
+                c.that(approve_shown(pg) and pg.text_content(".rv-approve") == "Approve round 2",
+                       tag + ": the newest round shows \"Approve round 2\"")
+                if pg.get_attribute(".rv-more-toggle", "aria-expanded") == "true":
+                    pg.click(".rv-more-toggle")
                 c.that(pg.eval_on_selector(".rv-from", "s => s.options[s.selectedIndex].text").startswith("Round 1"),
                        tag + ": from is Round 1")
                 c.that(texts(pg, "ins.rv-add") == ["slow", P4], tag + ": ins marks the new word and the new paragraph (%r)" % texts(pg, "ins.rv-add"))
@@ -238,6 +276,7 @@ def run(base, shots):
                 pick(pg, ".rv-to", round1)
                 wait_for(pg, "document.querySelector('main h1 ins.rv-add') !== null")
                 c.that(texts(pg, "main > p") == [P1_OLD, P2, P3], tag + ": to = Round 1 shows the text of round 1")
+                c.that(not approve_shown(pg), tag + ": an older round hides the approve button")
                 c.that(texts(pg, "ins.rv-add") == [" page"] and pg.locator("del.rv-del, .rv-gone").count() == 0,
                        tag + ": Round 1 against master marks only the heading (%r)" % texts(pg, "ins.rv-add"))
                 header = pg.evaluate("document.querySelector('header.nav') !== null")
@@ -256,6 +295,7 @@ def run(base, shots):
                 wait_for(pg, "document.querySelectorAll('.rv-gone').length === 1")
                 c.that(texts(pg, "ins.rv-add") == [" page", "slow", P4] and texts(pg, "del.rv-del") == ["quick"],
                        tag + ": back to Round 2 shows the page on disk, marked against master (%r)" % texts(pg, "ins.rv-add"))
+                c.that(approve_shown(pg), tag + ": back to Round 2 shows the approve button again")
 
                 # a page new in "to"
                 pick(pg, ".rv-from", pg.eval_on_selector(".rv-from", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value"))
@@ -299,6 +339,53 @@ def run(base, shots):
                     c.that(not pg.is_visible(".rv-more-toggle") and pg.is_visible(".rv-from"),
                            tag + ": a wide screen shows every select in one row")
 
+                # Working is not a commit: no approve. The newest round of t/b is.
+                pg.goto(base + "/?branch=t/b")
+                bar_ready(pg)
+                c.that(pg.input_value(".rv-to") == "working" and not approve_shown(pg),
+                       tag + ": to = Working hides the approve button")
+                pick(pg, ".rv-to", pg.eval_on_selector(".rv-to", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value"))
+                c.that(approve_shown(pg) and pg.text_content(".rv-approve") == "Approve round 1",
+                       tag + ": the newest round of t/b shows \"Approve round 1\"")
+
+                # the approve flow: confirm, a POST with the header and the head sha, then the status of the host
+                fake_status(status_dir)
+                pg.goto(base + "/?branch=t/a")
+                bar_ready(pg)
+                c.that(pg.text_content(".rv-status") == "" and approve_shown(pg) and pg.is_enabled(".rv-approve"),
+                       tag + ": with no status the line is empty and the button works")
+                posts, dialogs = [], []
+
+                def on_approve(route):
+                    if route.request.method != "POST":
+                        return route.continue_()
+                    posts.append({"header": route.request.headers.get("x-t7d-review"), "body": route.request.post_data_json})
+                    body = {"branch": "t/a", "sha": head, "round": 2, "by": "button", "time": now()}
+                    route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
+                pg.route(re.compile(r"/__review/api/approve$"), on_approve)
+                pg.once("dialog", lambda d, dl=dialogs: (dl.append(d.message), d.accept()))
+                fake_status(status_dir, step="run scripts/check.py", sha=head)
+                pg.click(".rv-approve")
+                c.that(dialogs == ["Publish t/a at round 2 to t7d.dev?"], tag + ": the confirm text (%r)" % dialogs)
+                wait_for(pg, "document.querySelector('.rv-status').textContent.indexOf('check.py') >= 0")
+                c.that(posts == [{"header": "1", "body": {"branch": "t/a", "sha": head}}],
+                       tag + ": the POST has the header and the head sha (%r)" % posts)
+                c.that(pg.text_content(".rv-status") == "Publishing t/a: run scripts/check.py." and pg.is_disabled(".rv-approve"),
+                       tag + ": while the host runs, the line shows the step and the button is off (%r)" % pg.text_content(".rv-status"))
+                if shots and w in (1440, 390):
+                    pg.screenshot(path=os.path.join(shots, "approve-running-%d-%s.png" % (w, scheme)))
+                fake_status(status_dir, state="done", step="published t/a", sha=head, pr=PR)
+                wait_for(pg, "document.querySelector('.rv-status a') !== null")
+                c.that(pg.text_content(".rv-status") == "Published t/a. Open the PR"
+                       and pg.get_attribute(".rv-status a", "href") == PR and pg.is_enabled(".rv-approve"),
+                       tag + ": done shows the PR link and the button works again (%r)" % pg.text_content(".rv-status"))
+                c.that(no_side_scroll(pg) and small_targets(pg) == [],
+                       tag + ": with the status: no horizontal scroll, touch targets 40 px or more")
+                if shots and w in (1440, 390):
+                    pg.screenshot(path=os.path.join(shots, "approve-done-%d-%s.png" % (w, scheme)))
+                pg.unroute(re.compile(r"/__review/api/approve$"))
+                fake_status(status_dir)
+
                 c.that(errors == [], tag + ": no console error (%r)" % errors)
                 ctx.close()
         browser.close()
@@ -313,9 +400,13 @@ def main():
         os.makedirs(a.shots, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         main_clone, wts = fixture(os.path.realpath(tmp))
-        proc, base = start(main_clone, wts)
+        status_dir = os.path.join(os.path.realpath(tmp), "approve-status")
+        os.makedirs(status_dir)
+        head = subprocess.run(["git", "rev-parse", "t/a"], cwd=main_clone, check=True, capture_output=True,
+                              text=True).stdout.strip()
+        proc, base = start(main_clone, wts, status_dir)
         try:
-            c = run(base, a.shots)
+            c = run(base, a.shots, status_dir, head)
         finally:
             proc.terminate()
             proc.wait()

@@ -32,13 +32,14 @@
   var sw = ui('label', 'rv-switch'), swBox = ui('input');
   swBox.type = 'checkbox'; sw.append(swBox, ui('span', '', 'Show changes'));
   var approve = ui('button', 'rv-approve', 'Approve');
-  approve.type = 'button'; approve.hidden = true;   /* Task 6 of the review rounds connects it */
+  approve.type = 'button'; approve.hidden = true;   /* only on the newest round of a branch, see updateApprove */
   var status = ui('span', 'rv-status'); status.setAttribute('role', 'status');
   /* On a narrow screen the bar is one row: the comparison and the switch. A tap on the comparison opens the selects. */
   var more = ui('div', 'rv-more'), moreToggle = ui('button', 'rv-more-toggle');
-  more.id = 'rv-more'; more.append(branchField.label, fromField.label, toField.label);
+  /* the approve button is in the part that opens: on a phone, a publish takes a tap more */
+  more.id = 'rv-more'; more.append(branchField.label, fromField.label, toField.label, approve);
   moreToggle.type = 'button'; moreToggle.setAttribute('aria-controls', more.id); moreToggle.setAttribute('aria-expanded', 'false');
-  bar.append(moreToggle, more, sw, approve, status);
+  bar.append(moreToggle, more, sw, status);
   var versionParts = [fromField.label, toField.label, sw];
   function setOpen(open) {
     bar.classList.toggle('rv-open', open);
@@ -213,6 +214,66 @@
     });
   }
 
+  /* ---- approve: the host checks, merges and publishes the newest round (approve-host.sh) ---- */
+  var job = { state: 'idle' };   /* the status of the host, from GET /api/approve */
+  var since = null;              /* the time of the request that this page sent: an older end state does not count */
+  var polling = false, diffNote = '', approveNote = '';
+  function newest() { return v && v.rounds.length ? v.rounds[v.rounds.length - 1] : null; }
+  function updateApprove() {
+    var last = newest();
+    approve.hidden = !(last && v.branch !== v.base && choice.to === last.sha);   /* only a commit can ship, not Working */
+    if (last) approve.textContent = 'Approve round ' + last.n;
+    approve.disabled = job.state === 'running';
+  }
+  function showStatus() {
+    var parts = [], fresh = Date.now() - Date.parse(job.time || '') < 3600 * 1000;
+    if (diffNote) parts.push(diffNote);
+    if (approveNote) parts.push(approveNote);
+    else if (job.state === 'running') parts.push('Publishing' + (job.branch ? ' ' + job.branch : '') + ': ' + job.step + '.');
+    else if (job.state === 'failed' && (fresh || (v && job.branch === v.branch))) {
+      parts.push('Publishing ' + job.branch + ' failed at "' + job.step + '": ' + job.line);
+    } else if (job.state === 'done' && (fresh || (v && job.branch === v.branch))) {
+      parts.push('Published ' + job.branch + '.');
+      if (job.pr) { var a = ui('a', '', 'Open the PR'); a.href = job.pr; parts.push(a); }
+    }
+    status.replaceChildren();
+    parts.forEach(function (p, i) { if (i) status.append(' '); status.append(p); });
+  }
+  /* GET /api/approve now, then every 2 s while the host runs */
+  function poll() {
+    if (polling) return;
+    polling = true;
+    (function tick() {
+      fetch(API + 'approve')
+        .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+        .then(function (s) { if (s.state === 'running' || !since || (s.time && s.time >= since)) job = s; })
+        .catch(function () { /* the next tick asks again */ })
+        .then(function () {
+          updateApprove(); showStatus();
+          if (job.state === 'running') setTimeout(tick, 2000); else polling = false;
+        });
+    })();
+  }
+  approve.addEventListener('click', function () {
+    var last = newest();
+    if (!last || !window.confirm('Publish ' + v.branch + ' at round ' + last.n + ' to t7d.dev?')) return;
+    approveNote = '';
+    approve.disabled = true;
+    fetch(API + 'approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-T7d-Review': '1' },
+      body: JSON.stringify({ branch: v.branch, sha: last.sha })
+    }).then(function (r) {
+      return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || String(r.status)); return d; });
+    }).then(function (req) {
+      since = req.time;
+      job = { state: 'running', step: 'wait for the host', branch: v.branch, time: req.time };
+      updateApprove(); showStatus(); poll();
+    }).catch(function (err) {
+      approveNote = 'The approve was refused: ' + err.message + '.';
+      updateApprove(); showStatus();
+    });
+  });
+
   /* ---- the bar ---- */
   var v = null, versions = [], choice = {}, run = 0;
   function onDisk() { return versions[versions.length - 1].value; }
@@ -224,7 +285,8 @@
     var mine = ++run;
     moreToggle.textContent = nameOf(choice.to) + ' vs ' + nameOf(choice.from);
     unmark();
-    status.textContent = '';
+    diffNote = '';
+    updateApprove(); showStatus();
     var to = choice.to, from = choice.from;
     var shownReady = to === onDisk() ? Promise.resolve(showOwn()) : text(v.branch, to).then(function (html) {
       if (mine === run) showOther(to, html);
@@ -232,7 +294,7 @@
     return shownReady.then(function () {
       if (mine !== run || !choice.show || from === to) return;
       return text(v.branch, from).then(function (html) { if (mine === run) mark(html); });
-    }).catch(function () { if (mine === run) status.textContent = 'The changes cannot load.'; });
+    }).catch(function () { if (mine === run) { diffNote = 'The changes cannot load.'; showStatus(); } });
   }
   function remember() { save(v.branch, { show: choice.show, from: choice.from, to: choice.to, last: onDisk() }); }
   function fill(select, list, value) {
@@ -279,8 +341,8 @@
     fetch(API + 'versions?' + q(asked))
       .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(function (data) { versionParts.forEach(function (n) { n.hidden = false; }); return start(data); })
-      .catch(function () { status.textContent = 'The review server does not answer.'; })
-      .then(function () { bar.setAttribute('data-ready', ''); });
+      .catch(function () { diffNote = 'The review server does not answer.'; showStatus(); })
+      .then(function () { bar.setAttribute('data-ready', ''); poll(); });
   }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();

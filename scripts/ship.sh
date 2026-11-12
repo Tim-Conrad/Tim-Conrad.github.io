@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Ship a pull request in one step: merge it, wait for the deploy, and check that t7d.dev serves the new files.
 #   scripts/ship.sh [<pr>]      the PR number. Without it: the PR of the current branch.
+#   scripts/ship.sh <pr> <sha>  merge only if the head of the PR is still this commit (the approved round).
 # 1. gh pr merge --merge --delete-branch. A PR that is already merged is not merged again, so a second run
 #    after a failed step does the other steps only.
 # 2. This clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked files.
@@ -26,14 +27,19 @@ wait_run() {
   echo "   \"$1\" passed (run $id)"
 }
 
-pr=${1:-}
+pr=${1:-} head=${2:-}
+match=()
+if [ -n "$head" ]; then
+  [[ $head =~ ^[0-9a-f]{40}$ ]] || { echo "ship: \"$head\" is not a full commit sha. Nothing was done." >&2; exit 1; }
+  match=(--match-head-commit "$head")
+fi
 if [ -z "$pr" ]; then
   pr=$(gh pr view --json number --jq .number 2>/dev/null) || { echo "ship: no PR for this branch. Give the PR number." >&2; exit 1; }
 fi
 state=$(gh pr view "$pr" -R "$REPO" --json state --jq .state)
 echo "== PR #$pr ($state): $(gh pr view "$pr" -R "$REPO" --json title --jq .title)"
 case $state in
-  OPEN)   gh pr merge "$pr" -R "$REPO" --merge --delete-branch ;;
+  OPEN)   gh pr merge "$pr" -R "$REPO" --merge --delete-branch "${match[@]}" ;;
   MERGED) echo "== already merged" ;;
   *)      echo "ship: PR #$pr is $state. Nothing was done." >&2; exit 1 ;;
 esac
