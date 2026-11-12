@@ -3,7 +3,8 @@
 
     python3 scripts/review/approve.py <branch> [<sha>] [--root <main clone>]
 
-- Writes .review/approve/request.json in the main clone. The sha must be the head of the branch (default: the head).
+- Writes .review/approve/request.json in the main clone, also when it runs from a worktree. The sha must be the head of
+  the branch (default: the head).
 - Then prints each step that the host writes for this request to .review/approve-status/status.json.
   A status belongs to this request if its branch, sha and request time are those of the request.
 - Exit 0 when the host is done. Exit 1 when it fails, when a request is waiting already, while the host runs,
@@ -95,12 +96,20 @@ def read_status(status_dir):
     return st
 
 
+def main_clone(path):
+    """The main checkout of the repo at path: the parent of the common .git folder. A worktree gives its main clone."""
+    res = gitread._git(path, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if res.returncode == 0 and res.stdout.strip():
+        return os.path.dirname(res.stdout.strip())
+    return os.path.normpath(os.path.join(path, "..", ".."))
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("branch")
     ap.add_argument("sha", nargs="?", help="the head of the branch (default)")
-    ap.add_argument("--root", default=os.path.normpath(os.path.join(here, "..", "..")), help="the main clone")
+    ap.add_argument("--root", default=main_clone(here), help="the main clone (default: the main clone of this script)")
     ap.add_argument("--timeout", type=float, default=3600, help="seconds to wait for the host (default 3600)")
     ap.add_argument("--poll", type=float, default=2, help=argparse.SUPPRESS)
     a = ap.parse_args()

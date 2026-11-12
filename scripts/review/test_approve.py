@@ -313,6 +313,18 @@ class Request(Fixture):
         self.assertEqual(cli.returncode, 1)
         self.assertIn("already", cli.stderr)
 
+    def test_cli_in_a_worktree_writes_to_the_main_clone(self):
+        """An agent runs approve.py of its own worktree with no --root: the request goes to the main clone."""
+        here = os.path.join(self.wt, "scripts", "review")
+        os.makedirs(here)
+        for name in ("approve.py", "gitread.py"):
+            shutil.copy(os.path.join(HERE, name), here)
+        cli = subprocess.run([sys.executable, os.path.join(here, "approve.py"), "t/a", "--timeout", "0.2", "--poll", "0.05"],
+                             cwd=self.wt, capture_output=True, text=True)
+        self.assertIn("no host took the request", cli.stderr)
+        with open(os.path.join(self.approve_dir, "request.json")) as f:
+            self.assertEqual(json.load(f)["sha"], self.head)
+
     def test_request_is_refused_while_a_run_is_going(self):
         st = {"state": "running", "step": "push t/a", "line": "", "pr": None, "branch": "t/b", "sha": "b" * 40,
               "request": "2026-11-12T00:00:00Z", "time": approve.now()}
