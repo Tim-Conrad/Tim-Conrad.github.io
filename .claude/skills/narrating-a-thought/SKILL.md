@@ -25,7 +25,7 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 | Styles and the colour tokens | "Narration" in `assets/site.css`. DESIGN.md has the rules. |
 | Opt-in | `<article class="prose" data-narration="/thoughts/<slug>/narration.json">` |
 | The script | The page itself: every `h2`, `p` and `li` of the article up to `#sources`, in order, without source marks, plus the `.say` blocks. Figures, captions and code blocks are not read. |
-| Spoken parts | `<div class="say" id="say-..."><p><span class="say-k">Spoken</span>...</p></div>` in the page. `data-pause="2.5"` adds silence after it. |
+| Spoken parts | `<div class="say" id="say-..."><p><span class="say-k">Spoken</span>...</p></div>` in the page. `data-pause="2.5"` adds silence after it. A spoken part with several paragraphs wraps them in one `<div>`: the fold closes only one grid row, and a second paragraph would leave an empty space. |
 | Colour blocks | `<span class="mk" data-c="red|green|blue|yellow">term</span>` in the text. It turns on when the voice reaches its first word. Nothing else is needed. |
 | `narration.json` | `title`, `voice`, `audio` (mp3 path or null), `timing` (`{start: [...], end: [...]}` per character of the script, or null for simulated), `chapters` (`[id, title]`, id of an `h2` or a `.say`), `spoken` (id to spoken form, where TTS must hear other words than the page shows), `cues`. |
 | Figure cues | `{"in": "say-fig1", "p": "phrase in the script", "until": "phrase", "sel": ".cue-find", "cls": "hot"}`. `sel` is looked up inside the figure of `in`. `hot` makes that part stand out while the rest of the figure steps back. Without `cls`, the part gets `on`, and `[data-c].on` fills with its colour. Without `until`, the cue stays on. |
@@ -75,4 +75,5 @@ Use the skill `adding-a-thought` for the text. Then:
 | The sticky site header covered the top of the framed figure. | Subtract the header height when scrolling. |
 | A wide drawing scrolled sideways inside its box, so half of it was out of view. | A narrow drawing. |
 | The manual step viewer (box, Back, Next, Play, "Step 2 of 5") stayed under a narrated figure and broke the immersion. | Voice steps: a plain list, the voice animates. |
+| Empty space under a figure: a second paragraph in a spoken part kept its height, and a folded part in the figure grid still added one gap. | One wrapper per spoken part. Folded parts in a figure use `display: none`. Measure the space from the drawing to the next element before and after Listen. |
 | A python `http.server` cannot seek in an mp3 (no range requests). | Load the audio as a blob. |
