@@ -513,6 +513,7 @@ figure .dg-n { display: none; }
 .narr-go svg, .narr-play svg { width: 1.25rem; height: 1.25rem; fill: currentColor; }
 .i-pause { display: none; } .narr-playing .i-play { display: none; } .narr-playing .i-pause { display: block; }
 .narr-note { margin: 0; flex: 1 1 16rem; color: var(--muted); font-size: .9375rem; line-height: 1.4; }
+.narr-again[hidden] { display: none; }   /* .btn sets display, which would win over [hidden] */
 .narr-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--bg); border-top: var(--rule) solid var(--ink); padding-bottom: env(safe-area-inset-bottom, 0px); display: none; }
 .narr-on .narr-bar { display: block; }
 .narr-on { padding-bottom: 4.5rem; }
