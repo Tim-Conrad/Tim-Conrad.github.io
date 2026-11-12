@@ -77,7 +77,8 @@
       var host = document.getElementById(q['in']); if (!host) return null;
       var s = segs.find(function (x) { return x.el === host || host.contains(x.el); }); if (!s) return null;
       var scope = host.closest('figure') || art, at = T.indexOf(q.p, s.s), to = q.until ? T.indexOf(q.until, at) : -1;
-      return { els: $$(q.sel, scope), cls: q.cls || 'on', at: at, to: q.until ? (to < 0 ? T.length : to) : Infinity };
+      // "state": "a" or "b" sets a switch figure (data-switch) from this phrase on
+      return { els: q.sel ? $$(q.sel, scope) : [], cls: q.cls || 'on', state: q.state, fig: host.closest('figure'), at: at, to: q.until ? (to < 0 ? T.length : to) : Infinity };
     }).filter(function (q) { return q && q.at >= 0; });
 
     /* ---- the player ---- */
@@ -174,7 +175,19 @@
       // read words, colour blocks, figure cues: all derived from the position, so seeking back undoes them
       words.forEach(function (w) { w.el.classList.toggle('rd', started && w.k === k && w.s <= t + 0.03); });
       marks.forEach(function (x) { x.el.classList.toggle('on', started && t >= x.s); });
-      cues.forEach(function (q) { var on = started && c >= q.at && c < q.to; q.els.forEach(function (e) { e.classList.toggle(q.cls, on); }); });
+      cues.forEach(function (q) {
+        var on = started && c >= q.at && c < q.to;
+        if (q.state) { if (on && q.fig) q.fig.setAttribute('data-state', q.state); return; }   // the last state cue reached wins
+        q.els.forEach(function (e) { e.classList.toggle(q.cls, on); });
+      });
+      // a figure with tappable parts (data-pick): while the voice reads an item of its list, that part lights up
+      $$('figure', art).forEach(function (f) {
+        var items = $$('.pick__list li', f); if (!items.length || !started) return;
+        var now = f.contains(s.el) && items.indexOf(s.el) >= 0 ? s.el.getAttribute('data-k') : null;
+        if (!now && !f.contains(s.el)) return;   // leave the figure as the reader left it
+        $$('[data-pick]', f).forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-pick') === now); });
+        items.forEach(function (li) { li.classList.toggle('is-now', li.getAttribute('data-k') === now); });
+      });
       var ch = chapterOf(k);
       $('.narr-chap span', bar).textContent = chapters[ch].title;
       chapters.forEach(function (x, j) { x.li.classList.toggle('is-now', started && j === ch); });
