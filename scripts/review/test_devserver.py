@@ -40,17 +40,20 @@ class Inject(unittest.TestCase):
 
 
 class Widget(unittest.TestCase):
+    PAGE2 = PAGE.replace("base-uri 'none'", "style-src 'self'; img-src 'self'; base-uri 'none'")
+
     def test_widget_tag_and_csp_only_with_the_env(self):
         self.assertNotIn("papercuts", devserver.inject(PAGE).lower())
         self.assertNotIn("papercuts", devserver.inject(PAGE, widget="").lower())
-        out = devserver.inject(PAGE, widget="https://p.example", branch="feat/x", commit="abc1234")
+        out = devserver.inject(self.PAGE2, widget="https://p.example", branch="feat/x", commit="abc1234")
         self.assertEqual(out.count("<script src=\"https://p.example/papercuts.js\""), 1)
         self.assertIn('data-repo="Tim-Conrad/Tim-Conrad.github.io" data-branch="feat/x" data-commit="abc1234"', out)
         policy = re.search(r'content="([^"]*)"', out).group(1)
         for d in ("script-src", "connect-src", "img-src"):
-            self.assertRegex(policy, d + r"[^;]*https://p\.example")
-        self.assertIn("script-src 'self' https://p.example", policy)
-        self.assertEqual(re.search(r"style-src[^;]*", PAGE), re.search(r"style-src[^;]*", policy))
+            self.assertEqual(len(re.findall(d + r"[^;]*https://p\.example", policy)), 1, d)
+        self.assertEqual(re.search(r"style-src[^;]*", policy).group(0), "style-src 'self'")
+        self.assertEqual(re.search(r"img-src[^;]*", policy).group(0), "img-src 'self' https://p.example")
+        self.assertEqual(re.search(r"script-src[^;]*", policy).group(0), "script-src 'self' https://p.example")
 
 
 class Server(unittest.TestCase):

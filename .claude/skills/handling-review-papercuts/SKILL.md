@@ -7,11 +7,7 @@ description: Use when Tim mentions papercuts or feedback on the review site, whe
 
 Tim writes papercuts on the review site with the papercuts widget. The review site is this clone, served by `scripts/review/devserver.py` in the container `t7d-review` (`docker-compose.dev.yml`, host name in `.env` as `REVIEW_HOST`). A second container, `t7d-review-papercuts`, is the relay. It writes the local store `.papercuts/papercuts.db` in this clone. Each papercut keeps the page, the branch, the commit and a picture.
 
-Set the store once per shell, in any worktree. `$REVIEW_MAIN` is the folder of this clone.
-
-```sh
-export PAPERCUTS_STORE=local PAPERCUTS_DB=$REVIEW_MAIN/.papercuts/papercuts.db
-```
+`.github/papercuts.json` sets `"store": "local"`, so `papercuts add`, `list`, `show`, `comment` and `done` use the local store in every worktree. A worktree uses the `.papercuts/` folder of the main clone. No export is needed. Never run these commands with `PAPERCUTS_STORE=github`: that files a GitHub issue on a public repo.
 
 1. The SessionStart hook (`.claude/settings.json`) prints the number of open papercuts. Tell Tim how many are open, and run `papercuts list`.
 2. Run `papercuts show <n>` to read one papercut: the text, the page, the branch, the commit and the picture.
