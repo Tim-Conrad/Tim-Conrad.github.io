@@ -130,6 +130,7 @@ def clean_note(d):
 class Handler(SimpleHTTPRequestHandler):
     root = "."
     notes = ".review/notes"
+    worktrees = None   # the folder that holds the site worktrees, or None for any
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-cache")
@@ -139,14 +140,31 @@ class Handler(SimpleHTTPRequestHandler):
         pass   # quiet: the reload stream would fill the log
 
     def hidden(self):
-        parts = self.path.split("?", 1)[0].split("/")
+        parts = urllib.parse.unquote(self.path.split("?", 1)[0]).split("/")
         return any(p in HIDDEN for p in parts)
+
+    def servable(self, path):
+        """True if path is a file or folder inside the chosen worktree, with no hidden folder in its real path.
+        A symlink in the worktree cannot lead out of it or into .git."""
+        base = os.path.realpath(self.wt)
+        real = os.path.realpath(path)
+        if not real.startswith(base + os.sep):
+            return real == base
+        return not any(p in HIDDEN for p in os.path.relpath(real, base).split(os.sep))
+
+    def allowed(self, path):
+        """A worktree is offered if it is a folder, and below self.worktrees when that is set."""
+        if not os.path.isdir(path):
+            return False
+        if not self.worktrees:
+            return True
+        return os.path.realpath(path).startswith(os.path.realpath(self.worktrees) + os.sep)
 
     def pick(self):
         """Choose the branch of this request. Sets self.branch, self.wt (its worktree path), self.names,
         self.cookie_branch (a valid ?branch= to remember) and self.bad_branch (a ?branch= that is invalid or unknown)."""
         main = gitread.head(self.root)["branch"]
-        found = {w["branch"]: w["path"] for w in gitread.worktrees(self.root)}
+        found = {w["branch"]: w["path"] for w in gitread.worktrees(self.root) if self.allowed(w["path"])}
         if main:
             found[main] = self.root
         self.names = ([main] if main else []) + [b for b in found if b != main]
@@ -200,6 +218,8 @@ class Handler(SimpleHTTPRequestHandler):
         if url in GENERATED:
             return self.send_generated(url)
         path = self.translate_path(self.path)
+        if not self.servable(path):
+            return self.not_found()
         if os.path.isdir(path):
             if not url.endswith("/"):
                 self.send_response(301)
@@ -207,6 +227,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
             path = os.path.join(path, "index.html")
+            if not self.servable(path):
+                return self.not_found()
         if path.endswith(".html"):
             return self.send_page(path) if os.path.isfile(path) else self.not_found()
         if not os.path.isfile(path):
@@ -269,9 +291,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(400, {"error": "bad path"})
         try:
             if rev == "working":
-                full = os.path.realpath(os.path.join(self.wt, rel))
-                inside = full.startswith(os.path.realpath(self.wt) + os.sep)
-                html = read(full) if inside and os.path.isfile(full) else None
+                full = os.path.join(self.wt, rel)
+                html = read(full) if self.servable(full) and os.path.isfile(full) else None
             else:
                 html = gitread.show(self.root, rev, rel)
         except UnicodeDecodeError:
@@ -340,11 +361,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=os.path.normpath(os.path.join(HERE, "..", "..")))
     ap.add_argument("--notes", default=None, help="the notes folder (default: <root>/.review/notes)")
+    ap.add_argument("--worktrees", default=os.environ.get("REVIEW_WORKTREES"),
+                    help="offer only the worktrees below this folder (default: env REVIEW_WORKTREES, else any)")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args()
     root = os.path.abspath(a.root)
-    handler = partial(type("H", (Handler,), {"root": root, "notes": os.path.abspath(a.notes or os.path.join(root, ".review", "notes"))}),
+    handler = partial(type("H", (Handler,), {"root": root, "worktrees": a.worktrees and os.path.abspath(a.worktrees), "notes": os.path.abspath(a.notes or os.path.join(root, ".review", "notes"))}),
                       directory=root)
     srv = ThreadingHTTPServer((a.host, a.port), handler)
     srv.daemon_threads = True

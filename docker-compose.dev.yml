@@ -18,7 +18,7 @@ services:
     container_name: t7d-review
     restart: unless-stopped
     user: "1001:1001"
-    command: [python3, "${REVIEW_MAIN:?set REVIEW_MAIN in .env}/scripts/review/devserver.py", --root, "${REVIEW_MAIN}", --notes, "${REVIEW_MAIN}/.review/notes", --host, 0.0.0.0, --port, "8000"]
+    command: [python3, "${REVIEW_MAIN:?set REVIEW_MAIN in .env}/scripts/review/devserver.py", --root, "${REVIEW_MAIN}", --notes, "${REVIEW_MAIN}/.review/notes", --worktrees, "${REVIEW_WORKTREES}", --host, 0.0.0.0, --port, "8000"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     read_only: true

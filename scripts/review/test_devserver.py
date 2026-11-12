@@ -1,6 +1,7 @@
 """Tests of the review server. Run: python3 -m unittest scripts/review/test_devserver.py"""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -163,21 +164,37 @@ class Branches(unittest.TestCase):
         cls.write(cls.wt, "index.html", PAGE.replace("Hi", "Round one"))
         git(cls.wt, "commit", "-am", "round one")
         cls.write(cls.wt, "new/index.html", PAGE.replace("Hi", "New page"))
+        os.symlink("/etc/hostname", os.path.join(cls.wt, "leak.txt"))
+        os.symlink("/etc", os.path.join(cls.wt, "leakdir"))
+        os.symlink(os.path.join(cls.main, ".git", "config"), os.path.join(cls.wt, "gitlink.html"))
+        os.symlink(".git", os.path.join(cls.wt, "gitself.html"))
         git(cls.wt, "add", "-A")
         git(cls.wt, "commit", "-m", "round two")
         cls.shas = git(cls.main, "log", "--reverse", "--format=%H", "master..t/a").split()
-        h = partial(type("H", (devserver.Handler,), {"root": cls.main, "notes": os.path.join(cls.main, ".review", "notes")}),
+        cls.srv, cls.base = cls.serve()
+
+    @classmethod
+    def serve(cls, worktrees=None):
+        h = partial(type("H", (devserver.Handler,), {"root": cls.main, "worktrees": worktrees,
+                                                     "notes": os.path.join(cls.main, ".review", "notes")}),
                     directory=cls.main)
-        cls.srv = ThreadingHTTPServer(("127.0.0.1", 0), h)
-        cls.srv.daemon_threads = True
-        threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
-        cls.base = "http://127.0.0.1:%d" % cls.srv.server_port
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), h)
+        srv.daemon_threads = True
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        return srv, "http://127.0.0.1:%d" % srv.server_port
 
     @classmethod
     def tearDownClass(cls):
         cls.srv.shutdown()
         cls.srv.server_close()
         cls.tmp.cleanup()
+
+    def get_from(self, base, path, cookie=None):
+        try:
+            r = urllib.request.urlopen(urllib.request.Request(base + path, headers={"Cookie": cookie} if cookie else {}))
+            return r.status, r.headers, r.read().decode()
+        except urllib.error.HTTPError as e:
+            return e.code, e.headers, e.read().decode()
 
     @staticmethod
     def write(root, rel, body):
@@ -251,6 +268,92 @@ class Branches(unittest.TestCase):
         self.assertEqual(self.get("/__review/api/text?branch=t/a&path=/")[0], 400)
         # a SHA of t/a is not valid for master
         self.assertEqual(self.get("/__review/api/text?branch=master&rev=%s&path=/" % self.shas[0])[0], 400)
+
+    def test_encoded_hidden_folders_are_not_served(self):
+        for p in ("/%2egit/HEAD", "/%2Egit/config", "/%2ereview/notes/n.json", "/%2egit?branch=t/a",
+                  "/%2egit/HEAD?branch=t/a", "/a/%2e%2e/%2egit/HEAD"):
+            self.assertEqual(self.get(p)[0], 404, p)
+
+    def test_symlinks_do_not_leave_the_worktree(self):
+        for p in ("/leak.txt?branch=t/a", "/leakdir/hostname?branch=t/a", "/gitlink.html?branch=t/a",
+                  "/gitself.html?branch=t/a"):
+            self.assertEqual(self.get(p)[0], 404, p)
+
+    def test_text_working_does_not_follow_a_symlink_to_hidden_or_outside(self):
+        for path in ("/gitlink.html", "/gitself.html", "/leak.txt", "/leakdir/hostname"):
+            code, _, body = self.get("/__review/api/text?branch=t/a&rev=working&path=" + path)
+            self.assertEqual((code, json.loads(body)["html"]), (200, None), path)
+
+    def test_a_removed_worktree_is_not_offered(self):
+        gone = os.path.join(os.path.dirname(self.wt), "gone")
+        git(self.main, "worktree", "add", "-b", "t/gone", gone)
+        shutil.rmtree(gone)
+        try:
+            v = json.loads(self.get("/__review/api/versions")[2])
+            self.assertNotIn("t/gone", v["branches"])
+            code, headers, body = self.get("/?branch=t/gone")
+            self.assertIn("Master home", body)
+            self.assertIsNone(headers["Set-Cookie"])
+            self.assertIn("Master home", self.get("/", cookie="review_branch=t/gone")[2])
+        finally:
+            git(self.main, "worktree", "prune")
+            git(self.main, "branch", "-D", "t/gone")
+
+    def test_a_worktree_outside_the_configured_folder_is_not_offered(self):
+        srv, base = self.serve(worktrees=os.path.join(os.path.dirname(self.wt), "only-here"))
+        try:
+            v = json.loads(self.get_from(base, "/__review/api/versions")[2])
+            self.assertEqual(v["branches"], ["master"])
+            self.assertIn("Master home", self.get_from(base, "/?branch=t/a")[2])
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        srv, base = self.serve(worktrees=os.path.dirname(self.wt))
+        try:
+            self.assertIn("Round one", self.get_from(base, "/?branch=t/a")[2])
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+    def test_reload_stamps_the_chosen_worktree(self):
+        def first_stamp(path):
+            r = urllib.request.urlopen(self.base + path)
+            line = r.readline().decode()
+            r.close()
+            return line
+        before = first_stamp("/__review/reload?branch=t/a")
+        self.write(self.main, "main-only.txt", "x")
+        self.assertEqual(first_stamp("/__review/reload?branch=t/a"), before)
+        self.write(self.wt, "wt-only.txt", "x")
+        try:
+            self.assertNotEqual(first_stamp("/__review/reload?branch=t/a"), before)
+        finally:
+            os.remove(os.path.join(self.wt, "wt-only.txt"))
+            os.remove(os.path.join(self.main, "main-only.txt"))
+
+    def test_state_reports_the_worktree(self):
+        s = json.loads(self.get("/__review/api/state?branch=t/a")[2])
+        self.assertEqual((s["branch"], s["commit"]), ("t/a", self.shas[1][:7]))
+        s = json.loads(self.get("/__review/api/state")[2])
+        self.assertEqual(s["branch"], "master")
+
+    def test_feeds_and_404_come_from_the_chosen_worktree(self):
+        post = '<html><head><title>Wt post · Tim Conrad</title><meta name="description" content="D."><link rel="canonical" href="https://t7d.dev/thoughts/w/"><meta property="article:published_time" content="2026-11-10"></head><body></body></html>'
+        self.write(self.wt, "thoughts/w/index.html", post)
+        self.write(self.wt, "404.html", PAGE.replace("Hi", "Wt gone"))
+        try:
+            self.assertIn("<title>Wt post</title>", self.get("/thoughts/feed.xml?branch=t/a")[2])
+            self.assertNotIn("Wt post", self.get("/thoughts/feed.xml")[2])
+            code, _, body = self.get("/nope/?branch=t/a")
+            self.assertEqual(code, 404)
+            self.assertIn("Wt gone", body)
+        finally:
+            shutil.rmtree(os.path.join(self.wt, "thoughts"))
+            os.remove(os.path.join(self.wt, "404.html"))
+
+    def test_query_wins_over_the_cookie(self):
+        self.assertIn("Master home", self.get("/?branch=master", cookie="review_branch=t/a")[2])
+        self.assertIn("Round one", self.get("/", cookie="review_branch=t/a")[2])
 
 
 if __name__ == "__main__":
