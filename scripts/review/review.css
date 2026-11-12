@@ -1,4 +1,4 @@
-/* The note tab of the review site (tools/review/devserver.py). Black and white, as the site (DESIGN.md). */
+/* The note tab of the review site (scripts/review/devserver.py). Black and white, as the site (DESIGN.md). */
 .rv-tab {
   position: fixed; right: 0; top: 50%; z-index: 2147483000;
   transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl;

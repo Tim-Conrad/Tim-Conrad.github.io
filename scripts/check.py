@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the rules of the site pages that must always hold. CI runs it before each deploy and on each pull request.
 
-  python3 tools/check.py
+  python3 scripts/check.py
 
 For every HTML page in git (redirect pages excepted, they only carry a meta refresh):
 - a Content-Security-Policy <meta> is there;
@@ -19,7 +19,7 @@ SITE = 'https://t7d.dev'
 
 def pages():
     out = subprocess.run(['git', '-C', ROOT, 'ls-files', '*.html'], capture_output=True, text=True, check=True).stdout
-    return [p for p in out.split() if not p.startswith(('tools/', '.claude/'))]
+    return [p for p in out.split() if not p.startswith(('scripts/', '.claude/'))]
 
 
 def main():

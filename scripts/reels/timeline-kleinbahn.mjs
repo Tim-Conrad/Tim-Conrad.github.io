@@ -1,5 +1,5 @@
 // The development timeline of Kleinbahn: one stage per merged pull request that changed the game.
-// Each stage is filmed at `ref` (the merge commit) by tools/reels/timeline.mjs.
+// Each stage is filmed at `ref` (the merge commit) by scripts/reels/timeline.mjs.
 //   setup, after: game code run once (G = the game's scope through __G, T = the timeline helpers)
 //   until: an expression of G and T; the clock runs without drawing until it is true
 //   each: code run before every frame (f = frame number, u = 0..1, e = eased u)

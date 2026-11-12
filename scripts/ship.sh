@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Ship a pull request in one step: merge it, wait for the deploy, and check that t7d.dev serves the new files.
-#   tools/ship.sh [<pr>]      the PR number. Without it: the PR of the current branch.
+#   scripts/ship.sh [<pr>]      the PR number. Without it: the PR of the current branch.
 # 1. gh pr merge --merge --delete-branch. A PR that is already merged is not merged again, so a second run
 #    after a failed step does the other steps only.
 # 2. This clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked files.
 # 3. The workflow "Deploy to gh-pages" of the merge commit must pass. It writes the commit "Deploy <sha>" on gh-pages,
-#    unless the PR changed no site file (tools/, docs): then the script ends here.
+#    unless the PR changed no site file (scripts/, docs): then the script ends here.
 # 4. The GitHub Pages build of the newest gh-pages commit must pass (a later deploy contains this one).
 # 5. Each site file of the PR must be on t7d.dev as it is on gh-pages now (a query string skips the CDN cache).
 set -euo pipefail
@@ -59,7 +59,7 @@ fi
 wait_run pages-build-deployment "$(git rev-parse origin/gh-pages)"
 
 echo "== $SITE_URL serves the new files"
-read -r -a site <<<"$(sed -n 's/^SITE=(\(.*\))$/\1/p' tools/deploy.sh)"
+read -r -a site <<<"$(sed -n 's/^SITE=(\(.*\))$/\1/p' scripts/deploy.sh)"
 mapfile -t files < <(git diff --name-only --diff-filter=AM "$sha^1" "$sha" -- "${site[@]}")
 bad=0
 for f in "${files[@]}"; do

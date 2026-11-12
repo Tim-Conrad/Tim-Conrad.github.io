@@ -169,7 +169,7 @@ def loops(out, marks):
 
 def timeline():
     """The clips of the development timelines: 640x360, silent, a poster at 60 %.
-    Kleinbahn from the frames of tools/reels/timeline.mjs, Wortzauber from the recordings of tools/reels/timeline-wz.mjs."""
+    Kleinbahn from the frames of scripts/reels/timeline.mjs, Wortzauber from the recordings of scripts/reels/timeline-wz.mjs."""
     out = os.path.join(SITE, 'assets', 'projects', 'timeline')
     os.makedirs(out, exist_ok=True)
     enc = ['-c:v', 'libx264', '-crf', '27', '-preset', 'slow', '-movflags', '+faststart', '-an']

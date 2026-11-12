@@ -1,4 +1,4 @@
-/* The review site (tools/review/devserver.py): live reload and the note tab. Never on t7d.dev. */
+/* The review site (scripts/review/devserver.py): live reload and the note tab. Never on t7d.dev. */
 (function () {
   'use strict';
   var API = '/__review/api/';

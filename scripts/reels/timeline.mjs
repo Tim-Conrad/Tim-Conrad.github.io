@@ -1,9 +1,9 @@
 // Films the development timeline of a game: one short clip per merged pull request, each at its own git state.
-// node tools/reels/timeline.mjs <path to tiny-train> [--test] [--only pr13,pr11]
-// For each stage of tools/reels/timeline-kleinbahn.mjs it checks out the stage's commit as a git worktree
+// node scripts/reels/timeline.mjs <path to tiny-train> [--test] [--only pr13,pr11]
+// For each stage of scripts/reels/timeline-kleinbahn.mjs it checks out the stage's commit as a git worktree
 // (node_modules linked from the repo), opens that version of the game on its virtual clock, renders the frames
 // and removes the worktree again. Frames land in <work>/tl/kb/<id>/ (<work>/tl/kb-test/ with --test: three frames).
-// Then `python3 tools/reels/build.py timeline` cuts the clips into assets/projects/timeline/.
+// Then `python3 scripts/reels/build.py timeline` cuts the clips into assets/projects/timeline/.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
