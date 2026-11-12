@@ -408,9 +408,9 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .prose .pick__list a:hover { background: var(--ink); color: var(--bg); outline: 0; }
 .pick__hint { margin: 0; font-size: .9688rem; color: var(--muted); }
 .pick__hint[hidden] { display: none; }
-/* a figure can hold a wide drawing (.dg-w) and a narrow one for phones (.dg-n) */
-.anim .dg-n { display: none; }
-@media (max-width: 600px) { .anim .dg-w { display: none; } .anim .dg-n { display: block; } .fig-wide.anim { overflow-x: visible; } .fig-wide .dg-n { min-width: 0; } }
+/* a figure (animated or with steps) can hold a wide drawing (.dg-w) and a narrow one for phones (.dg-n) */
+.anim .dg-n, [data-steps] .dg-n { display: none; }
+@media (max-width: 600px) { .anim .dg-w, [data-steps] .dg-w { display: none; } .anim .dg-n, [data-steps] .dg-n { display: block; } .fig-wide.anim { overflow-x: visible; } .fig-wide .dg-n { min-width: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .anim .draw, .anim .grow, .anim .grow-l, .anim .pop, .anim .w-a, .anim .w-b, .anim .fade, .anim .lvl { transition: none; }
 }

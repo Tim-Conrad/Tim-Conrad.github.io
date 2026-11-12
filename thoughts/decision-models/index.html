@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>When a small decision model can replace an LLM call · Tim Conrad</title>
+<meta name="description" content="Amazon replaced Claude Sonnet 4.6 with a small decision model for labelling tickets. The method behind it, step by step: the task card, a frozen test set, baselines, the ladder from rewording to training, thresholds and a side-by-side run. And how I would try it at home and at work.">
+<link rel="canonical" href="https://t7d.dev/thoughts/decision-models/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="When a small decision model can replace an LLM call">
+<meta property="og:description" content="Amazon replaced Claude Sonnet 4.6 with a small decision model for labelling tickets. The method behind it, step by step: the task card, a frozen test set, baselines, the ladder from rewording to training, thresholds and a side-by-side run. And how I would try it at home and at work.">
+<meta property="og:url" content="https://t7d.dev/thoughts/decision-models/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-10">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/thoughts/">← Thoughts</a>
+  <h1>When a small decision model can replace an LLM call</h1>
+  <p class="sub">Amazon replaced Claude Sonnet 4.6 with a small model that only picks from a list. How that is done, step by step, and how I would try it at home and at work.</p>
+  <p class="label">Tim Conrad · Language models · Method · Cost</p>
+  <dl class="tmeta">
+    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#itch">One model for everything</a></li>
+      <li><a href="#amazon">What Amazon did</a></li>
+      <li><a href="#decider">A model that only picks</a></li>
+      <li><a href="#method">The method, step by step</a></li>
+      <li><a href="#home">At home</a></li>
+      <li><a href="#work">At work</a></li>
+      <li><a href="#gaps">What the post leaves out</a></li>
+      <li><a href="#check">When to think about a specialised model</a></li>
+      <li><a href="#open">Open questions</a></li>
+      <li><a href="#start">Starting points</a></li>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#revisions">Revisions</a></li>
+      <li><a href="#feedback">Feedback</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="itch">One model for everything</h2>
+    <p>I use whatever model the session runs, and that is a frontier model, for everything. I rarely think about what one call costs. A large model that writes a paragraph of reasoning before it picks one word from a list of twenty is the same model that refactors a codebase.</p>
+    <p>A post from the Strands Agents team made me stop on that. Two Amazon engineers replaced Claude Sonnet 4.6 with a small decision model in a ticketing system, at a fraction of the cost <a href="#s1">[1]</a>. The case itself matters less to me than the method. How do you do this well, and how would I do it at home and at work?</p>
+
+    <h2 id="amazon">What Amazon did</h2>
+    <p>The post is by Carr Onstott, Mehul Jaiswal and the Strands Agents team, from 9 November 2026 <a href="#s1">[1]</a>. Sonnet 4.6 put each ticket into one of 20 categories, with a long system prompt and a JSON answer with reasoning. They replaced it with Strands Decider on Gemma 4 E4B. Per ticket, 6,724 tokens became 2,010, the average call took 897 ms instead of 4,215 ms, and the cost at list prices fell from $0.0222 to about $0.0005.</p>
+    <p>They name the limits themselves. It worked because the task is "a closed choice from a known catalog, the volume is high, and the latency of the old path mattered." If the labels need explanation text, the catalog changes weekly, or the context does not fit into a few thousand tokens, "a decision model probably can't replace the LLM's job" <a href="#s1">[1]</a>.</p>
+
+    <h2 id="decider">A model that only picks</h2>
+    <p>A decision model does not write text. It gets a state and a question with options, and returns a probability for each option and a confidence <a href="#s1">[1]</a>. It answers three kinds of question: pick one of several options, yes or no, and a level on a scale <a href="#s4">[4]</a>.</p>
+    <figure class="fig-wide anim" data-switch="LLM|Decision model">
+      <svg class="dg dg-w" viewBox="0 0 680 300" role="img" aria-labelledby="f1t f1d">
+        <title id="f1t">The same ticket, labelled by an LLM and by a decision model</title>
+        <desc id="f1d">A ticket goes into a model. The LLM reads a long prompt of 6,554 tokens and writes JSON with a label and its reasoning: 170 tokens out, 4.2 seconds on average. The decision model reads a short prompt of 2,009 tokens and returns one probability per label. The top label, capacity request at 0.71, is above the threshold, so it is applied: 1 token out, 0.9 seconds on average. The token and time figures are Amazon's; the probabilities are an example.</desc>
+        <text x="20" y="28" class="t-h">Ticket</text>
+        <rect class="bx" x="20" y="44" width="180" height="200"/>
+        <rect class="bx-s" x="36" y="64" width="140" height="10"/>
+        <rect class="bx-s" x="36" y="86" width="110" height="10"/>
+        <rect class="bx-s" x="36" y="108" width="130" height="10"/>
+        <rect class="bx-s" x="36" y="130" width="90" height="10"/>
+        <rect class="bx-s" x="36" y="152" width="120" height="10"/>
+        <text x="36" y="228" class="t-s">comments, alarms, logs</text>
+        <line class="ln" x1="208" y1="144" x2="228" y2="144"/><polygon class="arr" points="228,139 236,144 228,149"/>
+
+        <rect class="bx" x="240" y="104" width="150" height="80"/>
+        <text x="256" y="134" class="t-h w-a">LLM</text>
+        <text x="256" y="134" class="t-h w-b">Decision model</text>
+        <text x="256" y="160" class="t-s w-a">6,554 tokens in</text>
+        <text x="256" y="160" class="t-s w-b">2,009 tokens in</text>
+        <line class="ln" x1="398" y1="144" x2="418" y2="144"/><polygon class="arr" points="418,139 426,144 418,149"/>
+
+        <text x="430" y="28" class="t-h w-a">Writes an answer</text>
+        <text x="430" y="28" class="t-h w-b">Returns probabilities</text>
+        <rect class="bx" x="430" y="44" width="230" height="200"/>
+        <g class="w-a">
+          <text x="446" y="72" class="t-s">{"label": "capacity",</text>
+          <text x="446" y="94" class="t-s"> "reasoning": "The ticket</text>
+          <text x="446" y="116" class="t-s">  asks for more hosts in</text>
+          <text x="446" y="138" class="t-s">  one region before a</text>
+          <text x="446" y="160" class="t-s">  launch, so ..."}</text>
+          <text x="446" y="228" class="t-s">170 tokens out · 4.2 s</text>
+        </g>
+        <g class="w-b">
+          <text x="446" y="72" class="t-s">capacity</text>
+          <rect class="bx-i" x="540" y="62" width="78" height="12"/>
+          <text x="446" y="98" class="t-s">alarm</text>
+          <rect class="bx-s" x="540" y="88" width="15" height="12"/>
+          <text x="446" y="124" class="t-s">security</text>
+          <rect class="bx-s" x="540" y="114" width="9" height="12"/>
+          <text x="446" y="150" class="t-s">escalation</text>
+          <rect class="bx-s" x="540" y="140" width="6" height="12"/>
+          <text x="446" y="176" class="t-s">none</text>
+          <rect class="bx-s" x="540" y="166" width="2" height="12"/>
+          <line class="ln-s" x1="606" y1="54" x2="606" y2="186"/>
+          <text x="606" y="202" text-anchor="middle" class="t-s">threshold</text>
+          <text x="446" y="228" class="t-s">1 token out · 0.9 s</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 520" role="img" aria-labelledby="f1nt">
+        <title id="f1nt">The same ticket, labelled by an LLM and by a decision model</title>
+        <text x="10" y="24" class="t-h">Ticket</text>
+        <rect class="bx" x="10" y="38" width="340" height="70"/>
+        <rect class="bx-s" x="26" y="56" width="200" height="10"/>
+        <rect class="bx-s" x="26" y="78" width="150" height="10"/>
+        <line class="ln" x1="180" y1="112" x2="180" y2="126"/><polygon class="arr" points="175,126 180,134 185,126"/>
+        <rect class="bx" x="10" y="138" width="340" height="66"/>
+        <text x="26" y="166" class="t-h w-a">LLM</text>
+        <text x="26" y="166" class="t-h w-b">Decision model</text>
+        <text x="26" y="190" class="t-s w-a">6,554 tokens in</text>
+        <text x="26" y="190" class="t-s w-b">2,009 tokens in</text>
+        <line class="ln" x1="180" y1="208" x2="180" y2="222"/><polygon class="arr" points="175,222 180,230 185,222"/>
+        <rect class="bx" x="10" y="234" width="340" height="270"/>
+        <g class="w-a">
+          <text x="26" y="264" class="t-s">{"label": "capacity",</text>
+          <text x="26" y="288" class="t-s"> "reasoning": "The ticket asks</text>
+          <text x="26" y="312" class="t-s">  for more hosts in one region</text>
+          <text x="26" y="336" class="t-s">  before a launch, so ..."}</text>
+          <text x="26" y="484" class="t-s">170 tokens out · 4.2 s</text>
+        </g>
+        <g class="w-b">
+          <text x="26" y="264" class="t-s">capacity</text>
+          <rect class="bx-i" x="130" y="254" width="142" height="12"/>
+          <text x="26" y="294" class="t-s">alarm</text>
+          <rect class="bx-s" x="130" y="284" width="28" height="12"/>
+          <text x="26" y="324" class="t-s">security</text>
+          <rect class="bx-s" x="130" y="314" width="16" height="12"/>
+          <text x="26" y="354" class="t-s">escalation</text>
+          <rect class="bx-s" x="130" y="344" width="10" height="12"/>
+          <text x="26" y="384" class="t-s">none</text>
+          <rect class="bx-s" x="130" y="374" width="4" height="12"/>
+          <line class="ln-s" x1="250" y1="244" x2="250" y2="394"/>
+          <text x="250" y="414" text-anchor="middle" class="t-s">threshold</text>
+          <text x="26" y="484" class="t-s">1 token out · 0.9 s</text>
+        </g>
+      </svg>
+      <figcaption>Fig. 1 · An LLM writes an answer; a decision model returns one probability per label, and the top one counts only above a threshold. Tokens and times are Amazon's averages <a href="#s1">[1]</a>; the probabilities are an example.</figcaption>
+    </figure>
+    <p>Three properties make the method work:</p>
+    <ul>
+      <li><b>A confidence I can act on.</b> The README says that on short classification tasks the model has never seen, answers with a confidence of 0.9 or more are right about 95% of the time; below that, "confirm or ask a person" <a href="#s2">[2]</a>. On unseen tasks, picking an option is useful behind such a gate; a level on a scale is not <a href="#s3">[3]</a>.</li>
+      <li><b>More questions cost almost nothing.</b> The state is read once, and only the short questions are added for each one. On their GPU, eight questions about a 2,000-token state took 369 ms, against 1,964 ms when each was asked on its own <a href="#s5">[5]</a>. So "which team", "how urgent" and "is it a duplicate" can be one call.</li>
+      <li><b>Open and local.</b> The repository is under Apache 2.0, and the models are open, from 2B to 26B parameters. They can serve on a CPU <a href="#s2">[2]</a>.</li>
+    </ul>
+
+    <h2 id="method">The method, step by step</h2>
+    <p>The best description of the method I found is not the blog post, but a guide in the same repository, written for a coding agent that helps a user try the model on their own data <a href="#s4">[4]</a>. It agrees with what Amazon did, and goes further. Its rule: measure first, and train only when the numbers show a gap that training can close. Here is my summary, with Amazon's experience added where it fits.</p>
+    <figure class="fig-wide" data-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 250" role="img" aria-labelledby="f2t f2d">
+        <title id="f2t">Eight steps from an LLM call to a decision model</title>
+        <desc id="f2d">Check the fit, write the task card, build a frozen test set, score every candidate on it, climb the ladder from rewording to training, set the thresholds, run old and new side by side, then watch and re-check.</desc>
+        <g data-step="1"><rect class="bx" x="20" y="40" width="165" height="70"/><text x="34" y="62" class="t-s">1</text><text x="34" y="84" class="t-h">Fit?</text><text x="34" y="102" class="t-s">fixed options</text></g>
+        <g data-step="2"><line class="ln" x1="185" y1="75" x2="198" y2="75"/><polygon class="arr" points="198,70 206,75 198,80"/><rect class="bx" x="205" y="40" width="165" height="70"/><text x="219" y="62" class="t-s">2</text><text x="219" y="84" class="t-h">Task card</text><text x="219" y="102" class="t-s">options, error costs</text></g>
+        <g data-step="3"><line class="ln" x1="370" y1="75" x2="383" y2="75"/><polygon class="arr" points="383,70 391,75 383,80"/><rect class="bx" x="390" y="40" width="165" height="70"/><text x="404" y="62" class="t-s">3</text><text x="404" y="84" class="t-h">Test set</text><text x="404" y="102" class="t-s">real items, frozen</text></g>
+        <g data-step="4"><line class="ln" x1="555" y1="75" x2="568" y2="75"/><polygon class="arr" points="568,70 576,75 568,80"/><rect class="bx" x="575" y="40" width="165" height="70"/><text x="589" y="62" class="t-s">4</text><text x="589" y="84" class="t-h">Baselines</text><text x="589" y="102" class="t-s">all on the same items</text></g>
+        <g data-step="5"><line class="ln" x1="657" y1="110" x2="657" y2="142"/><polygon class="arr" points="652,142 657,150 662,142"/><rect class="bx" x="575" y="150" width="165" height="70"/><text x="589" y="172" class="t-s">5</text><text x="589" y="194" class="t-h">Ladder</text><text x="589" y="212" class="t-s">train only if needed</text></g>
+        <g data-step="6"><line class="ln" x1="575" y1="185" x2="562" y2="185"/><polygon class="arr" points="562,180 554,185 562,190"/><rect class="bx" x="390" y="150" width="165" height="70"/><text x="404" y="172" class="t-s">6</text><text x="404" y="194" class="t-h">Thresholds</text><text x="404" y="212" class="t-s">act, confirm, person</text></g>
+        <g data-step="7"><line class="ln" x1="390" y1="185" x2="377" y2="185"/><polygon class="arr" points="377,180 369,185 377,190"/><rect class="bx" x="205" y="150" width="165" height="70"/><text x="219" y="172" class="t-s">7</text><text x="219" y="194" class="t-h">Side by side</text><text x="219" y="212" class="t-s">both on real traffic</text></g>
+        <g data-step="8"><line class="ln" x1="205" y1="185" x2="192" y2="185"/><polygon class="arr" points="192,180 184,185 192,190"/><rect class="bx-i" x="20" y="150" width="165" height="70"/><text x="34" y="172" class="t-s t-inv">8</text><text x="34" y="194" class="t-h t-inv">Watch</text><text x="34" y="212" class="t-s t-inv">log and re-check</text></g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 474" role="img" aria-labelledby="f2nt">
+        <title id="f2nt">Eight steps from an LLM call to a decision model</title>
+        <g data-step="1"><rect class="bx" x="10" y="10" width="340" height="46"/><text x="24" y="39" class="t-s">1</text><text x="46" y="39" class="t-h">Fit?</text><text x="336" y="39" text-anchor="end" class="t-s">fixed options</text></g>
+        <g data-step="2"><line class="ln" x1="180" y1="56" x2="180" y2="61"/><polygon class="arr" points="175,61 180,68 185,61"/><rect class="bx" x="10" y="68" width="340" height="46"/><text x="24" y="97" class="t-s">2</text><text x="46" y="97" class="t-h">Task card</text><text x="336" y="97" text-anchor="end" class="t-s">options, error costs</text></g>
+        <g data-step="3"><line class="ln" x1="180" y1="114" x2="180" y2="119"/><polygon class="arr" points="175,119 180,126 185,119"/><rect class="bx" x="10" y="126" width="340" height="46"/><text x="24" y="155" class="t-s">3</text><text x="46" y="155" class="t-h">Test set</text><text x="336" y="155" text-anchor="end" class="t-s">real items, frozen</text></g>
+        <g data-step="4"><line class="ln" x1="180" y1="172" x2="180" y2="177"/><polygon class="arr" points="175,177 180,184 185,177"/><rect class="bx" x="10" y="184" width="340" height="46"/><text x="24" y="213" class="t-s">4</text><text x="46" y="213" class="t-h">Baselines</text><text x="336" y="213" text-anchor="end" class="t-s">all on the same items</text></g>
+        <g data-step="5"><line class="ln" x1="180" y1="230" x2="180" y2="235"/><polygon class="arr" points="175,235 180,242 185,235"/><rect class="bx" x="10" y="242" width="340" height="46"/><text x="24" y="271" class="t-s">5</text><text x="46" y="271" class="t-h">Ladder</text><text x="336" y="271" text-anchor="end" class="t-s">train only if needed</text></g>
+        <g data-step="6"><line class="ln" x1="180" y1="288" x2="180" y2="293"/><polygon class="arr" points="175,293 180,300 185,293"/><rect class="bx" x="10" y="300" width="340" height="46"/><text x="24" y="329" class="t-s">6</text><text x="46" y="329" class="t-h">Thresholds</text><text x="336" y="329" text-anchor="end" class="t-s">act, confirm, person</text></g>
+        <g data-step="7"><line class="ln" x1="180" y1="346" x2="180" y2="351"/><polygon class="arr" points="175,351 180,358 185,351"/><rect class="bx" x="10" y="358" width="340" height="46"/><text x="24" y="387" class="t-s">7</text><text x="46" y="387" class="t-h">Side by side</text><text x="336" y="387" text-anchor="end" class="t-s">both on real traffic</text></g>
+        <g data-step="8"><line class="ln" x1="180" y1="404" x2="180" y2="409"/><polygon class="arr" points="175,409 180,416 185,409"/><rect class="bx-i" x="10" y="416" width="340" height="46"/><text x="24" y="445" class="t-s t-inv">8</text><text x="46" y="445" class="t-h t-inv">Watch</text><text x="336" y="445" text-anchor="end" class="t-s t-inv">log and re-check</text></g>
+      </svg>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>Is it a decision? The answer must be one of a fixed set of options, known before the call, and what the model needs to see must fit into its window of 4,096 tokens.</li>
+          <li>Write the task card: the question, each option with a one-line description, a "none" option, what happens after each answer, and what each kind of mistake costs.</li>
+          <li>Build a test set from real items, with labels from an outcome that is already recorded. Split it by time, and freeze it.</li>
+          <li>Score the current way, every model size and the simplest guess on the same items. Only then is a number worth anything.</li>
+          <li>Climb the ladder and stop at the first rung that is good enough: reword, recalibrate, a larger model, and only then train.</li>
+          <li>Set the thresholds from the costs of the mistakes: act alone above one confidence, ask below it.</li>
+          <li>Run the old and the new way on the same real traffic. The old one decides; every disagreement gets read.</li>
+          <li>Switch with a setting that can go back. Log every answer with its probabilities, label a fresh sample each month, and score it again.</li>
+        </ol>
+      </div>
+      <figcaption>Fig. 2 · The order of the work. Steps 1 to 6 need no traffic and no money; only step 5 may need a GPU, and only at its last rung.</figcaption>
+    </figure>
+
+    <h3>1. Is it a decision?</h3>
+    <p>The guide names good fits: routing, triage, choosing a tool, guardrails and policy checks, checking whether an answer is adequate, grading against a rubric. Poor fits: the answer is free text, the options are not known before the call, the decision needs many steps of reasoning that are not in the input, or the input is much longer than the window <a href="#s4">[4]</a>. If it is a poor fit, stop here.</p>
+
+    <h3>2. The task card</h3>
+    <p>One short document per decision. The question in exact words. Each option with a one-line description, because the model reads the descriptions. What the application does with each answer. And the cost of each kind of mistake: a false "urgent" wakes a person at night, a missed "urgent" loses a customer <a href="#s4">[4]</a>.</p>
+    <p>Amazon did the same. Their label descriptions alone were longer than the model's window, so they rewrote each of the 20 labels as a one- or two-sentence criterion and added "none" <a href="#s1">[1]</a>. The guide says to try the wording on 20 to 50 real examples: rewording costs nothing and "often moves accuracy by several points" <a href="#s4">[4]</a>. I like that this step is useful even if no model ever reads the card.</p>
+
+    <h3>3. A test set from real outcomes</h3>
+    <p>The labels should come from an outcome that is already recorded, not from someone's first guess. The guide's example: if each ticket records the team that finally closed it, that team is the label. The share of tickets that were passed on to another team then gives the accuracy of the current process for free. The passed-on tickets are the hard cases, and worth a group of their own <a href="#s4">[4]</a>.</p>
+    <p>Size: at least 1,000 items per decision for the test, and about as many again to calibrate. Split by time: the most recent period is the test, the older data is for training. Then freeze the files with their hashes. A test set that changes makes every earlier number useless <a href="#s4">[4]</a>.</p>
+
+    <h3>4. Baselines first</h3>
+    <p>Score everything on the same items: the current way, every model size, and the simplest guess of all, always the most common answer. A model below that simple guess has learned nothing, however good its accuracy looks: 29% on a choice of ten is worse than a most common answer that holds 30% <a href="#s4">[4]</a>. Report the accuracy with its interval, the share of answers above 0.9 confidence, their accuracy, the latency and the memory.</p>
+    <p>Amazon did a short version: they tried the 2B model, saw the E4B do clearly better on a test set, and switched <a href="#s1">[1]</a>.</p>
+
+    <h3>5. The ladder</h3>
+    <p>Climb and stop at the first rung that meets the target <a href="#s4">[4]</a>:</p>
+    <ol>
+      <li><b>Reword</b> the question and the descriptions.</li>
+      <li><b>Recalibrate</b> a released model on my own data. This needs no training, and is often the largest cheap gain.</li>
+      <li><b>Take a larger released model.</b> It usually gains more than training a small one, and needs no training data.</li>
+      <li><b>Fine-tune</b>, only when the gap is larger than the noise of the test set, there are a few thousand correct labels per decision, and the GPU cost is accepted. Train three seeds, not one, and keep the result only if it beats the released model on the same items.</li>
+    </ol>
+    <p>Amazon seems to have stopped at rung 3: a larger released model and a tuned threshold <a href="#s1">[1]</a>. That is the part I find most encouraging. The training I would expect to be the hard part is the last resort.</p>
+
+    <h3>6. Thresholds from the cost of mistakes</h3>
+    <p>The guide's starting bands: act alone at 0.9 or more, confirm between 0.5 and 0.9, send to a person below 0.5. "A start, not a rule" <a href="#s4">[4]</a>. The real thresholds come from the task card: where a mistake is expensive, the bar goes up. A yes-or-no question has no separate confidence, only the probability of yes, so it gets one or two cut points, for example: page a person above 0.8, queue for review between 0.4 and 0.8, ignore below 0.4.</p>
+    <p>Below the threshold, the item does not fail. It goes to a person, or to the large model. The small model takes the clear cases off the large one, and the large one stays for the rest.</p>
+
+    <h3>7. Side by side on real traffic</h3>
+    <p>Amazon's switch had three settings: only Sonnet; both, with Sonnet's answer applied and the decider's compared; only the decider <a href="#s1">[1]</a>. They call it the part they would copy "regardless of model": running both on real traffic and judging every disagreement "told us more than any offline eval would have."</p>
+
+    <h3>8. Switch, then watch</h3>
+    <p>Switching back was a 45-second config change for Amazon <a href="#s1">[1]</a>. After the switch: log every answer with its probabilities. Each month, or when the traffic changes, label a fresh sample and score it again. If the accuracy falls at the same confidence, the traffic moved; recalibrate or retrain <a href="#s4">[4]</a>.</p>
+    <p>And keep the input stable. At Amazon the order of the keys in the JSON input moved the probabilities by up to 0.19, so they now sort the keys on every request <a href="#s1">[1]</a>. A changed format is a changed test.</p>
+
+    <h2 id="home">At home</h2>
+    <p>At home the first five steps fit into a laptop, and nothing has to leave it. The model installs as a Python package with a command-line tool: <code>strands-decider ask</code> answers one question, <code>strands-decider serve</code> runs a small local web server for many <a href="#s2">[2]</a>. The command-line tool takes options without descriptions; for the full task card, the guide sends requests to the local server <a href="#s4">[4]</a>.</p>
+    <p>It runs on a CPU, an Apple GPU or an NVIDIA GPU. A CPU is much slower: the repository measured several seconds per question for the larger models on a large CPU server, and a median of 234 ms for the 2B model on an M3 Pro laptop <a href="#s3">[3]</a> <a href="#s5">[5]</a>. For a first test on a few hundred items that is enough.</p>
+    <p>What I need for a first try:</p>
+    <ul>
+      <li>One decision I already make, or have a model make, often, with an outcome I can check.</li>
+      <li>A task card for it.</li>
+      <li>A few hundred items with the right answer, to start with. The 1,000 of the guide come later, if it looks promising.</li>
+      <li>A count: how often does the model agree with the right answer at each confidence, and how does that compare with always guessing the most common answer?</li>
+    </ul>
+    <p>That tells me whether the idea holds for my data before I spend anything.</p>
+
+    <h2 id="work">At work</h2>
+    <p>At work the steps are the same. Four things change.</p>
+    <ul>
+      <li><b>The data.</b> The guide asks before anything moves the data off the machine: a cloud host, an outside LLM used to label, a storage bucket <a href="#s4">[4]</a>. A small open model on our own hardware keeps tickets, findings and customer text in house. For many teams that matters more than the price.</li>
+      <li><b>The cost.</b> The tokens per ticket fell by 70%, not 98%. Most of Amazon's saving comes from paying per instance-hour, $1.408, instead of per token. An instance costs the same busy or idle. My own sum from the post's numbers: one instance-hour costs as much as about 63 Sonnet tickets. Below about 63 tickets an hour, or about 46,000 a month, an instance that runs all the time costs more than calling Sonnet. That leaves out cheaper ways to run it: on a CPU we already have, or on AWS Lambda, which the repository supports for the 2B model, with requests that take seconds <a href="#s6">[6]</a>.</li>
+      <li><b>The people.</b> Someone owns the labels, someone agrees on what each mistake costs, and someone reads the disagreements in step 7. That is the real work, more than the model.</li>
+      <li><b>The input may be hostile.</b> In security work a report or a log line can be written by an attacker, with text meant to steer the model. A decision model cannot write text or call tools, so an injected instruction can at most move the label. That is still bad when the label decides that a finding is ignored. So "dismiss" needs a higher confidence than "look at this".</li>
+    </ul>
+
+    <h2 id="gaps">What the post leaves out</h2>
+    <ul>
+      <li><b>No accuracy figure.</b> The post says the E4B was "beating production Sonnet" and "performed just as well". It gives no number, no count of disagreements, and does not say how each disagreement was judged, or by whom. The guide in the same repository asks for exactly that: intervals, and a paired comparison on the same items <a href="#s4">[4]</a>.</li>
+      <li><b>Two latencies.</b> One request took about 640 ms; the average call took 897 ms. The second probably includes the network and queueing, but the post does not say.</li>
+      <li><b>A vendor post.</b> It is written by the team that makes the model, on its own site. That does not make it wrong. It means I want my own numbers before I believe "just as well".</li>
+    </ul>
+
+    <h2 id="check">When to think about a specialised model</h2>
+    <p>My checklist, for now. The more of these are true, the more a decision model is worth a try:</p>
+    <ul>
+      <li>The answer is one item from a fixed list, a yes or no, or a level. Nobody reads the reasoning.</li>
+      <li>The list changes rarely, not every week.</li>
+      <li>What the model needs to see fits into a few thousand tokens.</li>
+      <li>The same question comes up often: hundreds of times a day, not ten.</li>
+      <li>There is a recorded outcome to build a test set from.</li>
+      <li>Speed matters, or the data should not leave the house.</li>
+      <li>I can say what each mistake costs, and route the unsure cases to a person.</li>
+      <li>I can run the old and the new way side by side before I switch.</li>
+    </ul>
+    <p>If only the first one is true, the frontier model stays. It is the default for a reason: it is the right tool for the tasks that are not a list.</p>
+
+    <h2 id="open">Open questions</h2>
+    <ul>
+      <li>How did Amazon judge the disagreements between Sonnet and the decision model, and how many were there?</li>
+      <li>Which decision of mine is the first good candidate, with a recorded outcome to test against?</li>
+      <li>How well does a 2B model do on German text, and on technical jargon?</li>
+      <li>How easy is it to move the label with text written into the input? That needs a test of its own.</li>
+    </ul>
+
+    <h2 id="start">Starting points</h2>
+    <ul>
+      <li>Carr Onstott, Mehul Jaiswal, Strands Agents team: "Amazon saves millions by replacing Sonnet 4.6 with Strands Decider", 9 Nov 2026. It claims that a small decision model labels tickets as well as Sonnet 4.6 at 98% less cost <a href="#s1">[1]</a>.</li>
+      <li>My own question: what is the method behind it, and how would I do it at home and at work?</li>
+    </ul>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">Carr Onstott, Mehul Jaiswal, Strands Agents team: <a href="https://strandsagents.com/blog/amazon-saves-millions-replacing-sonnet-with-strands-decider/" rel="noopener">Amazon saves millions by replacing Sonnet 4.6 with Strands Decider</a>, 9 Nov 2026.</li>
+      <li id="s2">strands-labs: <a href="https://github.com/strands-labs/strands-decider" rel="noopener">strands-decider</a>, README.</li>
+      <li id="s3">strands-labs: <a href="https://github.com/strands-labs/strands-decider/blob/main/evaluation/results.md" rel="noopener">strands-decider, evaluation/results.md</a>.</li>
+      <li id="s4">strands-labs: <a href="https://github.com/strands-labs/strands-decider/blob/main/skills/customize-decider/SKILL.md" rel="noopener">strands-decider, skills/customize-decider/SKILL.md</a>, the guide for trying and customising the model on your own data.</li>
+      <li id="s5">strands-labs: <a href="https://github.com/strands-labs/strands-decider/blob/main/docs/inference.md" rel="noopener">strands-decider, docs/inference.md</a>.</li>
+      <li id="s6">strands-labs: <a href="https://github.com/strands-labs/strands-decider/blob/main/deploy/README.md" rel="noopener">strands-decider, deploy/README.md</a>.</li>
+    </ol>
+    <p class="refs">I read the post <a href="#s1">[1]</a> as text copied from the page; its numbers are at us-east-1 list prices. I read the repository <a href="#s2">[2]</a>–<a href="#s6">[6]</a> at its commit of 6 Nov 2026.</p>
+
+    <h2 id="revisions">Revisions</h2>
+    <ul class="dates">
+      <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
+    </ul>
+
+    <h2 id="feedback">Feedback</h2>
+    <p>Not shared yet. When I post about it, what people answer goes here, with what it changed.</p>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>

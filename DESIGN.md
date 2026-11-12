@@ -11,6 +11,8 @@ Two rules follow from this:
 1. **Black and white.** The only colour on the site is in the pictures and videos, so they are what the eye finds first.
 2. **Plain words.** The site says what it holds and what a thing does. It does not sell.
 
+The one place that breaks the calm on purpose is a game page. There, the game's own characters live on the lines of the sheet and can be played with (see "Game pages"). The rest of the site stays still and serious.
+
 ## Wording
 
 The tone is honest and down to earth.
@@ -63,8 +65,49 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 - **The front page stays short.** It says what exists and links to it: overview, the games, the latest thoughts, the research summary with a button to the write-up, the PGP key, contact. Details such as the attack steps and the disclosure timeline belong in the write-up, not here.
 - **Title block.** The box next to the name lists site, contents, contact and the PGP fingerprint. It holds facts only. Update "Contents" when a write-up or a game is added.
 - **Grid.** The faint 48 px grid appears only behind the name on the front page. It is the one decorative element. Do not put it behind text blocks.
-- **Square corners.** Nothing has rounded corners or a shadow, except the phone frame, the step numbers and the dots of the timeline.
+- **Square corners.** Nothing has rounded corners or a shadow, except the phone frame, the step numbers, the dots of the timeline and the soft smoke of the train.
 - **Spacing.** Lay out with grid or flex and `gap`. Side padding is `--pad`.
+- **A game page** has, in this order: the header (with the line of what the characters can do), the reel, the live demo, the text with the feature list, and the timeline. It has no grid of screenshots: the videos show more, and the pictures made the page slow.
+
+## Game pages
+
+On the page of a game, and only there, the game's own characters live in the article. They make the page feel like the game without turning the site into a game. They never appear on the front page, in the game boxes there, in the thoughts or in the research.
+
+**What they are made of**
+
+- **The figures are pictures.** They are the game's own art, so they keep their colours, like any picture.
+  - Wortzauber: the pixel sprite sheets of the game, unchanged (Paul, the Schwebe-Bot, the things a word makes).
+  - Kleinbahn: rendered from the game's models (`src/models`, the near versions with `detail:'high'`), in side view, with 16 wheel positions per car, once by day and once by night. Render them again when the models change; do not draw them by hand.
+- **Everything around them is drawn in ink.** Hills, tunnels, the station, the platform, the signal, speech bubbles and the hint line use the colour tokens, like a diagram. They follow the theme.
+- **Smoke and steam are grey, never coloured, and low poly like the models.** Each puff is a faceted blob: a fan of flat triangles lit from the upper left. The exhaust leaves the chimney fast with the train's speed, drag slows it to the breeze, warm smoke keeps rising while it cools, and a shared turbulent flow folds neighbouring puffs together; puffs grow, turn lighter and fade. At speed the plume lies long and low; standing, it climbs. It comes in beats, four to a turn of the driving wheels, and is darker while the engine pulls away. Steam (the cylinders at the start, the brakes, the whistle, the safety valve) is lighter and short-lived. In the dark theme the smoke is light grey.
+- **The site loads no game engine.** No three.js, no canvas: the figures are image strips moved by one small script per game page.
+
+**Where they stand**
+
+- They stand on lines that are already there: the rules between the sections, the frame of a picture, the lines of the feature list, the tops of the letters of a heading, a button. They do not get boxes, backgrounds or frames of their own.
+- Kleinbahn's line is the rule under the header. The header gets the room the railway needs below its text, so nothing covers the text, and the smoke stays below it too.
+- The two tunnels are one loop: what goes into the right hill comes out of the left one at once, so the line is never empty for long. Each hill reaches over the track: its paper covers the wheels and the sleepers beneath it, and it draws the rail line again.
+- A figure may pass over text for a moment, but never stays on top of a link, a button or a paragraph.
+
+**How they behave**
+
+- **Alive, never pasted.** Every figure moves a little on its own: Paul breathes, looks around, walks and casts; the bot floats; the train runs, stops at the station and smokes; people get on and off; sheep graze. A figure that only stands still is wrong here.
+- **They answer the reader.** A tap does one small thing (Paul jumps, the train stops or starts, a sheep hops). A drag carries or pushes (pick Paul up and throw him, push the train). A real control stays a real control: the signal is a `button`.
+- **Wortzauber acts out the game.** Dotted words in the text (`.mw`) are traced letter by letter, and Paul makes the thing appear. Only words whose thing has a sprite in the game are dotted.
+- **Paul follows the reader.** When his line scrolls away, he jumps down to a line on screen, or the bot lifts him up, as in the game.
+- **Night is the dark theme.** In the dark theme the train shows its night pictures with lit windows. Load only the pictures of the theme in use.
+
+**Words**
+
+- One hint line under the subtitle says what you can do, in plain words: "Paul lives on this page. Pick him up, or tap a dotted word."
+- Speech bubbles are short and friendly and say something true about the moment ("Back to Paul.", "Stop!", "Kuchen · cake"). No slogans, no calls to action.
+
+**Limits**
+
+- **Reduced motion.** The figures stand still in one pose (the train waits at the station) and nothing moves by itself. Taps and drags still work, because the reader starts them.
+- **Weight.** The pictures of one game page stay under about 400 KB for one theme, as WebP or small PNG strips.
+- **Phone first.** Check at 1440, 390 and 320 px, in both themes, by touch as well as by mouse. On a narrow screen use a shorter train and leave out what has no room (the signal), rather than shrinking the figures.
+- **Access.** Each figure has `role="img"` and a label that says what it is and what a tap or drag does; the dotted words are focusable and work with Enter and Space.
 
 ## Components
 
@@ -82,7 +125,8 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 | Thought | `.tmeta`, `.status` | A page in `/thoughts/<slug>/`: an idea Tim works through and comes back to. Under the title: Status (`Draft`, `Settled` or `Changed my mind`), Started, Last revised. At the end, in this order: Open questions (if any), Starting points (the links the thought began with), Sources, Revisions (`.dates`: date and what changed), Feedback (what people answered when it was shared, and what it changed; "Not shared yet" until then). |
 | Animated diagram | `figure.anim` | Inline SVG that moves: lines draw (`.draw`), bars grow (`.grow`, `.grow-l`), parts appear (`.pop`, delays `.d1`-`.d8`) and numbers count up (`[data-count]`) once the figure comes on screen; a token can run along a path (`<animateMotion>`) while it is on screen, with a Pause button. `data-switch="A|B"` adds two buttons that switch the figure between two states (`.w-a`/`.w-b` show, `.hi-a`/`.hi-b` stay strong, `.off-b` fades). `[data-pick]` parts are buttons that show their item of `.pick__list` in a `.pick__panel`. A wide drawing (`.dg-w`) can have a narrow one for phones (`.dg-n`, below 600 px) instead of scrolling. Without the script, the end state and the whole list show. |
 | Diagram | `.dg` in a `figure` | Inline SVG drawn only with the classes in `site.css` (`.bx`, `.bx-s`, `.bx-i`, `.ln`, `.t-h`, `.t-s`, ...), which use the colour tokens, so a diagram follows the theme. Give it `<title>` and `<desc>`. In a `.fig-wide` figure it scrolls inside its box on a phone instead of shrinking the text. No colours, no `style` attributes. |
-| Diagram with steps | `figure[data-steps]`, `.steps__list` | A diagram whose parts carry `data-step="n"`, with one list item per step. The list sits in a box joined to the bottom of the diagram (`.steps__panel`, surface colour). `site.js` puts the step number, the text of the step and Back, Next and Play into that box and shows one step at a time: earlier steps faint, later ones nearly hidden. Without the script the box holds the whole numbered list. Use it where a process has an order; keep a still diagram where it has none. |
+| Diagram with steps | `figure[data-steps]`, `.steps__list` | A diagram whose parts carry `data-step="n"`, with one list item per step. The list sits in a box joined to the bottom of the diagram (`.steps__panel`, surface colour). `site.js` puts the step number, the text of the step and Back, Next and Play into that box and shows one step at a time: earlier steps faint, later ones nearly hidden. Without the script the box holds the whole numbered list. Like an animated diagram, it can hold a wide drawing (`.dg-w`) and a narrow one for phones (`.dg-n`); give the parts of both the same `data-step` numbers. Use it where a process has an order; keep a still diagram where it has none. |
+| Game characters | `.play-layer`, `.play-spr`, `.play-bubble`, `.mw`, `.kb-*` | Only on a game page (see "Game pages"). One layer over `main` holds the figures, the speech bubble and the smoke (`.kb-smoke`, one SVG of low-poly puffs); `.mw` marks a dotted word; `.kb-*` is the drawn railway (hills, station, platform, signal) and the cars. |
 | Encrypted site login | `.sealed` | The login page of a site below `/sealed/`, written by sealed (theme `t7d`). Label "Encrypted", the title as `h1`, one hint, username, password, one filled button "Open", a mono status line. Inputs are framed in ink with square corners. |
 
 ## Rules that are easy to break
@@ -91,12 +135,13 @@ All fonts are in `assets/fonts/` (SIL Open Font License). Nothing loads from ano
 - **Links are underlined.** Colour cannot mark a link here.
 - **Keyboard focus is visible**: a 3 px ink outline.
 - **Phone first.** Check each change at 1440, 390 and 320 px wide, in both themes. The page must not scroll sideways. Wide tables and code scroll inside their own box.
-- **Motion.** The interface does not move, apart from smooth scrolling to a section. The exceptions are recordings of real things: the videos, which loop silently and do not start by themselves for a visitor who asked for reduced motion, and the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element. The other exceptions are diagrams in a thought. A diagram with steps changes only when the reader presses Back, Next or Play. An animated diagram (`figure.anim`) plays its drawing once when it comes on screen, and a running token moves only while the figure is on screen and stops with its Pause button. Animation explains something in the diagram; it is never decoration. A visitor who asked for reduced motion gets the end state at once, and the running token stands still until Play.
+- **Motion.** The interface does not move, apart from smooth scrolling to a section. The exceptions are recordings of real things: the videos, which loop silently and do not start by themselves for a visitor who asked for reduced motion, and the gameplay loop in a game box: a short animated WebP of the real game, loaded lazily. A visitor who asked for reduced motion gets a still instead, through the `<picture>` element. The characters on a game page are another exception: they move on their own and answer the reader, and stand still for reduced motion ("Game pages"). The other exceptions are diagrams in a thought. A diagram with steps changes only when the reader presses Back, Next or Play. An animated diagram (`figure.anim`) plays its drawing once when it comes on screen, and a running token moves only while the figure is on screen and stops with its Pause button. Animation explains something in the diagram; it is never decoration. A visitor who asked for reduced motion gets the end state at once, and the running token stands still until Play.
 - **Pictures.** Give every picture `width`, `height` and a plain `alt` text that describes what it shows.
 
 ## Where things are
 
 - Styles and tokens: `assets/site.css`
-- Scripts: `assets/theme.js` (theme before the first paint), `assets/site.js` (toggle, copy buttons, table of contents, the demo)
+- Scripts: `assets/theme.js` (theme before the first paint), `assets/site.js` (toggle, copy buttons, table of contents, the demo), and on a game page its characters: `assets/play/play-wz.js` or `assets/play/play-kb.js`, with `assets/play/play.css`
+- Pictures of the characters: `assets/play/` (Wortzauber sprites from the game's `art/pixel/`; Kleinbahn car strips `car-<kind>-d.webp` and `-n.webp` rendered from `src/models/train.js`)
 - Reels and pictures of the games: `.claude/skills/updating-product-reels/SKILL.md`
 - Deploy and repository layout: `README.md`

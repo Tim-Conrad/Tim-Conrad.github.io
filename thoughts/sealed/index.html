@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>A private site on public static hosting · Tim Conrad</title>
+<meta name="description" content="sealed puts a whole static site on public hosting in encrypted form. Each reader has their own password, and the browser decrypts every file. What the host sees, how a password opens a file, the service worker, groups and new keys, and the limits.">
+<link rel="canonical" href="https://t7d.dev/thoughts/sealed/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A private site on public static hosting">
+<meta property="og:description" content="sealed puts a whole static site on public hosting in encrypted form. Each reader has their own password, and the browser decrypts every file. What the host sees, how a password opens a file, the service worker, groups and new keys, and the limits.">
+<meta property="og:url" content="https://t7d.dev/thoughts/sealed/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-10">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/thoughts/">← Thoughts</a>
+  <h1>A private site on public static hosting</h1>
+  <p class="sub">sealed puts a whole static site on a public host in encrypted form. Each reader has their own password, and the browser decrypts every file. How it works, in pictures, and what it does not protect.</p>
+  <p class="label">Tim Conrad · Encryption · Static sites · Service workers</p>
+  <dl class="tmeta">
+    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-11">11 Nov 2026</time></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#itch">Private, without a server</a></li>
+      <li><a href="#host">What the host sees</a></li>
+      <li><a href="#chain">From password to file</a></li>
+      <li><a href="#worker">The worker in the browser</a></li>
+      <li><a href="#names">Names that stay the same</a></li>
+      <li><a href="#groups">Groups and new keys</a></li>
+      <li><a href="#here">On this site</a></li>
+      <li><a href="#staticrypt">Compared with StatiCrypt</a></li>
+      <li><a href="#limits">What it does not protect</a></li>
+      <li><a href="#start">Starting points</a></li>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#revisions">Revisions</a></li>
+      <li><a href="#feedback">Feedback</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="itch">Private, without a server</h2>
+    <p>Some things I make are for a few people only. The first one is a pen-and-paper game for friends. I wanted it on my own site, next to everything else, but only for the people I give a password to.</p>
+    <p>And I wanted to keep the hosting I have: static files on GitHub Pages, with no server of my own that checks passwords. A static host cannot check anything. It hands every file to whoever asks.</p>
+    <p>So the files themselves have to be locked. sealed is the tool I built for that. It takes a finished static site, encrypts every file, and adds a login page. The host gets ciphertext. The browser of a reader with a password gets the site back, and it works as before <a href="#s1">[1]</a>.</p>
+
+    <h2 id="host">What the host sees</h2>
+    <p>The first question for any design like this: what does the host learn? Switch between the two views.</p>
+    <figure class="fig-wide anim" data-switch="What a reader sees|What the host sees">
+      <svg class="dg dg-w" viewBox="0 0 680 300" role="img" aria-labelledby="f1t f1d">
+        <title id="f1t">The same site, as a reader sees it and as the host sees it</title>
+        <desc id="f1d">A reader sees file names such as index.html, story/chapter-1.html, map.png and theme.mp3, and three users with their groups. The host sees random blob names with the same sizes, a keyring with three entries and no names, and a key index with two groups. The sizes are the same in both views.</desc>
+        <text x="20" y="28" class="t-h w-a">Files</text>
+        <text x="20" y="28" class="t-h w-b">Blobs</text>
+        <text x="330" y="28" text-anchor="end" class="t-h">Size</text>
+        <rect class="bx" x="20" y="40" width="320" height="236"/>
+        <g class="w-a">
+          <text x="36" y="72">index.html</text>
+          <text x="36" y="106">story/chapter-1.html</text>
+          <text x="36" y="140">story/chapter-2.html</text>
+          <text x="36" y="174">style.css</text>
+          <text x="36" y="208">map.png</text>
+          <text x="36" y="242">theme.mp3</text>
+        </g>
+        <g class="w-b">
+          <text x="36" y="72" class="t-s">_sealed/c/3f9a0c71…</text>
+          <text x="36" y="106" class="t-s">_sealed/c/b71e44d2…</text>
+          <text x="36" y="140" class="t-s">_sealed/c/0d2f98a5…</text>
+          <text x="36" y="174" class="t-s">_sealed/c/c94d1237…</text>
+          <text x="36" y="208" class="t-s">_sealed/c/e6c1a30f…</text>
+          <text x="36" y="242" class="t-s">_sealed/c/58ab07e9…</text>
+        </g>
+        <text x="324" y="72" text-anchor="end" class="t-s">4 KB</text>
+        <text x="324" y="106" text-anchor="end" class="t-s">12 KB</text>
+        <text x="324" y="140" text-anchor="end" class="t-s">15 KB</text>
+        <text x="324" y="174" text-anchor="end" class="t-s">6 KB</text>
+        <text x="324" y="208" text-anchor="end" class="t-s">820 KB</text>
+        <text x="324" y="242" text-anchor="end" class="t-s">3.1 MB</text>
+
+        <text x="380" y="28" class="t-h w-a">Readers</text>
+        <text x="380" y="28" class="t-h w-b">Keyring and key index</text>
+        <rect class="bx" x="380" y="40" width="280" height="236"/>
+        <g class="w-a">
+          <text x="396" y="72">Anna</text><text x="644" y="72" text-anchor="end" class="t-s">all, chapter 2</text>
+          <text x="396" y="106">Ben</text><text x="644" y="106" text-anchor="end" class="t-s">all, chapter 2</text>
+          <text x="396" y="140">Cem</text><text x="644" y="140" text-anchor="end" class="t-s">all</text>
+          <text x="396" y="190" class="t-s">each with their own password</text>
+        </g>
+        <g class="w-b">
+          <text x="396" y="72" class="t-s">entry a91f04c2… · sealed</text>
+          <text x="396" y="106" class="t-s">entry 07c3e85b… · sealed</text>
+          <text x="396" y="140" class="t-s">entry 5e2d9a10… · sealed</text>
+          <text x="396" y="190" class="t-s">key 41d0… → manifest (sealed)</text>
+          <text x="396" y="214" class="t-s">key 7c1e… → manifest (sealed)</text>
+        </g>
+        <text x="396" y="256" class="t-s w-a">names, paths, groups: readable</text>
+        <text x="396" y="256" class="t-s w-b">3 entries, 2 groups, no names</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 520" role="img" aria-labelledby="f1nt">
+        <title id="f1nt">The same site, as a reader sees it and as the host sees it</title>
+        <text x="10" y="24" class="t-h w-a">Files</text>
+        <text x="10" y="24" class="t-h w-b">Blobs</text>
+        <text x="350" y="24" text-anchor="end" class="t-h">Size</text>
+        <rect class="bx" x="10" y="36" width="340" height="226"/>
+        <g class="w-a">
+          <text x="24" y="66">index.html</text>
+          <text x="24" y="98">story/chapter-1.html</text>
+          <text x="24" y="130">story/chapter-2.html</text>
+          <text x="24" y="162">style.css</text>
+          <text x="24" y="194">map.png</text>
+          <text x="24" y="226">theme.mp3</text>
+        </g>
+        <g class="w-b">
+          <text x="24" y="66" class="t-s">_sealed/c/3f9a0c71…</text>
+          <text x="24" y="98" class="t-s">_sealed/c/b71e44d2…</text>
+          <text x="24" y="130" class="t-s">_sealed/c/0d2f98a5…</text>
+          <text x="24" y="162" class="t-s">_sealed/c/c94d1237…</text>
+          <text x="24" y="194" class="t-s">_sealed/c/e6c1a30f…</text>
+          <text x="24" y="226" class="t-s">_sealed/c/58ab07e9…</text>
+        </g>
+        <text x="336" y="66" text-anchor="end" class="t-s">4 KB</text>
+        <text x="336" y="98" text-anchor="end" class="t-s">12 KB</text>
+        <text x="336" y="130" text-anchor="end" class="t-s">15 KB</text>
+        <text x="336" y="162" text-anchor="end" class="t-s">6 KB</text>
+        <text x="336" y="194" text-anchor="end" class="t-s">820 KB</text>
+        <text x="336" y="226" text-anchor="end" class="t-s">3.1 MB</text>
+        <text x="10" y="302" class="t-h w-a">Readers</text>
+        <text x="10" y="302" class="t-h w-b">Keyring and key index</text>
+        <rect class="bx" x="10" y="314" width="340" height="196"/>
+        <g class="w-a">
+          <text x="24" y="344">Anna</text><text x="336" y="344" text-anchor="end" class="t-s">all, chapter 2</text>
+          <text x="24" y="376">Ben</text><text x="336" y="376" text-anchor="end" class="t-s">all, chapter 2</text>
+          <text x="24" y="408">Cem</text><text x="336" y="408" text-anchor="end" class="t-s">all</text>
+          <text x="24" y="450" class="t-s">each with their own password</text>
+        </g>
+        <g class="w-b">
+          <text x="24" y="344" class="t-s">entry a91f04c2… · sealed</text>
+          <text x="24" y="376" class="t-s">entry 07c3e85b… · sealed</text>
+          <text x="24" y="408" class="t-s">entry 5e2d9a10… · sealed</text>
+          <text x="24" y="444" class="t-s">key 41d0… → manifest (sealed)</text>
+          <text x="24" y="468" class="t-s">key 7c1e… → manifest (sealed)</text>
+        </g>
+        <text x="24" y="496" class="t-s w-a">names, paths, groups: readable</text>
+        <text x="24" y="496" class="t-s w-b">3 entries, 2 groups, no names</text>
+      </svg>
+      <figcaption>Fig. 1 · The host keeps the sizes, the number of files, the number of keyring entries and the number of groups. It loses every name, path and word. An example site; the names and sizes are made up.</figcaption>
+    </figure>
+    <p>Besides the blobs, the host serves a login page, a small script, a keyring and a key index. None of them holds a name or a path. That is the whole promise, and it is also the first limit: a picture of 820 KB stays a file of about 820 KB, and anyone can count the readers.</p>
+
+    <h2 id="chain">From password to file</h2>
+    <p>Each reader types a name and a password. From those two things alone, the browser finds the right keys. Step through it.</p>
+    <figure class="fig-wide" data-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 250" role="img" aria-labelledby="f2t f2d">
+        <title id="f2t">From a name and a password to a decrypted file</title>
+        <desc id="f2d">The name and the password give a master secret through a slow function. The master gives an entry key and an entry id for this site. The id finds the reader's entry in the public keyring, and the entry key opens it. The entry holds the keys of the reader's groups. Each group key opens the manifest of its group, which maps paths to blob names. The browser fetches the blob and decrypts the file.</desc>
+        <g data-step="1"><rect class="bx" x="20" y="40" width="165" height="70"/><text x="34" y="62" class="t-s">1</text><text x="34" y="84" class="t-h">Name, password</text><text x="34" y="102" class="t-s">typed at the login</text></g>
+        <g data-step="2"><line class="ln" x1="185" y1="75" x2="198" y2="75"/><polygon class="arr" points="198,70 206,75 198,80"/><rect class="bx" x="205" y="40" width="165" height="70"/><text x="219" y="62" class="t-s">2</text><text x="219" y="84" class="t-h">Master</text><text x="219" y="102" class="t-s">slow on purpose</text></g>
+        <g data-step="3"><line class="ln" x1="370" y1="75" x2="383" y2="75"/><polygon class="arr" points="383,70 391,75 383,80"/><rect class="bx" x="390" y="40" width="165" height="70"/><text x="404" y="62" class="t-s">3</text><text x="404" y="84" class="t-h">Entry key and id</text><text x="404" y="102" class="t-s">a pair per site</text></g>
+        <g data-step="4"><line class="ln" x1="555" y1="75" x2="568" y2="75"/><polygon class="arr" points="568,70 576,75 568,80"/><rect class="bx" x="575" y="40" width="165" height="70"/><text x="589" y="62" class="t-s">4</text><text x="589" y="84" class="t-h">Keyring entry</text><text x="589" y="102" class="t-s">public, but sealed</text></g>
+        <g data-step="5"><line class="ln" x1="657" y1="110" x2="657" y2="142"/><polygon class="arr" points="652,142 657,150 662,142"/><rect class="bx" x="575" y="150" width="165" height="70"/><text x="589" y="172" class="t-s">5</text><text x="589" y="194" class="t-h">Group keys</text><text x="589" y="212" class="t-s">one per group</text></g>
+        <g data-step="6"><line class="ln" x1="575" y1="185" x2="562" y2="185"/><polygon class="arr" points="562,180 554,185 562,190"/><rect class="bx" x="390" y="150" width="165" height="70"/><text x="404" y="172" class="t-s">6</text><text x="404" y="194" class="t-h">Manifest</text><text x="404" y="212" class="t-s">path → blob name</text></g>
+        <g data-step="7"><line class="ln" x1="390" y1="185" x2="377" y2="185"/><polygon class="arr" points="377,180 369,185 377,190"/><rect class="bx-i" x="205" y="150" width="165" height="70"/><text x="219" y="172" class="t-s t-inv">7</text><text x="219" y="194" class="t-h t-inv">The file</text><text x="219" y="212" class="t-s t-inv">opened in the browser</text></g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 416" role="img" aria-labelledby="f2nt">
+        <title id="f2nt">From a name and a password to a decrypted file</title>
+        <g data-step="1"><rect class="bx" x="10" y="10" width="340" height="46"/><text x="24" y="39" class="t-s">1</text><text x="46" y="39" class="t-h">Name, password</text><text x="336" y="39" text-anchor="end" class="t-s">typed at the login</text></g>
+        <g data-step="2"><line class="ln" x1="180" y1="56" x2="180" y2="61"/><polygon class="arr" points="175,61 180,68 185,61"/><rect class="bx" x="10" y="68" width="340" height="46"/><text x="24" y="97" class="t-s">2</text><text x="46" y="97" class="t-h">Master</text><text x="336" y="97" text-anchor="end" class="t-s">slow on purpose</text></g>
+        <g data-step="3"><line class="ln" x1="180" y1="114" x2="180" y2="119"/><polygon class="arr" points="175,119 180,126 185,119"/><rect class="bx" x="10" y="126" width="340" height="46"/><text x="24" y="155" class="t-s">3</text><text x="46" y="155" class="t-h">Entry key and id</text><text x="336" y="155" text-anchor="end" class="t-s">a pair per site</text></g>
+        <g data-step="4"><line class="ln" x1="180" y1="172" x2="180" y2="177"/><polygon class="arr" points="175,177 180,184 185,177"/><rect class="bx" x="10" y="184" width="340" height="46"/><text x="24" y="213" class="t-s">4</text><text x="46" y="213" class="t-h">Keyring entry</text><text x="336" y="213" text-anchor="end" class="t-s">public, but sealed</text></g>
+        <g data-step="5"><line class="ln" x1="180" y1="230" x2="180" y2="235"/><polygon class="arr" points="175,235 180,242 185,235"/><rect class="bx" x="10" y="242" width="340" height="46"/><text x="24" y="271" class="t-s">5</text><text x="46" y="271" class="t-h">Group keys</text><text x="336" y="271" text-anchor="end" class="t-s">one per group</text></g>
+        <g data-step="6"><line class="ln" x1="180" y1="288" x2="180" y2="293"/><polygon class="arr" points="175,293 180,300 185,293"/><rect class="bx" x="10" y="300" width="340" height="46"/><text x="24" y="329" class="t-s">6</text><text x="46" y="329" class="t-h">Manifest</text><text x="336" y="329" text-anchor="end" class="t-s">path → blob name</text></g>
+        <g data-step="7"><line class="ln" x1="180" y1="346" x2="180" y2="351"/><polygon class="arr" points="175,351 180,358 185,351"/><rect class="bx-i" x="10" y="358" width="340" height="46"/><text x="24" y="387" class="t-s t-inv">7</text><text x="46" y="387" class="t-h t-inv">The file</text><text x="336" y="387" text-anchor="end" class="t-s t-inv">opened in the browser</text></g>
+      </svg>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>The reader types a name and a password on the login page. Nothing is sent anywhere.</li>
+          <li>The browser turns them into a master secret with a function that is slow on purpose: 600,000 rounds (PBKDF2). A right guess costs the same as a wrong one, so guessing many passwords is expensive. When I set a password, my admin page does the same in my browser, and the server keeps only the master, never the password.</li>
+          <li>From the master, a fast function (HKDF) makes two values for this one site: a key for the reader's entry, and the entry's id. Another site gives another pair, so two keyrings do not show that they share a reader.</li>
+          <li>The keyring is a public file. The id finds the reader's entry, and the key opens it. A wrong name or password gives an id that is not there, so it finds nothing.</li>
+          <li>The entry holds the keys of the groups the reader may open. The browser hands them to its worker, which keeps them where they cannot be read out again.</li>
+          <li>The key index says which manifest belongs to which group key. A manifest, opened with its group key, maps each path of the site to the name of its blob.</li>
+          <li>When the page asks for a path, the worker fetches that blob and decrypts it (AES-256-GCM). The page gets the plain file.</li>
+        </ol>
+      </div>
+      <figcaption>Fig. 2 · Seven steps, all in the browser. Only steps 1 and 2 are slow, and they run once at the login.</figcaption>
+    </figure>
+    <p>The words, for those who want them: the slow step is PBKDF2 with SHA-256, the split into entry key and id is HKDF, and every file, entry and manifest is sealed with AES-256-GCM. All three come with the browser (WebCrypto). sealed has no other dependency <a href="#s2">[2]</a>.</p>
+
+    <h2 id="worker">The worker in the browser</h2>
+    <p>A site is many files: pages, pictures, sound. If each page had to decrypt its own pictures, every app would need to change. sealed puts a service worker in between: a small script that the browser runs beside the page and that answers the page's requests <a href="#s2">[2]</a>.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 250" role="img" aria-labelledby="f3t f3d">
+        <title id="f3t">A request through the service worker</title>
+        <desc id="f3d">The page asks for map.png. The service worker looks up the blob name, asks the host for the blob, gets ciphertext back, decrypts it with the group key and answers the page with the picture.</desc>
+        <rect class="bx" x="20" y="80" width="150" height="100"/>
+        <text x="36" y="108" class="t-h">Page</text>
+        <text x="36" y="130" class="t-s">the app, as before</text>
+        <rect class="bx-i" x="265" y="46" width="150" height="168"/>
+        <text x="281" y="76" class="t-h t-inv">Worker</text>
+        <text x="340" y="137" text-anchor="middle" class="t-s t-inv">decrypts</text>
+        <text x="281" y="182" class="t-s t-inv">holds the keys,</text>
+        <text x="281" y="202" class="t-s t-inv">cannot export them</text>
+        <rect class="bx" x="510" y="80" width="150" height="100"/>
+        <text x="526" y="108" class="t-h">Host</text>
+        <text x="526" y="130" class="t-s">ciphertext only</text>
+        <line class="ln" x1="170" y1="112" x2="257" y2="112"/><polygon class="arr" points="257,107 265,112 257,117"/>
+        <text x="217" y="102" text-anchor="middle" class="t-s">map.png</text>
+        <line class="ln" x1="415" y1="112" x2="502" y2="112"/><polygon class="arr" points="502,107 510,112 502,117"/>
+        <text x="462" y="102" text-anchor="middle" class="t-s">e6c1a30f…</text>
+        <line class="ln" x1="510" y1="152" x2="423" y2="152"/><polygon class="arr" points="423,147 415,152 423,157"/>
+        <text x="462" y="174" text-anchor="middle" class="t-s">ciphertext</text>
+        <line class="ln" x1="265" y1="152" x2="178" y2="152"/><polygon class="arr" points="178,147 170,152 178,157"/>
+        <text x="217" y="174" text-anchor="middle" class="t-s">picture</text>
+        <circle class="dot" r="6"><animateMotion dur="6s" repeatCount="indefinite" path="M170 112 H510 V152 H170 Z"/></circle>
+        <text x="20" y="232" class="t-s">The page never sees a key, and the host never sees a name.</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 440" role="img" aria-labelledby="f3nt">
+        <title id="f3nt">A request through the service worker</title>
+        <rect class="bx" x="80" y="10" width="200" height="60"/>
+        <text x="180" y="36" text-anchor="middle" class="t-h">Page</text>
+        <text x="180" y="56" text-anchor="middle" class="t-s">the app, as before</text>
+        <rect class="bx-i" x="80" y="150" width="200" height="110"/>
+        <text x="180" y="176" text-anchor="middle" class="t-h t-inv">Worker</text>
+        <text x="180" y="200" text-anchor="middle" class="t-s t-inv">decrypts,</text>
+        <text x="180" y="220" text-anchor="middle" class="t-s t-inv">holds the keys,</text>
+        <text x="180" y="240" text-anchor="middle" class="t-s t-inv">cannot export them</text>
+        <rect class="bx" x="80" y="340" width="200" height="60"/>
+        <text x="180" y="366" text-anchor="middle" class="t-h">Host</text>
+        <text x="180" y="386" text-anchor="middle" class="t-s">ciphertext only</text>
+        <line class="ln" x1="98" y1="70" x2="98" y2="142"/><polygon class="arr" points="93,142 98,150 103,142"/>
+        <text x="90" y="114" text-anchor="end" class="t-s">map.png</text>
+        <line class="ln" x1="98" y1="260" x2="98" y2="332"/><polygon class="arr" points="93,332 98,340 103,332"/>
+        <text x="90" y="304" text-anchor="end" class="t-s">e6c1a30f…</text>
+        <line class="ln" x1="262" y1="340" x2="262" y2="268"/><polygon class="arr" points="257,268 262,260 267,268"/>
+        <text x="270" y="304" class="t-s">ciphertext</text>
+        <line class="ln" x1="262" y1="150" x2="262" y2="78"/><polygon class="arr" points="257,78 262,70 267,78"/>
+        <text x="270" y="114" class="t-s">picture</text>
+        <circle class="dot" r="6"><animateMotion dur="6s" repeatCount="indefinite" path="M98 70 V340 H262 V70 Z"/></circle>
+        <text x="10" y="430" class="t-s">The page never sees a key, the host never a name.</text>
+      </svg>
+      <figcaption>Fig. 3 · One request. The worker sits between the page and the host and answers every request of the site.</figcaption>
+    </figure>
+    <p>What the worker does besides that, in plain words <a href="#s2">[2]</a>:</p>
+    <ul>
+      <li><b>The keys stay put.</b> They are stored in the browser as keys that cannot be exported. A script can ask the browser to use them, but cannot read them out.</li>
+      <li><b>Sound and video work.</b> A player asks for a file in many small pieces. The worker keeps recently opened files in memory, so it does not decrypt the whole file again for each piece.</li>
+      <li><b>Offline works.</b> If a site allows it, the worker downloads the files after the login, all but sound and video, and keeps them in the browser's cache, still encrypted.</li>
+      <li><b>A new version keeps you logged in.</b> On each page load the worker reads the key index again. As long as the reader's keys are still in it, the new files open with the old keys.</li>
+      <li><b>Logout</b> deletes the keys from the browser.</li>
+    </ul>
+
+    <h2 id="names">Names that stay the same</h2>
+    <p>Every blob gets its name from three things: the key of its group, its path and its content. Only someone with the key can work out which name belongs to which path. Without the key, the names look random <a href="#s2">[2]</a>.</p>
+    <p>The same three things always give the same name. So a file that did not change keeps its name from one version to the next. That has two good effects: a browser that already has it in its cache does not download it again, and on GitHub only the files that really changed show up as changed.</p>
+    <p>The name is also bound into the encryption of the blob. If the host swapped two blobs, the browser would refuse to decrypt both.</p>
+
+    <h2 id="groups">Groups and new keys</h2>
+    <p>A site can have groups: for example one for everything, and one for a chapter that only some readers get. Each file belongs to exactly one group, and each group has its own key. A reader's entry holds the keys of their groups <a href="#s1">[1]</a>. Switch to see what happens when a reader loses a group.</p>
+    <figure class="fig-wide anim" data-switch="Before|Ben loses chapter 2">
+      <svg class="dg dg-w" viewBox="0 0 680 270" role="img" aria-labelledby="f4t f4d">
+        <title id="f4t">Taking a reader out of a group gives that group a new key</title>
+        <desc id="f4d">Three readers and two groups. Anna and Ben have both groups, Cem has only "all". When Ben loses chapter 2, chapter 2 gets a new key and its files are encrypted again. Anna logs in once more and gets the new key. Ben keeps "all". His old key for chapter 2 is no longer in the key index, so his browser forgets it.</desc>
+        <text x="250" y="40" text-anchor="middle" class="t-h">all</text>
+        <text x="360" y="40" text-anchor="middle" class="t-h">chapter 2</text>
+        <line class="ln-s" x1="40" y1="56" x2="420" y2="56"/>
+        <text x="40" y="94">Anna</text>
+        <text x="40" y="144">Ben</text>
+        <text x="40" y="194">Cem</text>
+        <circle class="dot" cx="250" cy="88" r="9"/>
+        <circle class="dot" cx="250" cy="138" r="9"/>
+        <circle class="dot" cx="250" cy="188" r="9"/>
+        <circle class="dot" cx="360" cy="88" r="9"/>
+        <circle class="dot fade off-b" cx="360" cy="138" r="9"/>
+        <circle class="bx" cx="360" cy="188" r="9"/>
+        <line class="ln-s" x1="40" y1="216" x2="420" y2="216"/>
+        <text x="250" y="244" text-anchor="middle" class="t-s">key 41d0…</text>
+        <text x="360" y="244" text-anchor="middle" class="t-s w-a">key 7c1e…</text>
+        <text x="360" y="244" text-anchor="middle" class="t-s w-b">new key 2e9b…</text>
+        <rect class="bx" x="460" y="56" width="200" height="160"/>
+        <g class="w-a">
+          <text x="476" y="86" class="t-s">Three readers,</text>
+          <text x="476" y="108" class="t-s">two groups.</text>
+          <text x="476" y="140" class="t-s">Each entry holds the</text>
+          <text x="476" y="162" class="t-s">keys of its groups.</text>
+        </g>
+        <g class="w-b">
+          <text x="476" y="86" class="t-s">chapter 2: new key,</text>
+          <text x="476" y="108" class="t-s">its files sealed again.</text>
+          <text x="476" y="140" class="t-s">Anna logs in once more.</text>
+          <text x="476" y="162" class="t-s">Ben keeps "all".</text>
+          <text x="476" y="194" class="t-s">Cem: nothing changes.</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 400" role="img" aria-labelledby="f4nt">
+        <title id="f4nt">Taking a reader out of a group gives that group a new key</title>
+        <text x="190" y="30" text-anchor="middle" class="t-h">all</text>
+        <text x="290" y="30" text-anchor="middle" class="t-h">chapter 2</text>
+        <line class="ln-s" x1="10" y1="44" x2="350" y2="44"/>
+        <text x="10" y="80">Anna</text>
+        <text x="10" y="124">Ben</text>
+        <text x="10" y="168">Cem</text>
+        <circle class="dot" cx="190" cy="74" r="9"/>
+        <circle class="dot" cx="190" cy="118" r="9"/>
+        <circle class="dot" cx="190" cy="162" r="9"/>
+        <circle class="dot" cx="290" cy="74" r="9"/>
+        <circle class="dot fade off-b" cx="290" cy="118" r="9"/>
+        <circle class="bx" cx="290" cy="162" r="9"/>
+        <line class="ln-s" x1="10" y1="188" x2="350" y2="188"/>
+        <text x="190" y="214" text-anchor="middle" class="t-s">key 41d0…</text>
+        <text x="290" y="214" text-anchor="middle" class="t-s w-a">key 7c1e…</text>
+        <text x="290" y="214" text-anchor="middle" class="t-s w-b">new 2e9b…</text>
+        <rect class="bx" x="10" y="240" width="340" height="150"/>
+        <g class="w-a">
+          <text x="26" y="270" class="t-s">Three readers, two groups.</text>
+          <text x="26" y="296" class="t-s">Each entry holds the keys</text>
+          <text x="26" y="318" class="t-s">of its groups.</text>
+        </g>
+        <g class="w-b">
+          <text x="26" y="270" class="t-s">chapter 2: new key, its files</text>
+          <text x="26" y="292" class="t-s">sealed again.</text>
+          <text x="26" y="320" class="t-s">Anna logs in once more.</text>
+          <text x="26" y="344" class="t-s">Ben keeps "all".</text>
+          <text x="26" y="368" class="t-s">Cem: nothing changes.</text>
+        </g>
+      </svg>
+      <figcaption>Fig. 4 · A group keeps its key from version to version, so readers stay logged in. Only taking a reader out of a group, or a "new key" by hand, makes a new one. The readers are an example.</figcaption>
+    </figure>
+    <p>Why a new key at all? Ben's browser still has the old key of chapter 2. Without a new key, he could keep opening the new files of chapter 2. With it, his old key is not in the key index any more, and his browser forgets it <a href="#s1">[1]</a>.</p>
+    <p>A new password is different. It changes only the reader's entry, not the group keys. Devices that are logged in stay logged in. To log a reader out everywhere, I take away the access, or make a new key.</p>
+
+    <h2 id="here">On this site</h2>
+    <p>A sealed site can live on its own host, or in a folder below another site. On t7d.dev, sealed sites go below <code>/sealed/</code>, with a login page in the look of this site. Each folder has its own worker, its own key store and its own cache, so several sealed sites can share one address without seeing each other's keys <a href="#s1">[1]</a>.</p>
+    <p>You can try it: <a href="/sealed/demo/">the demo</a> is a small site with a picture, a sound and a bonus page. Log in as <code>reader</code> with the password <code>open-the-demo</code>, or as <code>member</code> with <code>open-the-bonus</code>; only <code>member</code> can open the bonus page. The demo protects nothing: its passwords and keys are public on purpose. A workflow in the sealed repository builds it and publishes it here after each change <a href="#s1">[1]</a>.</p>
+    <p>The deploy of this site and the publishing of sealed each replace only their own part of the branch that GitHub Pages serves, so they do not overwrite each other. Search engines are asked to stay out of <code>/sealed/</code>.</p>
+
+    <h2 id="staticrypt">Compared with StatiCrypt</h2>
+    <p>I am not the first to encrypt static pages. StatiCrypt is the best-known tool: it encrypts an HTML file with a password and returns a page with a password prompt. It also uses AES-256 and 600,000 rounds of PBKDF2, the number OWASP recommends <a href="#s3">[3]</a> <a href="#s4">[4]</a>. For one page and one password it is simpler than sealed.</p>
+    <p>What I needed beyond that:</p>
+    <ul>
+      <li><b>Every file, not only HTML.</b> Pictures, sound and video are encrypted too, and stream through the worker.</li>
+      <li><b>A password per reader.</b> StatiCrypt has one password per page; its README suggests a workaround for several users <a href="#s3">[3]</a>. In sealed each reader has their own, and I can take one away without changing the others.</li>
+      <li><b>Groups.</b> Different readers can open different parts of one site.</li>
+      <li><b>No changes to the app.</b> The site is built as a normal static site, and the worker makes it work behind the login, offline too.</li>
+    </ul>
+    <p>The price is more moving parts: a build, a worker, and an admin page that keeps the keys.</p>
+
+    <h2 id="limits">What it does not protect</h2>
+    <p>These are the limits I know of. They are in the README, and they belong here too <a href="#s1">[1]</a>.</p>
+    <ul>
+      <li><b>Guessing passwords offline.</b> The keyring is public. Anyone can copy it and try passwords on their own computer, as fast as their hardware allows. The slow step makes each try expensive, but only a long password makes guessing hopeless. That is why sealed generates the passwords.</li>
+      <li><b>Old keyrings stay in the history.</b> On GitHub Pages the published files are in a public repository, with all of their history. After a password change, the old keyring is still there, and so is everything it opens.</li>
+      <li><b>A reader can copy what they opened.</b> Once a file is decrypted in a browser, it can be saved. A new key protects the next version only.</li>
+      <li><b>Permissions work per file.</b> If one file holds the content of all groups, every reader who gets that file can read all of it. The site has to be split into files along the groups.</li>
+      <li><b>Sizes and counts show.</b> The number of files, their sizes, the number of readers and the number of groups are visible.</li>
+      <li><b>Static sites only.</b> An app with its own server needs something else. And the app cannot bring its own service worker, because sealed's worker takes that place.</li>
+      <li><b>A delay on GitHub Pages.</b> It caches files for up to ten minutes, so a new password or a new group can take that long to work there.</li>
+    </ul>
+
+    <h2 id="start">Starting points</h2>
+    <ul>
+      <li>My own need: put a game for a few friends on my public site, each friend with their own password, on static hosting without a server.</li>
+    </ul>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">sealed, README. My own tool, in a private repository; read on 11 Nov 2026, with the changes for the demo.</li>
+      <li id="s2">sealed, the crypto core, the service worker and the build (<code>client/core.js</code>, <code>client/sw.js</code>, <code>lib/build.mjs</code>), same commit.</li>
+      <li id="s3">Robin Moisson: <a href="https://github.com/robinmoisson/staticrypt" rel="noopener">StatiCrypt</a>, README, read at the commit of 8 Jun 2026.</li>
+      <li id="s4">OWASP: <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2" rel="noopener">Password Storage Cheat Sheet, PBKDF2</a>, as cited by StatiCrypt.</li>
+    </ol>
+
+    <h2 id="revisions">Revisions</h2>
+    <ul class="dates">
+      <li><time datetime="2026-11-11">11 Nov 2026</time><span>Added the demo below <code>/sealed/demo/</code>, with its public passwords.</span></li>
+      <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>
+    </ul>
+
+    <h2 id="feedback">Feedback</h2>
+    <p>Not shared yet. When I post about it, what people answer goes here, with what it changed.</p>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>

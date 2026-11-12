@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Agents without long-lived secrets, approved from my phone · Tim Conrad</title>
+<meta name="description" content="My agents can read API keys, deploy keys and tokens that never expire. A design where they hold none: tokens bound to a key with DPoP, a broker that checks which program asks, a phone that shows what the agent wants to do and signs a short grant, and a gateway that keeps the last keys.">
+<link rel="canonical" href="https://t7d.dev/thoughts/no-long-lived-secrets/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agents without long-lived secrets, approved from my phone">
+<meta property="og:description" content="My agents can read API keys, deploy keys and tokens that never expire. A design where they hold none: tokens bound to a key with DPoP, a broker that checks which program asks, a phone that shows what the agent wants to do and signs a short grant, and a gateway that keeps the last keys.">
+<meta property="og:url" content="https://t7d.dev/thoughts/no-long-lived-secrets/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta property="article:published_time" content="2026-11-12">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Tim Conrad · Thoughts" href="/thoughts/feed.xml">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/thoughts/">← Thoughts</a>
+  <h1>Agents without long-lived secrets, approved from my phone</h1>
+  <p class="sub">My agents can read keys that never expire. A design where they hold none: tokens bound to a key, a broker that knows which program asks, a phone that shows what the agent wants to do, and a gateway that keeps the last keys.</p>
+  <p class="label">Tim Conrad · Security · Coding agents · OAuth · Android</p>
+  <dl class="tmeta">
+    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Started</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <nav class="toc" aria-label="On this page">
+    <p class="label">On this page</p>
+    <ol>
+      <li><a href="#years">Keys that live for years</a></li>
+      <li><a href="#copy">A secret is something you can copy</a></li>
+      <li><a href="#picture">The design in one picture</a></li>
+      <li><a href="#who">Who is asking</a></li>
+      <li><a href="#intent">Show the intent, not a button</a></li>
+      <li><a href="#grants">Grants instead of secrets</a></li>
+      <li><a href="#flow">One request, step by step</a></li>
+      <li><a href="#gateway">A gateway keeps the last keys</a></li>
+      <li><a href="#pairing">Pairing the phone</a></li>
+      <li><a href="#lifetimes">How long each credential lives</a></li>
+      <li><a href="#further">Further out</a></li>
+      <li><a href="#first">What I would build first</a></li>
+      <li><a href="#left">What it does not solve</a></li>
+      <li><a href="#open">Open questions</a></li>
+      <li><a href="#start">Starting points</a></li>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#revisions">Revisions</a></li>
+      <li><a href="#feedback">Feedback</a></li>
+    </ol>
+  </nav>
+
+  <article class="prose">
+    <h2 id="years">Keys that live for years</h2>
+    <p>My agents run as me. Whatever I can read, they can read. On my machines that includes API keys for the models and for a voice service, deploy keys for the repositories, GitHub and cloud tokens, and the service passwords of my lab. Most of them have no expiry date. They stay valid until someone rotates them.</p>
+    <p>An agent does not need to be evil to leak one. It prints an environment variable while it debugs. It pastes a config file into a log. It reads a web page that tells it to send <code>~/.config</code> somewhere. A key that leaks once works for whoever has it, from anywhere, for as long as it lives.</p>
+    <p>I want to get rid of that kind of secret, at least within reach of an agent. This thought is the design I would build: what exists already, what is missing, and a phone app that approves what an agent may do instead of handing it a key. I call the app Countersign for now.</p>
+
+    <h2 id="copy">A secret is something you can copy</h2>
+    <p>A password, an API key and a bearer token have one thing in common: whoever shows it, gets in. The server cannot tell the owner from someone with a copy. That is the problem, more than the lifetime.</p>
+    <p>DPoP changes that. RFC 9449, from September 2023, binds an OAuth access token to a key pair of the client <a href="#s1">[1]</a>. The token names the key by its thumbprint (<code>cnf.jkt</code>). With each request the client sends a fresh, signed proof: a small JWT that contains the HTTP method (<code>htm</code>), the URL (<code>htu</code>), the time (<code>iat</code>), a unique id (<code>jti</code>) and a hash of the token (<code>ath</code>). The server can also send a nonce that the next proof must contain <a href="#s2">[2]</a>.</p>
+    <div class="code">
+      <div class="code__bar"><span>a DPoP proof, decoded</span></div>
+<pre><code>header   { "typ": "dpop+jwt", "alg": "ES256", "jwk": { public key of the agent } }
+payload  { "htm": "POST",
+           "htu": "https://gw.lab/github/repos/Tim-Conrad/sealed/git/refs",
+           "iat": 1794826800,
+           "jti": "e1j3V_bKic8-LAEB",
+           "ath": "fUHyO2r2Z3DZ53EsNrWBb0xWXoaNy59IiKCAqksmQEo" }
+signed   with the private key, which never leaves the agent's process</code></pre>
+    </div>
+    <p>A copied token is now useless without the private key. And a copied proof is useless too: it is good for one method on one URL, for a short time, once.</p>
+    <figure class="fig-wide anim" data-switch="Bearer token|DPoP-bound token">
+      <svg class="dg dg-w" viewBox="0 0 680 270" role="img" aria-labelledby="f1t f1d">
+        <title id="f1t">What a copied token is worth</title>
+        <desc id="f1d">Top row: the agent sends a request to the API and the API accepts it. Bottom row: another machine sends a copy of the same token. With a bearer token the API accepts the copy too. With a DPoP-bound token the copy comes without a proof from the key, and the API rejects it.</desc>
+        <text x="20" y="28" class="t-h">The agent</text>
+        <rect class="bx" x="20" y="42" width="170" height="72"/>
+        <text x="36" y="70">agent, my laptop</text>
+        <text x="36" y="94" class="t-s w-a">holds the token</text>
+        <text x="36" y="94" class="t-s w-b">holds token and key</text>
+        <line class="ln" x1="190" y1="78" x2="232" y2="78"/><polygon class="arr" points="232,73 240,78 232,83"/>
+        <rect class="bx-s" x="244" y="42" width="214" height="72"/>
+        <text x="258" y="70" class="w-a">Bearer &lt;token&gt;</text>
+        <text x="258" y="70" class="w-b">DPoP &lt;token&gt;</text>
+        <text x="258" y="94" class="t-s w-a">the token alone</text>
+        <text x="258" y="94" class="t-s w-b">+ proof, signed just now</text>
+        <line class="ln" x1="458" y1="78" x2="498" y2="78"/><polygon class="arr" points="498,73 506,78 498,83"/>
+        <rect class="bx" x="510" y="42" width="150" height="72"/>
+        <text x="526" y="70">API</text>
+        <text x="526" y="94" class="t-s">accepts</text>
+
+        <text x="20" y="162" class="t-h">A copy of the token</text>
+        <rect class="bx-d" x="20" y="176" width="170" height="72"/>
+        <text x="36" y="204">another machine</text>
+        <text x="36" y="228" class="t-s">copied from a log</text>
+        <line class="ln" x1="190" y1="212" x2="232" y2="212"/><polygon class="arr" points="232,207 240,212 232,217"/>
+        <rect class="bx-s" x="244" y="176" width="214" height="72"/>
+        <text x="258" y="204" class="w-a">Bearer &lt;token&gt;</text>
+        <text x="258" y="204" class="w-b">DPoP &lt;token&gt;</text>
+        <text x="258" y="228" class="t-s w-a">the same token</text>
+        <text x="258" y="228" class="t-s w-b">no key, so no proof</text>
+        <line class="ln" x1="458" y1="212" x2="498" y2="212"/><polygon class="arr" points="498,207 506,212 498,217"/>
+        <rect class="bx w-a" x="510" y="176" width="150" height="72"/>
+        <text x="526" y="204" class="w-a">API</text>
+        <text x="526" y="228" class="t-s w-a">accepts the copy</text>
+        <rect class="bx-i w-b" x="510" y="176" width="150" height="72"/>
+        <text x="526" y="204" class="t-inv w-b">API</text>
+        <text x="526" y="228" class="t-s t-inv w-b">rejects: no proof</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 520" role="img" aria-labelledby="f1nt">
+        <title id="f1nt">What a copied token is worth</title>
+        <text x="10" y="24" class="t-h">The agent</text>
+        <rect class="bx" x="10" y="36" width="340" height="56"/>
+        <text x="24" y="60">agent, my laptop</text>
+        <text x="24" y="80" class="t-s w-a">holds the token</text>
+        <text x="24" y="80" class="t-s w-b">holds token and key</text>
+        <line class="ln" x1="180" y1="92" x2="180" y2="102"/><polygon class="arr" points="175,102 180,110 185,102"/>
+        <rect class="bx-s" x="10" y="112" width="340" height="56"/>
+        <text x="24" y="136" class="w-a">Bearer &lt;token&gt;</text>
+        <text x="24" y="136" class="w-b">DPoP &lt;token&gt;</text>
+        <text x="24" y="156" class="t-s w-a">the token alone</text>
+        <text x="24" y="156" class="t-s w-b">+ proof, signed just now</text>
+        <line class="ln" x1="180" y1="168" x2="180" y2="178"/><polygon class="arr" points="175,178 180,186 185,178"/>
+        <rect class="bx" x="10" y="188" width="340" height="56"/>
+        <text x="24" y="212">API</text>
+        <text x="24" y="232" class="t-s">accepts</text>
+
+        <text x="10" y="284" class="t-h">A copy of the token</text>
+        <rect class="bx-d" x="10" y="296" width="340" height="56"/>
+        <text x="24" y="320">another machine</text>
+        <text x="24" y="340" class="t-s">copied from a log</text>
+        <line class="ln" x1="180" y1="352" x2="180" y2="362"/><polygon class="arr" points="175,362 180,370 185,362"/>
+        <rect class="bx-s" x="10" y="372" width="340" height="56"/>
+        <text x="24" y="396" class="w-a">Bearer &lt;token&gt;</text>
+        <text x="24" y="396" class="w-b">DPoP &lt;token&gt;</text>
+        <text x="24" y="416" class="t-s w-a">the same token</text>
+        <text x="24" y="416" class="t-s w-b">no key, so no proof</text>
+        <line class="ln" x1="180" y1="428" x2="180" y2="438"/><polygon class="arr" points="175,438 180,446 185,438"/>
+        <rect class="bx w-a" x="10" y="448" width="340" height="56"/>
+        <text x="24" y="472" class="w-a">API</text>
+        <text x="24" y="492" class="t-s w-a">accepts the copy</text>
+        <rect class="bx-i w-b" x="10" y="448" width="340" height="56"/>
+        <text x="24" y="472" class="t-inv w-b">API</text>
+        <text x="24" y="492" class="t-s t-inv w-b">rejects: no proof</text>
+      </svg>
+      <figcaption>Fig. 1 · Switch between a bearer token and a DPoP-bound token, and look at the bottom row.</figcaption>
+    </figure>
+    <p>RFC 8705 does the same with a TLS client certificate <a href="#s3">[3]</a>. DPoP works at the HTTP layer, so it also works through proxies, and a short-lived program can make a fresh key pair whenever it starts. Keycloak supports it fully since 26.4 <a href="#s4">[4]</a>, Spring Security can check DPoP-bound tokens <a href="#s5">[5]</a>, and Okta offers it as an app setting <a href="#s6">[6]</a>.</p>
+    <p>So the rule I want: <b>nothing an agent holds may work without a key that cannot be copied.</b> A private key is still a secret. But if it lives only in the memory of one process, or in a TPM or a phone's secure element, there is nothing to paste into a log.</p>
+
+    <h2 id="picture">The design in one picture</h2>
+    <p>DPoP solves the copy. It does not answer who decides that the agent gets a token, for what, and for how long. That is where the phone comes in. There are five parts. Tap one to read what it does and what it holds.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 350" role="img" aria-labelledby="f2t f2d">
+        <title id="f2t">The five parts of the design</title>
+        <desc id="f2d">On my Linux machine, the agent talks to a local broker over a Unix socket. The broker talks end to end to my phone, through a relay that sees only ciphertext. The agent sends its requests to a gateway with a DPoP proof and a grant from the phone. The gateway trusts the phone's public key and calls the real APIs with a short upstream token or a key that it keeps.</desc>
+        <rect class="bx-d" x="20" y="40" width="320" height="290"/>
+        <text x="34" y="62" class="t-s">my Linux machine, or a server</text>
+        <g data-pick="agent" class="pop d1">
+          <rect class="bx" x="40" y="80" width="130" height="70"/>
+          <text x="54" y="108" class="t-h">Agent</text>
+          <text x="54" y="130" class="t-s">Claude Code</text>
+        </g>
+        <g data-pick="broker" class="pop d2">
+          <rect class="bx" x="190" y="80" width="130" height="70"/>
+          <text x="204" y="108" class="t-h">Broker</text>
+          <text x="204" y="130" class="t-s">local daemon</text>
+        </g>
+        <line class="ln draw d1" pathLength="1" x1="170" y1="115" x2="190" y2="115"/>
+        <text x="180" y="172" text-anchor="middle" class="t-s">Unix socket</text>
+        <g data-pick="relay" class="pop d3">
+          <rect class="bx" x="380" y="80" width="120" height="70"/>
+          <text x="394" y="108" class="t-h">Relay</text>
+          <text x="394" y="130" class="t-s">ciphertext only</text>
+        </g>
+        <line class="ln draw d2" pathLength="1" x1="320" y1="115" x2="380" y2="115"/>
+        <line class="ln draw d3" pathLength="1" x1="500" y1="115" x2="530" y2="115"/>
+        <text x="440" y="172" text-anchor="middle" class="t-s">end to end (Noise)</text>
+        <g data-pick="phone" class="pop d4">
+          <rect class="bx" x="530" y="60" width="130" height="90"/>
+          <text x="544" y="92" class="t-h">Phone</text>
+          <text x="544" y="114" class="t-s">Android app</text>
+          <text x="544" y="132" class="t-s">key in StrongBox</text>
+        </g>
+        <g data-pick="gateway" class="pop d5">
+          <rect class="bx" x="380" y="240" width="140" height="70"/>
+          <text x="394" y="268" class="t-h">Gateway</text>
+          <text x="394" y="290" class="t-s">agentgateway</text>
+        </g>
+        <path class="ln draw d4" pathLength="1" d="M105 150 V275 H380"/>
+        <text x="118" y="266" class="t-s">DPoP proof + grant</text>
+        <path class="ln-s" d="M595 150 V200 H450 V240"/>
+        <text x="604" y="190" class="t-s">public key</text>
+        <g data-pick="api" class="pop d6">
+          <rect class="bx" x="560" y="240" width="100" height="70"/>
+          <text x="574" y="268" class="t-h">APIs</text>
+          <text x="574" y="290" class="t-s">GitHub, …</text>
+        </g>
+        <line class="ln draw d5" pathLength="1" x1="520" y1="275" x2="560" y2="275"/>
+        <text x="660" y="334" text-anchor="end" class="t-s">short token or kept key</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 500" role="img" aria-labelledby="f2nt">
+        <title id="f2nt">The five parts of the design</title>
+        <rect class="bx-d" x="5" y="30" width="350" height="104"/>
+        <text x="15" y="22" class="t-s">my Linux machine, or a server</text>
+        <g data-pick="agent" class="pop d1"><rect class="bx" x="15" y="48" width="155" height="64"/><text x="29" y="74" class="t-h">Agent</text><text x="29" y="96" class="t-s">Claude Code</text></g>
+        <g data-pick="broker" class="pop d2"><rect class="bx" x="190" y="48" width="155" height="64"/><text x="204" y="74" class="t-h">Broker</text><text x="204" y="96" class="t-s">local daemon</text></g>
+        <line class="ln" x1="170" y1="80" x2="190" y2="80"/>
+        <line class="ln" x1="267" y1="112" x2="267" y2="170"/>
+        <text x="275" y="148" class="t-s">Noise</text>
+        <g data-pick="relay" class="pop d3"><rect class="bx" x="190" y="170" width="155" height="60"/><text x="204" y="196" class="t-h">Relay</text><text x="204" y="216" class="t-s">ciphertext only</text></g>
+        <line class="ln" x1="267" y1="230" x2="267" y2="270"/>
+        <g data-pick="phone" class="pop d4"><rect class="bx" x="190" y="270" width="155" height="64"/><text x="204" y="296" class="t-h">Phone</text><text x="204" y="318" class="t-s">key in StrongBox</text></g>
+        <path class="ln" d="M92 112 V400"/>
+        <text x="100" y="250" class="t-s">proof</text>
+        <text x="100" y="266" class="t-s">+ grant</text>
+        <path class="ln-s" d="M267 334 V370 H130 V400"/>
+        <text x="140" y="364" class="t-s">public key</text>
+        <g data-pick="gateway" class="pop d5"><rect class="bx" x="15" y="400" width="155" height="64"/><text x="29" y="426" class="t-h">Gateway</text><text x="29" y="448" class="t-s">agentgateway</text></g>
+        <line class="ln" x1="170" y1="432" x2="190" y2="432"/>
+        <g data-pick="api" class="pop d6"><rect class="bx" x="190" y="400" width="155" height="64"/><text x="204" y="426" class="t-h">APIs</text><text x="204" y="448" class="t-s">GitHub, …</text></g>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Tap a part to read what it does and what it holds.</p>
+        <ul class="pick__list">
+          <li data-k="agent"><b>Agent</b>: Claude Code, a cron job, a CI runner. It makes a key pair when it starts and keeps the private half in memory. It asks the broker for what it needs, then sends its requests to the gateway with a DPoP proof. Holds: its own key, a grant for a few minutes or hours. Nothing that works without the key.</li>
+          <li data-k="broker"><b>Broker</b>: a small daemon on the same machine, reached over a Unix socket. It finds out which program is asking, the way macOS does with code signatures, and sends the request to my phone. Holds: its pairing key with the phone, ideally in the TPM.</li>
+          <li data-k="relay"><b>Relay</b>: a mailbox on the internet, so the phone and the machine find each other behind any network. It passes ciphertext and a push to wake the phone. It cannot read or change a request. Holds: nothing worth stealing.</li>
+          <li data-k="phone"><b>Phone</b>: the Android app. It shows who asks, what for and why, and signs a grant with a key in the secure element after my fingerprint. Holds: the one key that matters, and it cannot leave the chip.</li>
+          <li data-k="gateway"><b>Gateway</b>: an identity-aware proxy, for example agentgateway on my lab. It checks the proof, the grant and that the request matches the grant, then calls the real API. Holds: the phone's public key, and the upstream keys that cannot be replaced yet.</li>
+          <li data-k="api"><b>APIs</b>: GitHub, the model providers, my lab's services. Where they accept short tokens from a federation (a GitHub App, a cloud's workload identity), the gateway gets one per request. Where they only take a static key, that key lives in the gateway and nowhere else.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 2 · The five parts. The dashed line carries only a public key.</figcaption>
+    </figure>
+    <p>Two things are worth saying at once. The phone never sends a secret anywhere: it signs a statement. And the agent never sees an upstream key: the gateway adds it on the way out. Claude Code's cloud sessions, which I use, already do the second part: I save an API key on the environment, a proxy adds it to requests to that host, and the session never sees the value.</p>
+
+    <h2 id="who">Who is asking</h2>
+    <p>"An agent wants to push" is not enough. Which program? Started by whom? The same request from Claude Code in a session I started, and from an unknown binary in <code>/tmp</code>, should look very different on the phone.</p>
+    <h3>How macOS knows</h3>
+    <p>On macOS every app carries a code signature, and the system identifies an app by it, not by its path or name. The key idea is the designated requirement: in Apple's words, "the code's way of saying 'If you see me again, here's how you tell it's really me'" <a href="#s7">[7]</a>. For an app from a registered developer, it names the developer's Team ID in the certificate. A new version of the app meets the same requirement, so the privacy permissions you gave it (camera, files, screen) stay with it. A changed binary does not, so they do not <a href="#s7">[7]</a>.</p>
+    <p>Two more pieces make it work. Notarization: Apple scans software signed with a Developer ID, and Gatekeeper checks for that ticket <a href="#s8">[8]</a>. And a service can demand a signature from the process on the other end of its connection: <code>setCodeSigningRequirement</code> drops an XPC connection whose peer does not meet a requirement <a href="#s9">[9]</a>. Apple's engineers advise identifying the peer by its audit token, not by its process id, because a process id can be reused by another process <a href="#s10">[10]</a>.</p>
+    <h3>What Linux has</h3>
+    <p>Linux has no single signing system for programs. But it has most of the pieces to build the same check in a broker:</p>
+    <ul>
+      <li><b>The peer of a socket.</b> <code>SO_PEERCRED</code> gives the user and process id of the other end of a Unix socket. Since Linux 6.5, <code>SO_PEERPIDFD</code> gives a pidfd instead <a href="#s11">[11]</a>: a handle to exactly that process, which cannot point to another one if the id is reused. That is the audit token of Linux.</li>
+      <li><b>The program.</b> From the pidfd, <code>/proc/&lt;pid&gt;/exe</code> leads to the binary. Its hash can come from fs-verity, which the kernel keeps for a file and checks on each read (since 5.4), or from IMA, which measures files as they are run <a href="#s11">[11]</a>. SPIRE's Unix workload attestor already does this for workloads: it gives the user, the group, the path and the SHA-256 of the binary as selectors <a href="#s12">[12]</a>.</li>
+      <li><b>The context.</b> The process's cgroup names its systemd unit or scope, so the broker can see "a terminal session of tim" or "the backup timer". Flatpak's portals identify an app by the app id in the sandbox, and use pidfds to do it safely <a href="#s13">[13]</a>.</li>
+    </ul>
+    <p>So the broker can write a requirement much like Apple's, only from other parts:</p>
+    <div class="code">
+      <div class="code__bar"><span>a requirement for the broker, a sketch</span></div>
+<pre><code>requirement claude-code
+  exe      = /usr/bin/node
+  script   = ~/.local/lib/node_modules/@anthropic-ai/claude-code/cli.js
+  script.sha256 in npm-integrity(@anthropic-ai/claude-code)
+  uid      = tim
+  unit     ~ "session-*.scope"        # started from my login, not a timer
+  ptrace   = denied                   # Yama scope 2, or its own user</code></pre>
+    </div>
+    <p>Two things are harder than on macOS, and the design must be honest about them.</p>
+    <ul>
+      <li><b>Interpreters.</b> Many agents run in Node or Python. The binary is the interpreter; the program is a script. The broker has to identify the script too, and check its hash against the package it came from. A program that loads more code at run time is only as trustworthy as that code.</li>
+      <li><b>Same user, same power.</b> On a normal desktop, any process of mine can attach a debugger to another one and change it. macOS blocks that for hardened apps. On Linux the broker can only trust an identity if the agent runs as its own user, in a sandbox, or with ptrace restricted. Otherwise the check is a hint, and the phone should say so.</li>
+    </ul>
+
+    <h2 id="intent">Show the intent, not a button</h2>
+    <p>The push prompts I know ask "Is this you?" with two buttons. People approve them without reading; attackers count on it and send prompts until someone taps yes. Microsoft made number matching mandatory in its Authenticator app in May 2023 for that reason: the person types a number from the login screen, so a prompt they did not cause cannot be approved by reflex <a href="#s14">[14]</a>. That fixes "did I cause this". It does not say what I agree to.</p>
+    <p>There is better prior art for that. Secure Payment Confirmation in the browser must show the payee, the amount and the card, and the signature covers exactly that data <a href="#s15">[15]</a>. Android's Protected Confirmation shows a message in a screen the app cannot draw over, and signs it with a key that works only for confirmed messages <a href="#s16">[16]</a>. OAuth has a format for the content: Rich Authorization Requests (RFC 9396) carry a list of <code>authorization_details</code>, each with a <code>type</code> and the fields that say what exactly is allowed <a href="#s17">[17]</a>. And CIBA, the OpenID flow where one device asks and another one approves, shows a <code>binding_message</code> on both <a href="#s18">[18]</a>.</p>
+    <p>Put together, the phone shows a request in four parts, and what it signs is exactly what it shows. Tap a part.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 480" role="img" aria-labelledby="f3t f3d">
+        <title id="f3t">The approval screen on the phone</title>
+        <desc id="f3d">A phone screen with six parts. Who: claude, node, verified because the package hash matches, on lab-1, session 7f3a. What: git push to Tim-Conrad/Tim-Conrad.github.io, branch claude/thought-grants, 3 commits. Why, in the agent's words: push the new thought for review. Allow: this push, or this session for 2 hours. A code that also shows in my terminal. Deny and Approve.</desc>
+        <rect class="bx" x="40" y="20" width="260" height="440" rx="28"/>
+        <text x="60" y="54" class="t-s">Countersign · lab-1 asks</text>
+        <g data-pick="who">
+          <rect class="bx" x="60" y="68" width="220" height="74"/>
+          <text x="72" y="90">claude · node</text>
+          <text x="72" y="110" class="t-s">verified: package hash</text>
+          <text x="72" y="128" class="t-s">lab-1 · session 7f3a</text>
+          <line class="ln-s" x1="290" y1="105" x2="330" y2="105"/>
+          <text x="340" y="109" class="t-pick">Who: checked by the broker</text>
+        </g>
+        <g data-pick="what">
+          <rect class="bx" x="60" y="152" width="220" height="86"/>
+          <text x="72" y="176" class="t-h">git push</text>
+          <text x="72" y="196" class="t-s">repo Tim-Conrad.github.io</text>
+          <text x="72" y="212" class="t-s">branch claude/thought-grants</text>
+          <text x="72" y="228" class="t-s">3 commits · not main</text>
+          <line class="ln-s" x1="290" y1="195" x2="330" y2="195"/>
+          <text x="340" y="199" class="t-pick">What: the exact request</text>
+        </g>
+        <g data-pick="why">
+          <rect class="bx" x="60" y="248" width="220" height="62"/>
+          <text x="72" y="266" class="t-s">why · the agent's words</text>
+          <text x="72" y="286">Push the new thought</text>
+          <text x="72" y="302">for review.</text>
+          <line class="ln-s" x1="290" y1="279" x2="330" y2="279"/>
+          <text x="340" y="283" class="t-pick">Why: what the agent says</text>
+        </g>
+        <g data-pick="grant">
+          <rect class="bx" x="60" y="320" width="220" height="50"/>
+          <text x="72" y="337" class="t-s">allow</text>
+          <rect class="bx-i" x="72" y="344" width="92" height="20"/>
+          <text x="80" y="358" class="t-s t-inv">this push</text>
+          <rect class="bx" x="170" y="344" width="100" height="20"/>
+          <text x="178" y="358" class="t-s">session, 2 h</text>
+          <line class="ln-s" x1="290" y1="345" x2="330" y2="345"/>
+          <text x="340" y="349" class="t-pick">Grant: how far, how long</text>
+        </g>
+        <g data-pick="code">
+          <rect class="bx" x="60" y="378" width="220" height="22"/>
+          <text x="72" y="393" class="t-s">code 47 · also in the terminal</text>
+          <line class="ln-s" x1="290" y1="389" x2="330" y2="389"/>
+          <text x="340" y="393" class="t-pick">Code: did I cause this?</text>
+        </g>
+        <g data-pick="sign">
+          <rect class="bx" x="60" y="408" width="100" height="34"/>
+          <text x="110" y="430" text-anchor="middle">Deny</text>
+          <rect class="bx-i" x="180" y="408" width="100" height="34"/>
+          <text x="230" y="430" text-anchor="middle" class="t-inv">Approve</text>
+          <line class="ln-s" x1="290" y1="425" x2="330" y2="425"/>
+          <text x="340" y="429" class="t-pick">Approve: fingerprint, then sign</text>
+        </g>
+      </svg>
+      <svg class="dg dg-n" viewBox="20 0 300 480" role="img" aria-labelledby="f3nt">
+        <title id="f3nt">The approval screen on the phone</title>
+        <rect class="bx" x="40" y="20" width="260" height="440" rx="28"/>
+        <text x="60" y="54" class="t-s">Countersign · lab-1 asks</text>
+        <g data-pick="who"><rect class="bx" x="60" y="68" width="220" height="74"/><text x="72" y="90">claude · node</text><text x="72" y="110" class="t-s">verified: package hash</text><text x="72" y="128" class="t-s">lab-1 · session 7f3a</text></g>
+        <g data-pick="what"><rect class="bx" x="60" y="152" width="220" height="86"/><text x="72" y="176" class="t-h">git push</text><text x="72" y="196" class="t-s">repo Tim-Conrad.github.io</text><text x="72" y="212" class="t-s">branch claude/thought-grants</text><text x="72" y="228" class="t-s">3 commits · not main</text></g>
+        <g data-pick="why"><rect class="bx" x="60" y="248" width="220" height="62"/><text x="72" y="266" class="t-s">why · the agent's words</text><text x="72" y="286">Push the new thought</text><text x="72" y="302">for review.</text></g>
+        <g data-pick="grant"><rect class="bx" x="60" y="320" width="220" height="50"/><text x="72" y="337" class="t-s">allow</text><rect class="bx-i" x="72" y="344" width="92" height="20"/><text x="80" y="358" class="t-s t-inv">this push</text><rect class="bx" x="170" y="344" width="100" height="20"/><text x="178" y="358" class="t-s">session, 2 h</text></g>
+        <g data-pick="code"><rect class="bx" x="60" y="378" width="220" height="22"/><text x="72" y="393" class="t-s">code 47 · also in the terminal</text></g>
+        <g data-pick="sign"><rect class="bx" x="60" y="408" width="100" height="34"/><text x="110" y="430" text-anchor="middle">Deny</text><rect class="bx-i" x="180" y="408" width="100" height="34"/><text x="230" y="430" text-anchor="middle" class="t-inv">Approve</text></g>
+      </svg>
+      <div class="pick__panel">
+        <p class="pick__hint">Tap a part of the screen to read what it shows and where it comes from.</p>
+        <ul class="pick__list">
+          <li data-k="who"><b>Who</b>: the program as the broker checked it, not as the agent describes itself. The machine, the session it runs in, and whether the requirement matched. If the agent shares its user with other programs, this says "not isolated", and the screen says so plainly.</li>
+          <li data-k="what"><b>What</b>: the request as structured data, an <code>authorization_details</code> entry, drawn by a template for its type. For a push: the repository, the branch, the number of commits, whether it is the default branch. A type without a template shows its raw fields, and asks for a second look.</li>
+          <li data-k="why"><b>Why</b>: the agent's own reason, and the task it came from. It is useful, and it is a claim. A prompt injection can write a good reason too, so the screen marks it as the agent's words and keeps it apart from what the broker checked.</li>
+          <li data-k="grant"><b>Grant</b>: how far the approval goes. "This push" is used once. "This session, 2 h" lets the same session do the same kind of thing again, within the same limits, until it ends or the time runs out. I can end any grant from the phone.</li>
+          <li data-k="code"><b>Code</b>: when I sit at the machine, the terminal shows the same two digits. It proves that this request is the one I just caused. When an agent runs on its own at night, there is no code, and the screen says so.</li>
+          <li data-k="sign"><b>Approve</b>: my fingerprint unlocks the key in the secure element, and the phone signs exactly the data on the screen. Deny tells the agent no, with an optional reason it can read.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 3 · The approval screen. The agent's reason and the checked facts are kept apart.</figcaption>
+    </figure>
+    <p>The most important line on that screen is the difference between "the broker checked this" and "the agent says this". An agent that read a poisoned web page can give a perfect reason. It cannot fake the program, the branch or the repository, because the gateway will refuse anything outside the grant.</p>
+
+    <h2 id="grants">Grants instead of secrets</h2>
+    <p>What the phone signs I call a grant. It is a short JWT, signed with ES256 by the key in the phone's StrongBox chip. Android keeps such a key out of the app's memory, and can bind its use to a fingerprint <a href="#s19">[19]</a>. A grant names the agent's key, so only that agent can use it:</p>
+    <div class="code">
+      <div class="code__bar"><span>a grant, decoded</span></div>
+<pre><code>{ "iss": "phone:tim-pixel",
+  "sub": "tim",
+  "cnf": { "jkt": "0ZcOCORZNYy-DWpqq30jZyJGHTN0d2HglBV3uiguA4I" },   # the agent's key
+  "req": { "machine": "lab-1", "requirement": "claude-code",
+           "session": "7f3a", "isolated": true },                  # what the broker checked
+  "authorization_details": [{
+      "type": "git.push",
+      "repository": "Tim-Conrad/Tim-Conrad.github.io",
+      "ref": "refs/heads/claude/thought-grants",
+      "default_branch": false,
+      "uses": 1 }],
+  "why": "Push the new thought for review.",                       # the agent's words
+  "iat": 1794826800, "exp": 1794834000,                            # two hours at most
+  "jti": "g_8Qm2" }</code></pre>
+    </div>
+    <p>Three properties follow from that shape.</p>
+    <ul>
+      <li><b>It is useless when copied.</b> The gateway accepts it only with a DPoP proof from the key in <code>cnf.jkt</code>.</li>
+      <li><b>It is narrow.</b> The gateway compares each request with <code>authorization_details</code>. A push to <code>main</code> is outside a grant for a branch.</li>
+      <li><b>It ends by itself.</b> Two hours at most, and earlier when I end it on the phone. There is nothing to rotate.</li>
+    </ul>
+    <h3>Standing grants</h3>
+    <p>Asking forty times per session would train me to tap without reading, which is the problem I started with. So the screen offers "this session, 2 h": the same session may repeat the same kind of action within the same limits. The phone shows a list of open grants, each with a button to end it.</p>
+    <p>1Password's SSH agent already works this way for keys: it asks once per application, and I can approve for that app, for a terminal session or for one request <a href="#s20">[20]</a>. Tailscale's SSH check mode asks again after a period, 12 hours by default <a href="#s21">[21]</a>. Krypton did it from a phone years ago: the SSH key lived on the phone and never left it <a href="#s22">[22]</a>. What none of them carry is the intent: they approve a key, not an action.</p>
+    <h3>Grants for subagents</h3>
+    <p>Agents start other agents. A subagent should get its own key and a grant that is narrower than its parent's, never wider. The parent can sign that grant itself, as long as it only removes rights. The gateway then sees a chain: phone, agent, subagent. Token Exchange (RFC 8693) already has a claim for that chain, <code>act</code>, the party that acts for the subject <a href="#s23">[23]</a>. The phone can show the chain when the subagent asks for something new.</p>
+
+    <h2 id="flow">One request, step by step</h2>
+    <p>Here is a push from start to end. Step through it, or press Play.</p>
+    <figure class="fig-wide" data-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 430" role="img" aria-labelledby="f4t f4d">
+        <title id="f4t">One request from the agent to GitHub</title>
+        <desc id="f4d">The agent asks the broker, the broker checks who asks and sends the request to the phone, I approve, the phone signs a grant bound to the agent's key, the agent calls the gateway with a proof and the grant, the gateway checks them and calls GitHub with a short token, and sends a receipt to the phone.</desc>
+        <rect class="bx" x="10" y="20" width="120" height="36"/><text x="70" y="43" text-anchor="middle" class="t-h">Agent</text>
+        <rect class="bx" x="170" y="20" width="120" height="36"/><text x="230" y="43" text-anchor="middle" class="t-h">Broker</text>
+        <rect class="bx" x="330" y="20" width="120" height="36"/><text x="390" y="43" text-anchor="middle" class="t-h">Phone</text>
+        <rect class="bx" x="490" y="20" width="120" height="36"/><text x="550" y="43" text-anchor="middle" class="t-h">Gateway</text>
+        <rect class="bx" x="640" y="20" width="110" height="36"/><text x="695" y="43" text-anchor="middle" class="t-h">GitHub</text>
+        <line class="ln-s" x1="70" y1="56" x2="70" y2="420"/>
+        <line class="ln-s" x1="230" y1="56" x2="230" y2="420"/>
+        <line class="ln-s" x1="390" y1="56" x2="390" y2="420"/>
+        <line class="ln-s" x1="550" y1="56" x2="550" y2="420"/>
+        <line class="ln-s" x1="695" y1="56" x2="695" y2="420"/>
+        <g data-step="1"><line class="ln" x1="70" y1="96" x2="222" y2="96"/><polygon class="arr" points="222,91 230,96 222,101"/><text x="80" y="88" class="t-s">1 · need: git push, key jkt</text></g>
+        <g data-step="2"><rect class="bx-s" x="240" y="122" width="140" height="28"/><text x="250" y="141" class="t-s">2 · check caller</text></g>
+        <g data-step="3"><line class="ln" x1="230" y1="176" x2="382" y2="176"/><polygon class="arr" points="382,171 390,176 382,181"/><text x="240" y="168" class="t-s">3 · request, sealed</text></g>
+        <g data-step="4"><rect class="bx-s" x="400" y="202" width="140" height="28"/><text x="410" y="221" class="t-s">4 · read, approve</text></g>
+        <g data-step="5"><line class="ln" x1="390" y1="256" x2="78" y2="256"/><polygon class="arr" points="78,251 70,256 78,261"/><text x="90" y="248" class="t-s">5 · grant, bound to the agent's key</text></g>
+        <g data-step="6"><line class="ln" x1="70" y1="296" x2="542" y2="296"/><polygon class="arr" points="542,291 550,296 542,301"/><text x="90" y="288" class="t-s">6 · push + DPoP proof + grant</text></g>
+        <g data-step="7"><rect class="bx-s" x="560" y="318" width="126" height="28"/><text x="570" y="337" class="t-s">7 · check all 3</text><line class="ln" x1="550" y1="368" x2="687" y2="368"/><polygon class="arr" points="687,363 695,368 687,373"/><text x="560" y="362" class="t-s">token, 1 h</text></g>
+        <g data-step="8"><line class="ln" x1="550" y1="404" x2="398" y2="404"/><polygon class="arr" points="398,399 390,404 398,409"/><text x="410" y="396" class="t-s">8 · receipt</text></g>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 400" role="img" aria-labelledby="f4nt">
+        <title id="f4nt">One request from the agent to GitHub</title>
+        <rect class="bx" x="9" y="14" width="62" height="28"/><text x="40" y="32" text-anchor="middle" class="t-s">Agent</text>
+        <rect class="bx" x="79" y="14" width="62" height="28"/><text x="110" y="32" text-anchor="middle" class="t-s">Broker</text>
+        <rect class="bx" x="149" y="14" width="62" height="28"/><text x="180" y="32" text-anchor="middle" class="t-s">Phone</text>
+        <rect class="bx" x="219" y="14" width="62" height="28"/><text x="250" y="32" text-anchor="middle" class="t-s">Gateway</text>
+        <rect class="bx" x="289" y="14" width="62" height="28"/><text x="320" y="32" text-anchor="middle" class="t-s">GitHub</text>
+        <line class="ln-s" x1="40" y1="42" x2="40" y2="390"/>
+        <line class="ln-s" x1="110" y1="42" x2="110" y2="390"/>
+        <line class="ln-s" x1="180" y1="42" x2="180" y2="390"/>
+        <line class="ln-s" x1="250" y1="42" x2="250" y2="390"/>
+        <line class="ln-s" x1="320" y1="42" x2="320" y2="390"/>
+        <g data-step="1"><line class="ln" x1="40" y1="80" x2="103" y2="80"/><polygon class="arr" points="103,75 110,80 103,85"/><text x="46" y="72" class="t-s">1 need</text></g>
+        <g data-step="2"><rect class="bx-s" x="116" y="100" width="58" height="24"/><text x="122" y="116" class="t-s">2 who?</text></g>
+        <g data-step="3"><line class="ln" x1="110" y1="150" x2="173" y2="150"/><polygon class="arr" points="173,145 180,150 173,155"/><text x="116" y="142" class="t-s">3 ask</text></g>
+        <g data-step="4"><rect class="bx-s" x="186" y="170" width="58" height="24"/><text x="192" y="186" class="t-s">4 read</text></g>
+        <g data-step="5"><line class="ln" x1="180" y1="222" x2="47" y2="222"/><polygon class="arr" points="47,217 40,222 47,227"/><text x="56" y="214" class="t-s">5 grant</text></g>
+        <g data-step="6"><line class="ln" x1="40" y1="260" x2="243" y2="260"/><polygon class="arr" points="243,255 250,260 243,265"/><text x="56" y="252" class="t-s">6 proof + grant</text></g>
+        <g data-step="7"><rect class="bx-s" x="256" y="280" width="58" height="24"/><text x="262" y="296" class="t-s">7 check</text><line class="ln" x1="250" y1="326" x2="313" y2="326"/><polygon class="arr" points="313,321 320,326 313,331"/><text x="256" y="318" class="t-s">token</text></g>
+        <g data-step="8"><line class="ln" x1="250" y1="366" x2="187" y2="366"/><polygon class="arr" points="187,361 180,366 187,371"/><text x="190" y="358" class="t-s">8 receipt</text></g>
+      </svg>
+      <div class="steps__panel">
+        <ol class="steps__list">
+          <li>The agent made a key pair when it started. It asks the broker over the Unix socket: I want to push this branch, and here is the thumbprint of my key.</li>
+          <li>The broker takes the pidfd of the caller from the socket and checks it against its requirements: the binary, the script and its hash, the user, the systemd unit, whether ptrace is restricted. A request that matches no requirement still goes to the phone, marked "unknown program".</li>
+          <li>The broker seals the request for the phone and puts it on the relay. A push wakes the app. The relay sees a few hundred bytes of ciphertext.</li>
+          <li>I read the screen. If I sit at the machine, I compare the code with the terminal. My fingerprint unlocks the key in the secure element.</li>
+          <li>The phone signs the grant, with the agent's key thumbprint, the checked facts, the exact request and an expiry, and sends it back the same way. The broker hands it to the agent.</li>
+          <li>The agent sends its push to the gateway, with <code>Authorization: DPoP</code>, a fresh proof for this method and URL, and the grant.</li>
+          <li>The gateway checks the grant's signature against the phone's public key, the proof against the key in the grant, and the request against <code>authorization_details</code>. Then it asks GitHub for an installation token of a GitHub App, which expires after one hour <a href="#s24">[24]</a>, and forwards the push with it. The agent never sees that token.</li>
+          <li>The gateway sends a signed receipt to the phone: what was approved, and what was done. If the two differ, the phone says so.</li>
+        </ol>
+      </div>
+      <figcaption>Fig. 4 · One push, eight steps. Only steps 3 to 5 need me.</figcaption>
+    </figure>
+
+    <h2 id="gateway">A gateway keeps the last keys</h2>
+    <p>Some services will take only a static API key for years to come. Those keys do not disappear. But they can move to one place that no agent can read, and that place can be strict about who uses them.</p>
+    <p>That place is an identity-aware proxy. The idea is old: Google's BeyondCorp moved access decisions from the network edge to a proxy in front of each service, which checks the user and the device on every request <a href="#s25">[25]</a>. Pomerium is an open-source proxy of that kind <a href="#s26">[26]</a>. CyberArk's Secretless Broker was built to keep secrets away from client applications: the broker connects to the database, the app does not get the password <a href="#s27">[27]</a>.</p>
+    <p>agentgateway is the same idea built for agents. It is an open-source proxy for MCP, A2A and LLM traffic, from Solo.io and now a Linux Foundation project <a href="#s28">[28]</a>. Three of its features fit this design directly <a href="#s28">[28]</a>:</p>
+    <ul>
+      <li>It checks JWTs and runs policies in CEL, so it can verify a grant against the phone's public key and compare a request with its fields.</li>
+      <li>Its <code>backendAuth</code> policy adds stored credentials to the upstream request. The agent sends its request without a key, and the key is added on the way out.</li>
+      <li>It can keep a private key and sign a fresh JWT for each upstream request (<code>jwtSign</code>), or do an RFC 8693 token exchange. For services that accept that, there is no static key at all, only a key that signs.</li>
+    </ul>
+    <p>I could not find DPoP proof checks in agentgateway. If they are missing, a small check in front of it can do that part. Tailscale's Aperture, in beta, keeps model provider keys in a gateway too, and lets clients in by their Tailscale identity <a href="#s29">[29]</a>.</p>
+    <p>The upstream keys that remain should be few, listed in one file, and used only by the gateway. Where a service offers federation (a GitHub App, a cloud's workload identity), the gateway uses that instead and the static key goes away.</p>
+
+    <h2 id="pairing">Pairing the phone</h2>
+    <p>The phone and the broker meet once, in person. The broker shows a QR code with its public key and a one-time code. The phone scans it, and both run a Noise handshake: a framework for building secure channels from Diffie-Hellman key exchanges <a href="#s30">[30]</a>. Afterwards each side knows the other's public key, and every message between them is encrypted end to end. The one-time code from the QR goes into the handshake, so a relay in the middle cannot join it.</p>
+    <p>Without a camera, a short code works, as in Magic Wormhole: a few words, typed on the other device, run through a PAKE so that a wrong guess fails at once <a href="#s31">[31]</a>.</p>
+    <p>The phone's key gets an attestation from Android: a certificate chain to Google's root that says the key was made in StrongBox and cannot leave it <a href="#s32">[32]</a>. The gateway checks it once, when I add the phone, and then trusts the public key.</p>
+
+    <h2 id="lifetimes">How long each credential lives</h2>
+    <p>Switch between what an agent can read today and what it would hold with grants.</p>
+    <figure class="fig-wide anim" data-switch="Today|With grants">
+      <svg class="dg dg-w" viewBox="0 0 680 290" role="img" aria-labelledby="f5t f5d">
+        <title id="f5t">Lifetime of each credential, today and with grants</title>
+        <desc id="f5d">On a scale from a minute to no expiry. Today: an API key for an agent, a deploy key, a GitHub or cloud token and a lab password, all valid until I rotate them, which in practice means years or forever. With grants: the access token lives about 5 minutes, the grant at most 2 hours, the agent's own key until its session ends, and the upstream keys still never expire, but stay in the gateway.</desc>
+        <text x="20" y="66" class="w-a">API key, agent</text>
+        <text x="20" y="66" class="w-b">Access token</text>
+        <text x="20" y="116" class="w-a">Deploy key</text>
+        <text x="20" y="116" class="w-b">Grant</text>
+        <text x="20" y="166" class="w-a">GitHub, cloud</text>
+        <text x="20" y="166" class="w-b">Agent key</text>
+        <text x="20" y="216" class="w-a">Lab password</text>
+        <text x="20" y="216" class="w-b">Upstream key</text>
+
+        <rect class="bx-i grow w-a" x="220" y="48" width="444" height="26"/><text x="232" y="66" class="t-s t-inv w-a">until I rotate it</text>
+        <rect class="bx-i grow w-a d1" x="220" y="98" width="444" height="26"/><text x="232" y="116" class="t-s t-inv w-a">until I rotate it</text>
+        <rect class="bx-i grow w-a d2" x="220" y="148" width="410" height="26"/><text x="232" y="166" class="t-s t-inv w-a">until it expires or I rotate it</text>
+        <rect class="bx-i grow w-a d3" x="220" y="198" width="444" height="26"/><text x="232" y="216" class="t-s t-inv w-a">until I change it</text>
+
+        <rect class="bx-s grow w-b" x="220" y="48" width="69" height="26"/><text x="297" y="66" class="t-s w-b">about 5 min, DPoP-bound</text>
+        <rect class="bx-s grow w-b d1" x="220" y="98" width="152" height="26"/><text x="380" y="116" class="t-s w-b">2 h at most</text>
+        <rect class="bx-s grow w-b d2" x="220" y="148" width="195" height="26"/><text x="423" y="166" class="t-s w-b">until the session ends</text>
+        <rect class="bx-i grow w-b d3" x="220" y="198" width="444" height="26"/><text x="232" y="216" class="t-s t-inv w-b">no expiry, but only in the gateway</text>
+
+        <line class="ln" x1="220" y1="242" x2="664" y2="242"/>
+        <line class="ln" x1="250" y1="238" x2="250" y2="246"/><text x="250" y="262" text-anchor="middle" class="t-s">1 min</text>
+        <line class="ln" x1="350" y1="238" x2="350" y2="246"/><text x="350" y="262" text-anchor="middle" class="t-s">1 h</text>
+        <line class="ln" x1="450" y1="238" x2="450" y2="246"/><text x="450" y="262" text-anchor="middle" class="t-s">1 day</text>
+        <line class="ln" x1="550" y1="238" x2="550" y2="246"/><text x="550" y="262" text-anchor="middle" class="t-s">1 month</text>
+        <line class="ln" x1="630" y1="238" x2="630" y2="246"/><text x="630" y="262" text-anchor="middle" class="t-s">1 year</text>
+        <text x="664" y="280" text-anchor="end" class="t-s">never →</text>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 310" role="img" aria-labelledby="f5nt">
+        <title id="f5nt">Lifetime of each credential, today and with grants</title>
+        <text x="10" y="26" class="t-s w-a">API key, agent</text><text x="10" y="26" class="t-s w-b">Access token</text>
+        <text x="10" y="86" class="t-s w-a">Deploy key</text><text x="10" y="86" class="t-s w-b">Grant</text>
+        <text x="10" y="146" class="t-s w-a">GitHub, cloud token</text><text x="10" y="146" class="t-s w-b">Agent key</text>
+        <text x="10" y="206" class="t-s w-a">Lab password</text><text x="10" y="206" class="t-s w-b">Upstream key</text>
+        <rect class="bx-i grow w-a" x="10" y="34" width="340" height="20"/><text x="18" y="48" class="t-s t-inv w-a">until I rotate it</text>
+        <rect class="bx-i grow w-a d1" x="10" y="94" width="340" height="20"/><text x="18" y="108" class="t-s t-inv w-a">until I rotate it</text>
+        <rect class="bx-i grow w-a d2" x="10" y="154" width="320" height="20"/><text x="18" y="168" class="t-s t-inv w-a">until it expires or I rotate it</text>
+        <rect class="bx-i grow w-a d3" x="10" y="214" width="340" height="20"/><text x="18" y="228" class="t-s t-inv w-a">until I change it</text>
+        <rect class="bx-s grow w-b" x="10" y="34" width="78" height="20"/><text x="96" y="48" class="t-s w-b">about 5 min</text>
+        <rect class="bx-s grow w-b d1" x="10" y="94" width="135" height="20"/><text x="153" y="108" class="t-s w-b">2 h at most</text>
+        <rect class="bx-s grow w-b d2" x="10" y="154" width="166" height="20"/><text x="184" y="168" class="t-s w-b">session</text>
+        <rect class="bx-i grow w-b d3" x="10" y="214" width="340" height="20"/><text x="18" y="228" class="t-s t-inv w-b">no expiry, only in the gateway</text>
+        <line class="ln" x1="10" y1="258" x2="350" y2="258"/>
+        <line class="ln" x1="60" y1="254" x2="60" y2="262"/><text x="60" y="278" text-anchor="middle" class="t-s">1 min</text>
+        <line class="ln" x1="130" y1="254" x2="130" y2="262"/><text x="130" y="278" text-anchor="middle" class="t-s">1 h</text>
+        <line class="ln" x1="200" y1="254" x2="200" y2="262"/><text x="200" y="278" text-anchor="middle" class="t-s">1 day</text>
+        <line class="ln" x1="270" y1="254" x2="270" y2="262"/><text x="270" y="278" text-anchor="middle" class="t-s">1 mo</text>
+        <line class="ln" x1="330" y1="254" x2="330" y2="262"/><text x="330" y="278" text-anchor="middle" class="t-s">1 yr</text>
+        <text x="350" y="300" text-anchor="end" class="t-s">never →</text>
+      </svg>
+      <figcaption>Fig. 5 · Lifetimes on a log scale. Today's bars are rough: most of these keys have no expiry date at all. The upstream keys stay long-lived with grants too; what changes is who can read them.</figcaption>
+    </figure>
+    <p>The last bar is the honest part. "No long-lived secrets ever" is not reachable while some services only take static keys. What is reachable: no long-lived secret that an agent can read, and every one that remains in one place, in a list I can see.</p>
+
+    <h2 id="further">Further out</h2>
+    <p>The ideas above I would build. These go further. Some may be bad; I want to think them through anyway.</p>
+    <ul>
+      <li><b>Approve the plan, not each click.</b> At the start of a task the agent sends its plan as a list of <code>authorization_details</code>: push to this branch, open one pull request, call the voice API for at most 40 lines. I approve the plan once. The gateway refuses anything outside it. When the plan changes, the phone shows the difference, like a diff. That is intent in its strongest form: I agree to what the agent means to do before it does it.</li>
+      <li><b>Receipts.</b> Every request through the gateway produces a signed record. Once a week the phone shows what I approved and what happened. A grant that was never used was too wide.</li>
+      <li><b>Rules that grow from approvals.</b> After I approve the same request the fifth time, the phone offers a rule: "Claude Code in a session of mine may push to <code>claude/*</code> branches, for 30 days." A rule that is not used for a month expires.</li>
+      <li><b>Two keys for big actions.</b> A push to <code>main</code>, a deploy, a payment, deleting data: these need a second approval, from a second device or a second person. Like two keys for a safe.</li>
+      <li><b>Tripwires.</b> If no real secrets lie around, any secret that does is bait. Put fake API keys where agents look. Any use of one is an alarm, and the gateway knows which session read it.</li>
+      <li><b>Lending access.</b> A friend's agent needs to read one repository. Their broker sends a request to my phone, and I sign a grant for their agent's key: one repository, read only, a week. No account, no token to revoke later.</li>
+      <li><b>The agent asks better questions.</b> If every request must carry a type, fields and a reason, the agent has to say what it is about to do. That alone may make agents work better on my behalf: a request I can read is also a plan I can correct.</li>
+    </ul>
+
+    <h2 id="first">What I would build first</h2>
+    <p>The smallest version that removes a real key from my machines:</p>
+    <ol>
+      <li><b>The broker.</b> A small daemon with a Unix socket. It reads <code>SO_PEERPIDFD</code>, finds the binary, the script and the systemd unit, and matches requirements from a file. First it only logs, so I can see what my agents actually ask for.</li>
+      <li><b>The phone app.</b> Android, a key in StrongBox that needs my fingerprint, pairing by QR code and a Noise handshake, a relay with push. Templates for three types: <code>git.push</code>, <code>http.call</code> to an API, <code>secret.use</code> for the old keys.</li>
+      <li><b>The gateway.</b> agentgateway on my lab, in front of the GitHub API and the model APIs. It checks the grant as a JWT with the phone's public key; a small service in front checks the DPoP proof. Pushes go out with a GitHub App's installation token, and the voice service's key moves from <code>~/.config</code> into the gateway.</li>
+      <li><b>One agent.</b> Claude Code on the lab, as its own user, with a git credential helper that asks the broker. Then the deploy keys, one by one.</li>
+    </ol>
+    <p>A good test of the design: after step 4, <code>grep -r</code> for keys in the agent's home finds nothing that works.</p>
+
+    <h2 id="left">What it does not solve</h2>
+    <ul>
+      <li><b>A wrong action I approved.</b> If I approve a bad push, the push happens. The design makes the request readable; it cannot make me read it.</li>
+      <li><b>Approval fatigue.</b> Standing grants and plans reduce the number of questions. Whether I still read the twentieth one, I will only know by trying.</li>
+      <li><b>A program that pretends.</b> On a desktop where the agent shares my user, another process can change it while it runs. The identity check is only strong for agents in their own user or sandbox.</li>
+      <li><b>Root, a broken phone, a broken gateway.</b> The broker trusts the kernel. The grant trusts the phone. The upstream keys trust the gateway. Each is one place to protect instead of a hundred, but it is still a place.</li>
+      <li><b>Losing the phone.</b> A second paired device is the clean answer. A paper recovery key in a drawer is the honest one, and it is a long-lived secret again, only one that no program can reach.</li>
+      <li><b>Services with static keys.</b> They stay, in the gateway, until they offer something better.</li>
+    </ul>
+    <p>The same pattern runs through <a href="/thoughts/sealed/">sealed</a>, which keeps the keys in the browser where a script cannot export them. A key that cannot be copied is the thing I trust most. Grants and receipts are how I would extend that trust to agents, one narrow, short promise at a time.</p>
+
+    <h2 id="open">Open questions</h2>
+    <ul>
+      <li>Should the wire format be CIBA, so that an existing identity provider such as Keycloak can be the broker's partner, or is my own small protocol simpler?</li>
+      <li>How do I name and version the request types, so that a template on the phone and a check in the gateway always agree on what a field means?</li>
+      <li>How reliably can a broker identify a script inside Node or Python? Is the package hash enough?</li>
+      <li>Does agentgateway check DPoP proofs, or will it soon?</li>
+      <li>Android's Protected Confirmation would be the right screen for the approval, but it seems to be on its way out. Is a normal screen with a biometric prompt good enough?</li>
+      <li>Is there a way to recover from a lost phone without any long-lived secret at all?</li>
+    </ul>
+
+    <h2 id="start">Starting points</h2>
+    <ul>
+      <li>My own question: can DPoP replace the long-lived passwords, API keys and tokens on my machines, and can a phone approve what my agents may do, over an encrypted link to the Linux machine they run on?</li>
+      <li>How macOS identifies an app by its signature, and whether a Linux broker can do the same.</li>
+      <li>agentgateway, as a place to keep the keys that cannot go away yet <a href="#s28">[28]</a>.</li>
+    </ul>
+
+    <h2 id="sources">Sources</h2>
+    <ol class="refs">
+      <li id="s1">D. Fett, B. Campbell, J. Bradley, T. Lodderstedt, M. Jones, D. Waite: <a href="https://www.rfc-editor.org/rfc/rfc9449" rel="noopener">RFC 9449, OAuth 2.0 Demonstrating Proof of Possession (DPoP)</a>, Sep 2023.</li>
+      <li id="s2">The DPoP specification source, with the proof fields, <code>cnf.jkt</code> and the nonce: <a href="https://github.com/danielfett/draft-dpop/blob/master/main.md" rel="noopener">danielfett/draft-dpop</a>.</li>
+      <li id="s3"><a href="https://www.rfc-editor.org/rfc/rfc8705" rel="noopener">RFC 8705, OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens</a>, Feb 2020.</li>
+      <li id="s4">Keycloak: <a href="https://github.com/keycloak/keycloak/tree/main/docs/documentation/release_notes/topics" rel="noopener">release notes 23.0, 24.0 and 26.4</a>.</li>
+      <li id="s5">Spring Security: <a href="https://github.com/spring-projects/spring-security/blob/main/docs/modules/ROOT/pages/servlet/oauth2/resource-server/dpop-tokens.adoc" rel="noopener">OAuth 2.0 DPoP-bound access tokens</a>.</li>
+      <li id="s6">Okta: <a href="https://developer.okta.com/docs/guides/dpop/main" rel="noopener">Configure OAuth 2.0 Demonstrating Proof-of-Possession</a>.</li>
+      <li id="s7">Apple: <a href="https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements" rel="noopener">TN3127, Inside code signing: requirements</a>.</li>
+      <li id="s8">Apple: <a href="https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution" rel="noopener">Notarizing macOS software before distribution</a>.</li>
+      <li id="s9">Apple: <a href="https://developer.apple.com/documentation/foundation/nsxpcconnection/setcodesigningrequirement(_:)" rel="noopener">NSXPCConnection setCodeSigningRequirement</a>, macOS 13 and later.</li>
+      <li id="s10">Apple Developer Forums, answers by Apple's developer technical support: <a href="https://developer.apple.com/forums/thread/72881" rel="noopener">thread 72881</a> and <a href="https://developer.apple.com/forums/thread/681053" rel="noopener">thread 681053</a>.</li>
+      <li id="s11">Linux kernel source, <a href="https://github.com/torvalds/linux" rel="noopener">torvalds/linux</a>: <code>SO_PEERPIDFD</code> first in v6.5, <code>pidfd_open</code> in v5.3, fs-verity in v5.4, IMA in v2.6.30.</li>
+      <li id="s12">SPIFFE: <a href="https://github.com/spiffe/spire/blob/main/doc/plugin_agent_workloadattestor_unix.md" rel="noopener">SPIRE agent plugin, Unix workload attestor</a>.</li>
+      <li id="s13">xdg-desktop-portal: <a href="https://github.com/flatpak/xdg-desktop-portal/blob/main/shared/xdp-app-info-flatpak.c" rel="noopener">xdp-app-info-flatpak.c</a>.</li>
+      <li id="s14">BleepingComputer: <a href="https://www.bleepingcomputer.com/news/microsoft/microsoft-enforces-number-matching-to-fight-mfa-fatigue-attacks/" rel="noopener">Microsoft enforces number matching to fight MFA fatigue attacks</a>, May 2023.</li>
+      <li id="s15">W3C: <a href="https://w3c.github.io/secure-payment-confirmation/" rel="noopener">Secure Payment Confirmation</a>.</li>
+      <li id="s16">Android: <a href="https://developer.android.com/privacy-and-security/security-android-protected-confirmation" rel="noopener">Android Protected Confirmation</a>.</li>
+      <li id="s17">T. Lodderstedt, J. Richer, B. Campbell: <a href="https://www.rfc-editor.org/rfc/rfc9396" rel="noopener">RFC 9396, OAuth 2.0 Rich Authorization Requests</a>, May 2023.</li>
+      <li id="s18">OpenID Foundation: <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html" rel="noopener">Client-Initiated Backchannel Authentication Core 1.0</a>, Sep 2021.</li>
+      <li id="s19">Android: <a href="https://developer.android.com/privacy-and-security/keystore" rel="noopener">Android Keystore system</a>.</li>
+      <li id="s20">1Password: <a href="https://www.1password.dev/ssh/agent/authorization" rel="noopener">SSH agent authorization</a>.</li>
+      <li id="s21">Tailscale: <a href="https://tailscale.com/kb/1193/tailscale-ssh" rel="noopener">Tailscale SSH</a>.</li>
+      <li id="s22">KryptCo: <a href="https://github.com/kryptco/kr" rel="noopener">kr</a>, now deprecated in favour of akamai/akr.</li>
+      <li id="s23"><a href="https://www.rfc-editor.org/rfc/rfc8693" rel="noopener">RFC 8693, OAuth 2.0 Token Exchange</a>, Jan 2020.</li>
+      <li id="s24">GitHub Docs: <a href="https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app" rel="noopener">Generating an installation access token for a GitHub App</a>.</li>
+      <li id="s25">Rory Ward, Betsy Beyer: <a href="https://research.google/pubs/pub43231/" rel="noopener">BeyondCorp: a new approach to enterprise security</a>, ;login: 39(6), 2014.</li>
+      <li id="s26"><a href="https://github.com/pomerium/pomerium" rel="noopener">Pomerium</a>.</li>
+      <li id="s27">CyberArk: <a href="https://github.com/cyberark/secretless-broker" rel="noopener">Secretless Broker</a>.</li>
+      <li id="s28"><a href="https://github.com/agentgateway/agentgateway" rel="noopener">agentgateway</a>, its <a href="https://github.com/agentgateway/agentgateway/blob/main/examples/traffic-jwt-sign/README.md" rel="noopener">jwtSign example</a>, and <a href="https://agentgateway.dev/blog/2025-08-25-solo-contributes-agentgateway-to-lf" rel="noopener">Solo.io contributes agentgateway to the Linux Foundation</a>, Aug 2025.</li>
+      <li id="s29">Tailscale: <a href="https://tailscale.com/docs/aperture/what-is-aperture" rel="noopener">What is Aperture</a>.</li>
+      <li id="s30">Trevor Perrin: <a href="https://noiseprotocol.org/noise.html" rel="noopener">The Noise Protocol Framework</a>, revision 34, 2018.</li>
+      <li id="s31"><a href="https://github.com/magic-wormhole/magic-wormhole" rel="noopener">Magic Wormhole</a>.</li>
+      <li id="s32">Android: <a href="https://developer.android.com/privacy-and-security/security-key-attestation" rel="noopener">Verify hardware-backed key pairs with key attestation</a>.</li>
+    </ol>
+    <p class="refs">The dates of the RFCs, CIBA and BeyondCorp, the Okta, 1Password, Tailscale and Microsoft pages <a href="#s6">[6]</a>, <a href="#s14">[14]</a>, <a href="#s20">[20]</a>, <a href="#s21">[21]</a>, <a href="#s29">[29]</a>, and the CIBA <code>binding_message</code> I could check only through search summaries, not on the pages themselves. The rest I read in the source: the specification repositories, the kernel tags, and Apple's and Android's documentation.</p>
+
+    <h2 id="revisions">Revisions</h2>
+    <ul class="dates">
+      <li><time datetime="2026-11-12">12 Nov 2026</time><span>First version.</span></li>
+    </ul>
+
+    <h2 id="feedback">Feedback</h2>
+    <p>Not shared yet. When I post about it, what people answer goes here, with what it changed.</p>
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -47,7 +47,7 @@
   </div>
   <dl class="tb">
     <div><dt>Site</dt><dd>t7d.dev</dd></div>
-    <div><dt>Contents</dt><dd>2 games, 2 thoughts, 1 write-up, 1 tool</dd></div>
+    <div><dt>Contents</dt><dd>2 games, 5 thoughts, 1 write-up, 1 tool</dd></div>
     <div class="wide"><dt>Contact</dt><dd><a href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">LinkedIn</a>, <a href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a></dd></div>
     <div class="wide"><dt>PGP fingerprint</dt><dd class="mono">A886 6CB1 6B07 9685 5615<br>74B2 A91D ABBE C996 7390</dd></div>
   </dl>
@@ -93,49 +93,47 @@
       <p>Ideas I am working through. Each one keeps its sources and a list of what changed. All of them are on <a href="/thoughts/">the list</a>, and in the <a href="/thoughts/feed.xml">RSS feed</a>.</p>
     </div>
     <div class="projects">
-      <a class="proj" href="/thoughts/humans-md/">
-        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · working with models</p>
-        <h3>A humans.md for working with models</h3>
-        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="hm-t">
-          <title id="hm-t">Two files side by side: CLAUDE.md for the agent, HUMANS.md for me, with a log per model.</title>
-          <rect class="bx" x="50" y="56" width="240" height="220"/>
-          <text x="72" y="98" class="t-l">CLAUDE.md</text>
-          <rect class="bx-s" x="72" y="122" width="190" height="12"/>
-          <rect class="bx-s" x="72" y="148" width="150" height="12"/>
-          <rect class="bx-s" x="72" y="174" width="170" height="12"/>
-          <rect class="bx-s" x="72" y="200" width="120" height="12"/>
-          <text x="50" y="316" class="t-l t-m">for the agent</text>
-          <rect class="bx-i" x="350" y="56" width="240" height="220"/>
-          <text x="372" y="98" class="t-l t-inv">HUMANS.md</text>
-          <rect class="bx" x="372" y="122" width="190" height="12"/>
-          <rect class="bx" x="372" y="148" width="150" height="12"/>
-          <rect class="bx" x="372" y="190" width="196" height="64"/>
-          <line class="ln" x1="372" y1="211" x2="568" y2="211"/>
-          <line class="ln" x1="372" y1="232" x2="568" y2="232"/>
-          <text x="350" y="316" class="t-l t-m">for me</text>
+      <a class="proj" href="/thoughts/no-long-lived-secrets/">
+        <p class="label"><time datetime="2026-11-12">12 Nov 2026</time> · draft · security · coding agents</p>
+        <h3>Agents without long-lived secrets, approved from my phone</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="ls-t">
+          <title id="ls-t">Today an agent reads keys that never expire; with grants it holds a short grant from the phone, bound to its own key.</title>
+          <rect class="bx" x="40" y="56" width="250" height="220"/>
+          <text x="62" y="104" class="t-l">API_KEY=sk-…</text>
+          <text x="62" y="152" class="t-l">DEPLOY_KEY</text>
+          <text x="62" y="200" class="t-l">GH_TOKEN=…</text>
+          <text x="62" y="248" class="t-l">no expiry</text>
+          <text x="40" y="316" class="t-l t-m">what an agent reads today</text>
+          <rect class="bx" x="380" y="40" width="170" height="252" rx="20"/>
+          <rect class="bx-s" x="398" y="76" width="134" height="84"/>
+          <text x="410" y="106" class="t-l">git push</text>
+          <text x="410" y="140" class="t-l">2 h</text>
+          <rect class="bx-i" x="398" y="226" width="134" height="40"/>
+          <text x="465" y="253" text-anchor="middle" class="t-l t-inv">Approve</text>
+          <text x="350" y="316" class="t-l t-m">a grant from the phone</text>
         </svg>
-        <p>My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. A first version of that file, and what changes when a new model ships.</p>
+        <p>My agents can read keys that never expire. A design where they hold none: tokens bound to a key with DPoP, a phone that shows what an agent wants to do, and a gateway that keeps the last keys.</p>
         <span class="proj__more">Read the thought</span>
       </a>
-      <a class="proj" href="/thoughts/encrypted-patches/">
-        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · updates · key release</p>
-        <h3>Encrypted patches, unlocked on patch day</h3>
-        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="bc-t">
-          <title id="bc-t">The encrypted bundle reaches every host before patch day; at T only the key is published.</title>
-          <text x="400" y="50" text-anchor="middle" class="t-h t-l">patch day T</text>
-          <line class="ln-s" x1="400" y1="66" x2="400" y2="300"/>
-          <rect class="bx-s" x="40" y="92" width="360" height="56"/>
-          <text x="60" y="128" class="t-l">encrypted bundle</text>
-          <rect class="bx-i" x="400" y="92" width="36" height="56"/>
-          <text x="452" y="128" class="t-l t-m">install</text>
-          <rect class="bx-i" x="406" y="176" width="220" height="56"/>
-          <text x="422" y="212" class="t-l t-inv">diff → exploit</text>
-          <g transform="translate(388,256)"><circle class="bx" cx="10" cy="10" r="9"/><line class="ln-t" x1="19" y1="10" x2="44" y2="10"/><line class="ln-t" x1="36" y1="10" x2="36" y2="18"/></g>
-          <text x="376" y="274" text-anchor="end" class="t-l t-m">key at T</text>
-          <line class="ln" x1="40" y1="314" x2="600" y2="314"/>
-          <text x="40" y="344" class="t-l t-m">−7 days</text>
+      <a class="proj" href="/thoughts/sealed/">
+        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · encryption · static sites</p>
+        <h3>A private site on public static hosting</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="se-t">
+          <title id="se-t">Readable files for the reader, random blob names of the same sizes for the host.</title>
+          <rect class="bx" x="40" y="56" width="250" height="220"/>
+          <text x="62" y="104" class="t-l">index.html</text>
+          <text x="62" y="152" class="t-l">map.png</text>
+          <text x="62" y="200" class="t-l">theme.mp3</text>
+          <text x="62" y="248" class="t-l">chapter-2</text>
+          <text x="40" y="316" class="t-l t-m">for the reader</text>
+          <rect class="bx-i" x="350" y="56" width="250" height="220"/>
+          <text x="372" y="104" class="t-l t-inv">3f9a0c71</text>
+          <text x="372" y="152" class="t-l t-inv">e6c1a30f</text>
+          <text x="372" y="200" class="t-l t-inv">58ab07e9</text>
+          <text x="372" y="248" class="t-l t-inv">0d2f98a5</text>
+          <text x="350" y="316" class="t-l t-m">for the host</text>
         </svg>
-        <p>Ship a security fix early as ciphertext and publish the key on patch day, so teams can stage it and apply it together. Games, a design with signed keys, open source in private, and the patents.</p>
+        <p>sealed puts a whole static site on a public host in encrypted form, with a password per reader. What the host sees, how a password opens a file, and what it does not protect.</p>
         <span class="proj__more">Read the thought</span>
       </a>
     </div>
