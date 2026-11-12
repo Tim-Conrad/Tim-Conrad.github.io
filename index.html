@@ -47,7 +47,7 @@
   </div>
   <dl class="tb">
     <div><dt>Site</dt><dd>t7d.dev</dd></div>
-    <div><dt>Contents</dt><dd>2 games, 4 thoughts, 1 write-up</dd></div>
+    <div><dt>Contents</dt><dd>2 games, 5 thoughts, 1 write-up</dd></div>
     <div class="wide"><dt>Contact</dt><dd><a href="https://de.linkedin.com/in/tim-c-94397a200/de" rel="me noopener">LinkedIn</a>, <a href="https://github.com/Tim-Conrad" rel="me noopener">GitHub</a></dd></div>
     <div class="wide"><dt>PGP fingerprint</dt><dd class="mono">A886 6CB1 6B07 9685 5615<br>74B2 A91D ABBE C996 7390</dd></div>
   </dl>
@@ -93,6 +93,28 @@
       <p>Ideas I am working through. Each one keeps its sources and a list of what changed. All of them are on <a href="/thoughts/">the list</a>, and in the <a href="/thoughts/feed.xml">RSS feed</a>.</p>
     </div>
     <div class="projects">
+      <a class="proj" href="/thoughts/no-long-lived-secrets/">
+        <p class="label"><time datetime="2026-11-12">12 Nov 2026</time> · draft · security · coding agents</p>
+        <h3>Agents without long-lived secrets, approved from my phone</h3>
+        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="ls-t">
+          <title id="ls-t">Today an agent reads keys that never expire; with grants it holds a short grant from the phone, bound to its own key.</title>
+          <rect class="bx" x="40" y="56" width="250" height="220"/>
+          <text x="62" y="104" class="t-l">API_KEY=sk-…</text>
+          <text x="62" y="152" class="t-l">DEPLOY_KEY</text>
+          <text x="62" y="200" class="t-l">GH_TOKEN=…</text>
+          <text x="62" y="248" class="t-l">no expiry</text>
+          <text x="40" y="316" class="t-l t-m">what an agent reads today</text>
+          <rect class="bx" x="380" y="40" width="170" height="252" rx="20"/>
+          <rect class="bx-s" x="398" y="76" width="134" height="84"/>
+          <text x="410" y="106" class="t-l">git push</text>
+          <text x="410" y="140" class="t-l">2 h</text>
+          <rect class="bx-i" x="398" y="226" width="134" height="40"/>
+          <text x="465" y="253" text-anchor="middle" class="t-l t-inv">Approve</text>
+          <text x="350" y="316" class="t-l t-m">a grant from the phone</text>
+        </svg>
+        <p>My agents can read keys that never expire. A design where they hold none: tokens bound to a key with DPoP, a phone that shows what an agent wants to do, and a gateway that keeps the last keys.</p>
+        <span class="proj__more">Read the thought</span>
+      </a>
       <a class="proj" href="/thoughts/sealed/">
         <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · encryption · static sites</p>
         <h3>A private site on public static hosting</h3>
@@ -112,30 +134,6 @@
           <text x="350" y="316" class="t-l t-m">for the host</text>
         </svg>
         <p>sealed puts a whole static site on a public host in encrypted form, with a password per reader. What the host sees, how a password opens a file, and what it does not protect.</p>
-        <span class="proj__more">Read the thought</span>
-      </a>
-      <a class="proj" href="/thoughts/decision-models/">
-        <p class="label"><time datetime="2026-11-10">10 Nov 2026</time> · draft · language models · method</p>
-        <h3>When a small decision model can replace an LLM call</h3>
-        <svg class="dg" viewBox="0 0 640 360" role="img" aria-labelledby="dm-t">
-          <title id="dm-t">An LLM writes an answer; a decision model returns one bar per label and picks the top one above a threshold.</title>
-          <rect class="bx" x="40" y="56" width="250" height="220"/>
-          <text x="62" y="98" class="t-l">LLM</text>
-          <rect class="bx-s" x="62" y="122" width="200" height="12"/>
-          <rect class="bx-s" x="62" y="148" width="180" height="12"/>
-          <rect class="bx-s" x="62" y="174" width="206" height="12"/>
-          <rect class="bx-s" x="62" y="200" width="150" height="12"/>
-          <rect class="bx-s" x="62" y="226" width="170" height="12"/>
-          <text x="40" y="316" class="t-l t-m">writes an answer</text>
-          <rect class="bx" x="350" y="56" width="250" height="220"/>
-          <rect class="bx-i" x="372" y="96" width="170" height="20"/>
-          <rect class="bx-s" x="372" y="134" width="40" height="20"/>
-          <rect class="bx-s" x="372" y="172" width="24" height="20"/>
-          <rect class="bx-s" x="372" y="210" width="12" height="20"/>
-          <line class="ln-s" x1="512" y1="80" x2="512" y2="250"/>
-          <text x="350" y="316" class="t-l t-m">picks from a list</text>
-        </svg>
-        <p>Amazon replaced Claude Sonnet 4.6 with a small model that only picks from a list. The method behind it, and how I would try it at home and at work.</p>
         <span class="proj__more">Read the thought</span>
       </a>
     </div>
