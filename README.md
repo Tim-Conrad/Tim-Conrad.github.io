@@ -43,16 +43,16 @@ It is plain HTML, CSS and a little JavaScript. There is no build step and no dep
 | `scripts/ship.sh` | Merges a PR, waits for the deploy and checks t7d.dev |
 | `scripts/preview-artifact.py` | Builds a page as a Claude artifact bundle, for a review before it is published |
 | `scripts/reels/` | Scripts that film the two games and cut the reels |
-| `scripts/review/`, `docker-compose.dev.yml` | The review site: live reload and a note tab. Never published |
+| `scripts/review/`, `docker-compose.dev.yml` | The review site: live reload, rounds of a branch, the papercuts widget and the Approve button. Never published |
 | `.github/workflows/deploy.yml` | Runs the deploy on every push to `master` |
 | `DESIGN.md` | How the site looks and sounds: colours, type, layout, components and the wording rules |
 | `CLAUDE.md` | Instructions for Claude Code in this repository |
 | `.claude/skills/updating-product-reels/` | Working guide for Claude Code: how to take the reels and pictures again |
 | `.claude/skills/adding-a-thought/` | Working guide for Claude Code: how to turn a link into a new thought, and how to revise one |
 | `.claude/skills/updating-game-timeline/` | Working guide for Claude Code: how to film the timeline clips of a game page |
-| `.claude/skills/handling-review-notes/` | Working guide for Claude Code: how to handle Tim's notes from the review site |
+| `.claude/skills/handling-review-papercuts/` | Working guide for Claude Code: how to handle Tim's papercuts from the review site |
 | `.claude/rules/pages.md` | Rules for a new page; Claude Code loads them only when it works on an HTML page, the sitemap or the deploy script |
-| `.claude/settings.json` | A hook that prints the number of open review notes at the start of a session |
+| `.claude/settings.json` | A hook that prints the number of open papercuts at the start of a session |
 | `scripts/check.py` | Checks the CSP rules and the sitemap of every page; CI runs it |
 
 ## Preview locally
@@ -63,19 +63,35 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000>. All paths are absolute, so serve from the repository root.
 
-For live reload and the note tab, run `python3 scripts/review/devserver.py` instead (port 8000).
+For live reload, run `python3 scripts/review/devserver.py` instead (port 8000).
 
 ## Review site
 
-The review site serves this clone with live reload and a tab »Note« at the right edge. A note keeps the page, the width, the theme and the part that you pointed at. It is a JSON file in `.review/notes/`, and git ignores that folder. The site files on `gh-pages` do not change: `scripts/deploy.sh` never publishes `scripts/`.
+The review site serves this clone and its site worktrees with live reload. The site files on `gh-pages` do not change: `scripts/deploy.sh` never publishes `scripts/`.
+
+Each change is a branch with its own worktree in `~/code/worktrees/t7d/<branch with / as ->`. Each commit on the branch is one round. Open a page with `?branch=<branch>` to see that branch. The page then keeps the branch in a cookie.
+
+The bar at the bottom of each page shows the branch and two versions: master, a round, or "Working" for changes that are not committed. By default it compares the newest round with the round before it. "Show changes" marks the changed text in the page: removed words are struck out, new words are underlined. On a phone the bar is one row. A tap on the comparison opens the selects.
+
+Each page also has the papercuts widget. A papercut keeps the page, the branch, the commit and a picture. A relay container writes it to the local store `.papercuts/papercuts.db` of this clone. `.github/papercuts.json` sets `"store": "local"`, so `papercuts list`, `show` and `done` use that store in every worktree, with no env. Git ignores `.papercuts/`.
+
+"Approve round <n>" in the bar publishes the newest round of the branch. It writes a request to `.review/approve/`. On the host, `scripts/review/approve-host.sh` checks the head and the worktree and runs `scripts/check.py`. Then it pushes the branch, opens the PR, runs `scripts/ship.sh <pr> <sha>`, and removes the worktree and the branch. The bar shows each step from `.review/approve-status/`. An agent can do the same with `python3 scripts/review/approve.py <branch>`, also from its worktree. An agent starts Approve only when Tim tells it to, in that conversation or in a papercut.
 
 To run it in a container behind a login proxy:
 
-1. Make the notes folder: `mkdir -p .review/notes`.
-2. Write the host name into `.env`: `REVIEW_HOST=<host>`.
-3. Start the stack: `docker-compose -p t7d-review -f docker-compose.dev.yml up -d`.
+1. Install the host side of the Approve button once: `scripts/review/approve-install.sh`. It needs `gh` on PATH. It makes `.review/approve/`, `.review/approve-status/` and a systemd user unit that starts `approve-host.sh` for each request. To keep the button working after a reboot, run `loginctl enable-linger developer` once.
+2. Make the store folder and the worktrees folder: `mkdir -p .papercuts ~/code/worktrees/t7d`.
 
-`scripts/review/show.py <id>` opens the page of a note and frames its part in a picture. A handled note goes to `.review/notes/done/` with an `"answer"` field, which the tab shows under »My notes«. Tests: `python3 -m unittest scripts/review/test_devserver.py`.
+   Run steps 1 and 2 before step 4. If the folders do not exist, Docker makes them as root.
+3. Write the settings into `.env`:
+   - `REVIEW_HOST`: the host name of the review site.
+   - `REVIEW_PAPERCUTS_HOST`: the host name of the relay.
+   - `REVIEW_MAIN`: the host path of this clone.
+   - `REVIEW_WORKTREES`: the host path of the folder with the site worktrees (`~/code/worktrees/t7d`, as a full path).
+   - `PAPERCUTS_SRC`: the folder of the relay source with its Dockerfile.
+4. Start the stack: `docker-compose -p t7d-review -f docker-compose.dev.yml up -d --build`.
+
+Tests: `python3 -m unittest discover -s scripts/review -p 'test_*.py'` and `node --test 'scripts/review/test_*.mjs'`.
 
 ## Deploy
 

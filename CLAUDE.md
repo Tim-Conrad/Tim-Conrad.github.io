@@ -22,11 +22,15 @@ t7d.dev: the personal site of Tim Conrad. Plain HTML, CSS and a little JavaScrip
 - `blog/` and `CVE/` only redirect old addresses (the thoughts were a blog until November 2026). Do not add pages there.
 
 <important if="you show Tim a change for review">
-Show a changed page as a Claude artifact, not a local server: `python3 scripts/preview-artifact.py <page folder> <out dir>` builds the bundle; publish `<out dir>/index.html` with the Artifact tool and pass the other printed files in `files`. Republish the same `file_path` after each change, so the link stays. The review site (skill `handling-review-notes`) is where Tim leaves notes on his own.
+Show a changed page as a Claude artifact, not a local server: `python3 scripts/preview-artifact.py <page folder> <out dir>` builds the bundle; publish `<out dir>/index.html` with the Artifact tool and pass the other printed files in `files`. Republish the same `file_path` after each change, so the link stays. The review site (skill `handling-review-papercuts`) is where Tim leaves papercuts on his own.
 </important>
 
-<important if="Tim mentions notes or feedback on the review site, or you change scripts/review/ or docker-compose.dev.yml">
-Use the skill `handling-review-notes`. A hook prints the number of open notes at the start of a session.
+<important if="Tim mentions papercuts or feedback on the review site, or you change scripts/review/ or docker-compose.dev.yml">
+Use the skill `handling-review-papercuts`. A hook prints the number of open papercuts at the start of a session.
+</important>
+
+<important if="you think a text is ready to publish, or you consider running scripts/review/approve.py">
+Do not run `python3 scripts/review/approve.py <branch>` unless Tim tells you to, in this conversation or in a papercut. The command merges the branch and publishes it to t7d.dev. If you think that a text is ready, tell Tim. He presses Approve on the review site.
 </important>
 
 <important if="you deploy, or the live site does not show a change">

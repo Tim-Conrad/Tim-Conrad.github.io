@@ -5,6 +5,7 @@ __pycache__/
 /thoughts/feed.xml
 /blog/feed.xml
 .review/
+.papercuts/
 .env
 .preview/
 
