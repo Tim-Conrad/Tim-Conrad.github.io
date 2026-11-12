@@ -143,3 +143,22 @@ test("blockNodes gives the element of each block, in the order and with the keys
   assert.strictEqual(nodes[0].el, p);
   assert.strictEqual(nodes[1].el, h);
 });
+
+test("diffBlocks: 10k words in 150 paragraphs, all rewritten, finish in under 500 ms and keep a chg", () => {
+  const n = 150, per = 67;
+  const para = (tag, i) => blk("p" + i, Array.from({ length: per }, (_, j) => `${tag}${i}x${j}`).join(" "));
+  const a = Array.from({ length: n }, (_, i) => para("old", i));
+  const b = Array.from({ length: n }, (_, i) => para("new", i));
+  // paragraph 100 keeps its words but one: it must still pair as a change
+  b[100] = blk("p100", a[100].text.replace("old100x5 ", "changed "));
+  const t0 = performance.now();
+  const ops = diffBlocks(a, b);
+  const ms = performance.now() - t0;
+  assert.ok(ms < 500, `took ${Math.round(ms)} ms`);
+  const chg = ops.filter((o) => o.op === "chg");
+  assert.strictEqual(chg.length, 1);
+  assert.strictEqual(chg[0].a.key, "p100");
+  assert.ok(chg[0].words.some((w) => w.op === "add" && w.text === "changed"));
+  assert.strictEqual(ops.filter((o) => o.op === "del").length, n - 1);
+  assert.strictEqual(ops.filter((o) => o.op === "add").length, n - 1);
+});

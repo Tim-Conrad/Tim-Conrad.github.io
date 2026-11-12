@@ -8,6 +8,8 @@
   var MAX_EDITS = 1000;
   // Two blocks pair as a change when more than this share of their words is equal.
   var PAIR_RATIO = 0.4;
+  // In one run of changed blocks, Myers runs for at most this many block pairs. The other blocks stay del and add.
+  var MAX_PAIR_TRIES = 300;
 
   function tokens(s) {
     return s.split(/(\s+)/).filter(function (t) { return t !== ""; });
@@ -117,6 +119,21 @@
     return { ratio: longest ? shared / longest : 0, words: words };
   }
 
+  // The words of a block with their counts, and the number of words.
+  function bag(text) {
+    var counts = Object.create(null), words = text.match(/\S+/g) || [];
+    words.forEach(function (w) { counts[w] = (counts[w] || 0) + 1; });
+    return { counts: counts, n: words.length };
+  }
+
+  // The number of words that two bags share. No word diff of the two blocks finds more equal words.
+  function bagShared(x, y) {
+    if (x.n > y.n) { var t = x; x = y; y = t; }
+    var shared = 0;
+    for (var w in x.counts) if (y.counts[w]) shared += Math.min(x.counts[w], y.counts[w]);
+    return shared;
+  }
+
   function diffBlocks(a, b) {
     var raw = lcsBlocks(a, b);
     var out = [];
@@ -128,9 +145,15 @@
         if (raw[i].op === "del") dels.push(raw[i].a); else adds.push(raw[i].b);
         i++;
       }
-      var next = 0;
+      var next = 0, tries = 0;
+      var addBags = adds.map(function (x) { return bag(x.text); });
       dels.forEach(function (d) {
-        for (var k = next; k < adds.length; k++) {
+        var dBag = bag(d.text);
+        for (var k = next; k < adds.length && tries < MAX_PAIR_TRIES; k++) {
+          // A cheap filter first: Myers runs only for a pair that can share more than PAIR_RATIO of its words.
+          var longest = Math.max(dBag.n, addBags[k].n);
+          if (!longest || bagShared(dBag, addBags[k]) / longest <= PAIR_RATIO) continue;
+          tries++;
           var s = similarity(d, adds[k]);
           if (s.ratio > PAIR_RATIO) {
             for (var r = next; r < k; r++) out.push({ op: "add", b: adds[r] });
