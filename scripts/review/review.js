@@ -1,133 +1,259 @@
-/* The review site (scripts/review/devserver.py): live reload and the note tab. Never on t7d.dev. */
+/* The review site (scripts/review/devserver.py): live reload, the branch picker and the changes of a round.
+   Never on t7d.dev. Needs window.reviewDiff from /__review/textdiff.js. */
 (function () {
   'use strict';
   var API = '/__review/api/';
+  var diff = window.reviewDiff;
+  /* the branch of this page: ?branch= of the address, else the server uses the cookie */
+  var asked = new URLSearchParams(location.search).get('branch');
+  function q(branch) { return branch ? 'branch=' + encodeURIComponent(branch) : ''; }
 
   /* live reload: the first stamp is the page's own; a new stamp loads the page again */
-  var first = null, es = new EventSource('/__review/reload');
+  var first = null, es = new EventSource('/__review/reload?' + q(asked));
   es.onmessage = function (e) { if (first === null) first = e.data; else if (e.data !== first) location.reload(); };
 
-  function el(tag, cls, text) {
+  /* an element of the bar: blocks() of textdiff.js skips everything with data-review-ui */
+  function ui(tag, cls, text) {
     var n = document.createElement(tag);
+    n.setAttribute('data-review-ui', '');
     if (cls) n.className = cls;
     if (text) n.textContent = text;
     return n;
   }
-  function theme() {
-    var t = document.documentElement.dataset.theme;
-    if (t === 'light' || t === 'dark') return t;
-    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  function field(label, cls) {
+    var l = ui('label', 'rv-field ' + (cls || '')), s = ui('select', cls ? 'rv-' + cls : '');
+    l.append(ui('span', 'rv-label', label), s);
+    return { label: l, select: s };
   }
-  /* a CSS selector for a part of the page: its id, else the tag path with :nth-of-type */
-  function selectorOf(node) {
-    var parts = [];
-    for (var n = node; n && n.nodeType === 1 && n !== document.body && parts.length < 8; n = n.parentElement) {
-      if (n.id) { parts.unshift('#' + CSS.escape(n.id)); return parts.join(' > '); }
-      var tag = n.tagName.toLowerCase(), i = 1;
-      for (var s = n.previousElementSibling; s; s = s.previousElementSibling) if (s.tagName === n.tagName) i++;
-      parts.unshift(tag + ':nth-of-type(' + i + ')');
+
+  var bar = ui('div', 'rv-bar');
+  bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', 'Review');
+  var branchField = field('Branch', 'branch-pick'), fromField = field('From', 'from'), toField = field('To', 'to');
+  var sw = ui('label', 'rv-switch'), swBox = ui('input');
+  swBox.type = 'checkbox'; sw.append(swBox, ui('span', '', 'Show changes'));
+  var approve = ui('button', 'rv-approve', 'Approve');
+  approve.type = 'button'; approve.hidden = true;   /* Task 6 of the review rounds connects it */
+  var status = ui('span', 'rv-status'); status.setAttribute('role', 'status');
+  bar.append(branchField.label, fromField.label, toField.label, sw, approve, status);
+  var versionParts = [fromField.label, toField.label, sw];
+
+  /* the choice per branch in localStorage; "last" is the newest version when it was saved */
+  function load(branch) {
+    try { return JSON.parse(localStorage.getItem('review-bar:' + branch)) || {}; } catch (e) { return {}; }
+  }
+  function save(branch, s) {
+    try { localStorage.setItem('review-bar:' + branch, JSON.stringify(s)); } catch (e) { /* no storage: the choice is not kept */ }
+  }
+
+  var texts = {};   /* rev -> promise of the HTML of this page at rev, or null */
+  function text(branch, rev) {
+    if (!(rev in texts)) {
+      texts[rev] = fetch(API + 'text?' + q(branch) + '&rev=' + encodeURIComponent(rev) + '&path=' + encodeURIComponent(location.pathname))
+        .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+        .then(function (d) { return d.html; });
     }
-    return 'body > ' + parts.join(' > ');
+    return texts[rev];
+  }
+  function parse(html) { return new DOMParser().parseFromString(html, 'text/html'); }
+
+  /* ---- the version on screen: the page on disk, or the body of an older version ---- */
+  var own = null;      /* the nodes of the page on disk while an older version is on screen */
+  var shown = null;    /* the rev of the older version on screen, or null */
+  function pageNodes() {
+    return Array.prototype.filter.call(document.body.childNodes, function (n) { return n !== bar; });
+  }
+  function showOwn() {
+    if (!own) return;
+    pageNodes().forEach(function (n) { n.remove(); });
+    own.forEach(function (n) { document.body.insertBefore(n, bar); });
+    own = null; shown = null;
+  }
+  function showOther(rev, html) {
+    if (shown === rev) return;
+    if (!own) own = pageNodes();
+    pageNodes().forEach(function (n) { n.remove(); });
+    var nodes;
+    if (html === null) {
+      nodes = [ui('p', 'rv-missing wrap', 'This page is not in this version.')];
+    } else {
+      var body = parse(html).body;
+      /* the scripts of the page ran once already */
+      Array.prototype.forEach.call(body.querySelectorAll('script'), function (s) { s.remove(); });
+      nodes = Array.prototype.map.call(body.childNodes, function (n) { return document.adoptNode(n); });
+    }
+    nodes.forEach(function (n) { document.body.insertBefore(n, bar); });
+    shown = rev;
   }
 
-  var tab = el('button', 'rv-tab', 'Note'), badge = el('span', 'rv-badge');
-  tab.type = 'button'; tab.setAttribute('aria-haspopup', 'dialog'); tab.appendChild(badge);
-  var panel = el('div', 'rv-panel'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Note on this page'); panel.hidden = true;
-  var head = el('div', 'rv-head'), title = el('strong', '', 'Note on this page'), branch = el('span', 'rv-branch'), close = el('button', 'rv-x', 'Close');
-  close.type = 'button'; head.append(title, branch, close);
-  var text = el('textarea', 'rv-text'); text.rows = 5; text.maxLength = 4000; text.placeholder = 'What must change? The note keeps the page, the width and the theme.';
-  var partRow = el('div', 'rv-row'), pick = el('button', 'rv-btn', 'Point at a part'), part = el('span', 'rv-part'), unpick = el('button', 'rv-link', 'Remove');
-  pick.type = unpick.type = 'button'; unpick.hidden = true; partRow.append(pick, part, unpick);
-  var sendRow = el('div', 'rv-row'), send = el('button', 'rv-btn rv-send', 'Save note'), status = el('span', 'rv-status');
-  send.type = 'button'; status.setAttribute('role', 'status'); sendRow.append(send, status);
-  var listHead = el('div', 'rv-list-head', 'My notes'), list = el('ol', 'rv-list');
-  panel.append(head, text, partRow, sendRow, listHead, list);
-  var box = el('div', 'rv-box'); box.hidden = true;
+  /* ---- the marks ---- */
+  var fallbacks = [];   /* {el, nodes}: blocks with inline markup that got plain marked text */
+  function unmark() {
+    var parents = [];
+    Array.prototype.forEach.call(document.querySelectorAll('ins.rv-add'), function (n) {
+      if (parents.indexOf(n.parentNode) < 0) parents.push(n.parentNode);
+      n.replaceWith.apply(n, Array.prototype.slice.call(n.childNodes));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('del.rv-del, .rv-gone, .rv-newpage'), function (n) {
+      if (n.parentNode && parents.indexOf(n.parentNode) < 0) parents.push(n.parentNode);
+      n.remove();
+    });
+    fallbacks.forEach(function (f) { f.el.replaceChildren.apply(f.el, f.nodes); });
+    fallbacks = [];
+    parents.forEach(function (p) { p.normalize(); });
+  }
 
-  var target = null, selection = '';
+  /* Every text node of el, and for each character of the block text (blank runs as one space, trimmed) its node and
+     offset. The block text is the text that blocks() of textdiff.js gives. */
+  function textMap(el) {
+    var nodes = [], at = [], text = '', blank = false;
+    var walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (var t = walk.nextNode(); t; t = walk.nextNode()) {
+      nodes.push(t);
+      for (var i = 0; i < t.data.length; i++) {
+        if (/\s/.test(t.data[i])) { if (!blank && text) { text += ' '; at.push({ node: t, off: i }); } blank = true; }
+        else { text += t.data[i]; at.push({ node: t, off: i }); blank = false; }
+      }
+    }
+    if (text.slice(-1) === ' ') { text = text.slice(0, -1); at.pop(); }
+    return { nodes: nodes, at: at, text: text };
+  }
+  function del(textOf) { var d = document.createElement('del'); d.className = 'rv-del'; d.textContent = textOf; return d; }
+  function ins() { var n = document.createElement('ins'); n.className = 'rv-add'; return n; }
 
-  function state() {
-    fetch(API + 'state').then(function (r) { return r.json(); }).then(function (s) {
-      branch.textContent = (s.branch || 'detached') + (s.commit ? ' · ' + s.commit : '');
-      badge.textContent = s.open ? String(s.open) : '';
-    }).catch(function () { branch.textContent = 'no server'; });
+  /* Put the word marks into the text nodes of el, so links and inline markup stay. */
+  function markWords(el, words) {
+    var map = textMap(el);
+    var live = words.filter(function (w) { return w.op !== 'del'; }).map(function (w) { return w.text; }).join('');
+    if (live !== map.text || !map.at.length) return markPlain(el, words);
+    var edits = [], pos = 0;
+    words.forEach(function (w) {
+      if (w.op === 'eq') pos += w.text.length;
+      else if (w.op === 'add') { edits.push({ from: pos, to: pos + w.text.length }); pos += w.text.length; }
+      else edits.push({ from: pos, removed: w.text });
+    });
+    /* from the end to the start: a split keeps the head of a text node in that node, so earlier offsets stay true */
+    for (var k = edits.length - 1; k >= 0; k--) {
+      var e = edits[k];
+      if (e.removed !== undefined) {
+        var p = e.from < map.at.length ? map.at[e.from] : { node: map.at[map.at.length - 1].node, off: map.at[map.at.length - 1].off + 1 };
+        var rest = p.node.splitText(p.off);
+        rest.parentNode.insertBefore(del(e.removed), rest);
+      } else {
+        var s = map.at[e.from], last = map.at[e.to - 1];
+        var i0 = map.nodes.indexOf(s.node), i1 = map.nodes.indexOf(last.node);
+        for (var i = i1; i >= i0; i--) {
+          var node = map.nodes[i];
+          var a = i === i0 ? s.off : 0, b = i === i1 ? last.off + 1 : node.data.length;
+          if (a >= b) continue;
+          var mid = node.splitText(a);
+          if (b - a < mid.data.length) mid.splitText(b - a);
+          var wrap = ins();
+          mid.parentNode.insertBefore(wrap, mid);
+          wrap.appendChild(mid);
+        }
+      }
+    }
   }
-  function showList() {
-    fetch(API + 'notes').then(function (r) { return r.json(); }).then(function (d) {
-      list.textContent = '';
-      if (!d.notes.length) { list.appendChild(el('li', 'rv-empty', 'No notes yet.')); return; }
-      d.notes.slice(0, 20).forEach(function (n) {
-        var li = el('li', 'rv-item rv-' + n.status);
-        li.append(el('span', 'rv-meta', (n.status === 'done' ? 'Done' : 'Open') + ' · ' + (n.path || '') + ' · ' + (n.time || '').slice(0, 16).replace('T', ' ')),
-          el('span', 'rv-note', n.note));
-        if (n.answer) li.appendChild(el('span', 'rv-answer', n.answer));
-        list.appendChild(li);
-      });
-    }).catch(function () { list.textContent = ''; list.appendChild(el('li', 'rv-empty', 'The notes cannot load.')); });
+  /* The text of el does not match the block text: replace it with the marked text, and keep the old nodes for unmark. */
+  function markPlain(el, words) {
+    fallbacks.push({ el: el, nodes: Array.prototype.slice.call(el.childNodes) });
+    el.replaceChildren();
+    words.forEach(function (w) {
+      if (w.op === 'eq') el.append(w.text);
+      else if (w.op === 'del') el.append(del(w.text));
+      else { var n = ins(); n.textContent = w.text; el.append(n); }
+    });
   }
-  function open() {
-    panel.hidden = false; tab.setAttribute('aria-expanded', 'true'); state(); showList();
-    setTimeout(function () { text.focus(); }, 0);
-  }
-  function shut() { panel.hidden = true; tab.setAttribute('aria-expanded', 'false'); stopPick(); tab.focus(); }
 
-  /* the text that is selected on the page, read before the tap on the tab can clear it */
-  tab.addEventListener('pointerdown', function () { selection = String(getSelection() || '').trim().slice(0, 1000); });
-  tab.addEventListener('click', function () { if (panel.hidden) open(); else shut(); });
-  close.addEventListener('click', shut);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { if (picking) stopPick(); else shut(); } });
+  function root() { return document.querySelector('main') || document.body; }
+  function mark(fromHtml) {
+    if (fromHtml === null) {
+      var line = ui('p', 'rv-newpage', 'New page in this round');
+      root().insertBefore(line, root().firstChild);
+      return;
+    }
+    var live = diff.blockNodes(document), byKey = {};
+    live.forEach(function (b) { byKey[b.key] = b.el; });
+    var ops = diff.diffBlocks(diff.blocks(parse(fromHtml)), live.map(function (b) { return { key: b.key, text: b.text }; }));
+    var gone = [], lastEl = null;
+    function gonesBefore(el) {
+      gone.forEach(function (t) { var g = ui('div', 'rv-gone', t); el.parentNode.insertBefore(g, el); });
+      gone = [];
+    }
+    ops.forEach(function (o) {
+      if (o.op === 'del') { gone.push(o.a.text); return; }
+      var el = byKey[o.b.key];
+      gonesBefore(el);
+      if (o.op === 'chg') markWords(el, o.words);
+      else if (o.op === 'add') markWords(el, [{ op: 'add', text: o.b.text }]);
+      lastEl = el;
+    });
+    gone.forEach(function (t) {
+      var g = ui('div', 'rv-gone', t);
+      if (lastEl) { lastEl.after(g); lastEl = g; } else root().appendChild(g);
+    });
+  }
 
-  /* point at a part: the outline follows the pointer, a click takes that part */
-  var picking = false;
-  function ours(n) { return n === tab || tab.contains(n) || panel.contains(n) || n === box; }
-  function frame(n) {
-    var r = n.getBoundingClientRect();
-    box.style.left = r.left + 'px'; box.style.top = r.top + 'px'; box.style.width = r.width + 'px'; box.style.height = r.height + 'px';
-    box.hidden = false;
+  /* ---- the bar ---- */
+  var v = null, versions = [], choice = {}, run = 0;
+  function onDisk() { return versions[versions.length - 1].value; }
+  function render() {
+    var mine = ++run;
+    unmark();
+    status.textContent = '';
+    var to = choice.to, from = choice.from;
+    var shownReady = to === onDisk() ? Promise.resolve(showOwn()) : text(v.branch, to).then(function (html) {
+      if (mine === run) showOther(to, html);
+    });
+    return shownReady.then(function () {
+      if (mine !== run || !choice.show || from === to) return;
+      return text(v.branch, from).then(function (html) { if (mine === run) mark(html); });
+    }).catch(function () { if (mine === run) status.textContent = 'The changes cannot load.'; });
   }
-  function onMove(e) { var n = document.elementFromPoint(e.clientX, e.clientY); if (n && !ours(n)) frame(n); }
-  function onPick(e) {
-    var n = document.elementFromPoint(e.clientX, e.clientY);
-    if (!n || ours(n)) return;
-    e.preventDefault(); e.stopPropagation();
-    var r = n.getBoundingClientRect();
-    target = { selector: selectorOf(n), text: (n.innerText || n.alt || '').trim().replace(/\s+/g, ' ').slice(0, 300),
-      rect: { x: Math.round(r.left + scrollX), y: Math.round(r.top + scrollY), w: Math.round(r.width), h: Math.round(r.height) } };
-    part.textContent = target.text ? '“' + target.text.slice(0, 60) + '”' : target.selector;
-    unpick.hidden = false; stopPick(); frame(n); panel.hidden = false; text.focus();
+  function remember() { save(v.branch, { show: choice.show, from: choice.from, to: choice.to, last: onDisk() }); }
+  function fill(select, list, value) {
+    select.replaceChildren();
+    list.forEach(function (o) { var n = ui('option', '', o.label); n.value = o.value; select.appendChild(n); });
+    select.value = value;
   }
-  function stopPick() {
-    if (!picking) return;
-    picking = false; document.documentElement.classList.remove('rv-picking'); pick.textContent = 'Point at a part';
-    document.removeEventListener('pointermove', onMove, true); document.removeEventListener('click', onPick, true);
-    if (!target) box.hidden = true;
+
+  function start(data) {
+    v = data;
+    fill(branchField.select, v.branches.map(function (b) { return { value: b, label: b }; }), v.branch);
+    versions = [{ value: v.base, label: v.base }].concat(v.rounds.map(function (r) {
+      return { value: r.sha, label: 'Round ' + r.n + ': ' + r.subject };
+    }));
+    if (v.working) versions.push({ value: 'working', label: 'Working' });
+    if (versions.length < 2) {
+      versionParts.forEach(function (n) { n.hidden = true; });
+      return Promise.resolve();
+    }
+    var values = versions.map(function (o) { return o.value; });
+    var saved = load(v.branch), same = saved.last === onDisk();
+    choice.show = saved.show !== false;
+    choice.to = same && values.indexOf(saved.to) >= 0 ? saved.to : onDisk();
+    choice.from = same && values.indexOf(saved.from) >= 0 ? saved.from : values[Math.max(0, values.indexOf(choice.to) - 1)];
+    fill(fromField.select, versions, choice.from);
+    fill(toField.select, versions, choice.to);
+    swBox.checked = choice.show;
+    return render();
   }
-  pick.addEventListener('click', function () {
-    if (picking) return stopPick();
-    picking = true; document.documentElement.classList.add('rv-picking'); pick.textContent = 'Click a part (Esc stops)';
-    panel.hidden = true;
-    document.addEventListener('pointermove', onMove, true); document.addEventListener('click', onPick, true);
+
+  branchField.select.addEventListener('change', function () {
+    location.href = location.pathname + '?branch=' + encodeURIComponent(branchField.select.value) + location.hash;
   });
-  unpick.addEventListener('click', function () { target = null; part.textContent = ''; unpick.hidden = true; box.hidden = true; });
+  fromField.select.addEventListener('change', function () { choice.from = fromField.select.value; remember(); render(); });
+  toField.select.addEventListener('change', function () { choice.to = toField.select.value; remember(); render(); });
+  swBox.addEventListener('change', function () { choice.show = swBox.checked; remember(); render(); });
 
-  send.addEventListener('click', function () {
-    var note = text.value.trim();
-    if (!note) { status.textContent = 'Write the note first.'; text.focus(); return; }
-    send.disabled = true; status.textContent = 'Saving …';
-    var body = { note: note, path: location.pathname + location.hash, title: document.title, theme: theme(), selection: selection,
-      viewport: { w: innerWidth, h: innerHeight, dpr: devicePixelRatio }, scroll: { x: Math.round(scrollX), y: Math.round(scrollY) },
-      target: target, agent: navigator.userAgent };
-    fetch(API + 'notes', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-T7d-Review': '1' }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || r.status); return d; }); })
-      .then(function (d) {
-        status.textContent = 'Saved (' + d.id + ').';
-        text.value = ''; selection = ''; target = null; part.textContent = ''; unpick.hidden = true; box.hidden = true;
-        state(); showList();
-      })
-      .catch(function (err) { status.textContent = 'Not saved: ' + err.message + '. The text stays here.'; })
-      .then(function () { send.disabled = false; });
-  });
-
-  function mount() { document.body.append(tab, panel, box); state(); }
+  function mount() {
+    document.body.appendChild(bar);
+    versionParts.forEach(function (n) { n.hidden = true; });
+    fetch(API + 'versions?' + q(asked))
+      .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (data) { versionParts.forEach(function (n) { n.hidden = false; }); return start(data); })
+      .catch(function () { status.textContent = 'The review server does not answer.'; })
+      .then(function () { bar.setAttribute('data-ready', ''); });
+  }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();

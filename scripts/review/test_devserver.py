@@ -29,6 +29,7 @@ class Inject(unittest.TestCase):
         out = devserver.inject(PAGE)
         self.assertIn('href="/__review/review.css"', out)
         self.assertIn('src="/__review/review.js" defer', out)
+        self.assertLess(out.index('src="/__review/textdiff.js" defer'), out.index('src="/__review/review.js"'))
         self.assertIn("default-src 'none'; script-src 'self'; base-uri 'none'; connect-src 'self'", out)
         self.assertNotIn("unsafe-inline", out)
 
@@ -100,6 +101,9 @@ class Server(unittest.TestCase):
         self.assertEqual(headers["Cache-Control"], "no-cache")
         self.assertIn("/__review/review.js", body)
         self.assertEqual(self.get("/x.css")[2], "p{}")
+        code, headers, body = self.get("/__review/textdiff.js")
+        self.assertEqual((code, headers["Content-Type"]), (200, "text/javascript; charset=utf-8"))
+        self.assertIn("window.reviewDiff", body)
 
     def test_missing_page_is_the_404_page(self):
         code, _, body = self.get("/nope/")

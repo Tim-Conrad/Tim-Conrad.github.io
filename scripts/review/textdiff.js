@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var BLOCK_SELECTOR = "h1, h2, h3, h4, h5, h6, p, li, blockquote, figcaption, td, th, pre";
+  var BLOCK_SELECTOR = "h1, h2, h3, h4, h5, h6, p, li, dt, dd, blockquote, figcaption, td, th, pre";
   var SKIP_SELECTOR = "[data-review-ui], papercuts-widget";
   // Myers stops after this many edited tokens. The block pair then becomes "del all + add all".
   var MAX_EDITS = 1000;
@@ -146,8 +146,8 @@
     return out;
   }
 
-  // Visible text of main (else body) as blocks. Uses only querySelector(All), closest and textContent.
-  function blocks(doc) {
+  // Visible text of main (else body) as blocks with their elements. Uses only querySelector(All), closest and textContent.
+  function blockNodes(doc) {
     var root = (doc.querySelector && (doc.querySelector("main") || doc.querySelector("body"))) || doc;
     var counts = {};
     var out = [];
@@ -160,12 +160,17 @@
       var tag = el.tagName.toLowerCase();
       var idx = counts[tag] || 0;
       counts[tag] = idx + 1;
-      out.push({ key: tag + idx, text: text });
+      out.push({ key: tag + idx, text: text, el: el });
     });
     return out;
   }
 
-  var api = { blocks: blocks, diffWords: diffWords, diffBlocks: diffBlocks };
+  // The same blocks as {key, text}, for a diff.
+  function blocks(doc) {
+    return blockNodes(doc).map(function (b) { return { key: b.key, text: b.text }; });
+  }
+
+  var api = { blocks: blocks, blockNodes: blockNodes, diffWords: diffWords, diffBlocks: diffBlocks };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.reviewDiff = api;
 })();

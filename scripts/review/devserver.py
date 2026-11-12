@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Review server for the site: live reload and notes. Only the review site uses it. GitHub Pages serves t7d.dev.
+"""Review server for the site: live reload, the rounds of a branch and notes. Only the review site uses it. GitHub Pages serves t7d.dev.
 
     python3 scripts/review/devserver.py [--root .] [--notes .review/notes] [--host 127.0.0.1] [--port 8000]
 
 - Serves the repository root with Cache-Control: no-cache. A missing page gets /404.html with status 404.
-- Every HTML page gets /__review/review.css and /__review/review.js. The page CSP gets connect-src 'self', so the
+- Every HTML page gets /__review/review.css, /__review/textdiff.js and /__review/review.js. The page CSP gets connect-src 'self', so the
   script can reach this server. Nothing else in the CSP changes, so the review site keeps the rules of the real site.
 - /__review/reload: server-sent events. The stamp changes when a file of the site changes, is added or is deleted.
   The page then loads again.
@@ -15,7 +15,7 @@
 - /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
 - /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
   the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
-  <notes>/done/ with an "answer" field. The page shows the answer under "My notes".
+  <notes>/done/ with an "answer" field.
 - /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by scripts/gen-feeds.py, as the deploy makes them for gh-pages.
 - /.git, /.review, /.reels and /node_modules are not served.
 """
@@ -39,7 +39,8 @@ from gitread import HIDDEN  # noqa: E402
 PREFIX = "/__review/"
 COOKIE = "review_branch"
 BASE = "master"
-ASSETS = {"review.js": "text/javascript; charset=utf-8", "review.css": "text/css; charset=utf-8"}
+ASSETS = {"review.js": "text/javascript; charset=utf-8", "textdiff.js": "text/javascript; charset=utf-8",
+          "review.css": "text/css; charset=utf-8"}
 MAX_BODY = 32 * 1024
 MAX_NOTE = 4000
 NOTE_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
@@ -91,7 +92,8 @@ def inject(html):
         return m.group(1) + policy + m.group(3)
     html = CSP.sub(csp, html, count=1)
     link = '<link rel="stylesheet" href="%sreview.css">' % PREFIX
-    script = '<script src="%sreview.js" defer></script>' % PREFIX
+    # textdiff.js first: deferred scripts run in order, and review.js uses window.reviewDiff.
+    script = '<script src="%stextdiff.js" defer></script>\n<script src="%sreview.js" defer></script>' % (PREFIX, PREFIX)
     html = html.replace("</head>", link + "\n" + script + "\n</head>", 1) if "</head>" in html else link + script + html
     return html
 

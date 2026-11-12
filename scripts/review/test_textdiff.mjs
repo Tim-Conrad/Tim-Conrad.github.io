@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert";
 import { createRequire } from "node:module";
 
-const { blocks, diffWords, diffBlocks } = createRequire(import.meta.url)("./textdiff.js");
+const { blocks, blockNodes, diffWords, diffBlocks } = createRequire(import.meta.url)("./textdiff.js");
 
 test("diffWords marks a changed word", () => {
   assert.deepStrictEqual(diffWords("a b c", "a x c"), [
@@ -124,4 +124,22 @@ test("blocks reads main, numbers tags, and skips review UI and papercuts", () =>
     { key: "p1", text: "Second" },
     { key: "p2", text: "quoted" },
   ]);
+});
+
+test("blocks reads the status and dates of a thought (dt and dd)", () => {
+  const main = el("main", [el("dl", [el("dt", ["Status"]), el("dd", ["Draft"])])]);
+  assert.deepStrictEqual(blocks(main), [
+    { key: "dt0", text: "Status" },
+    { key: "dd0", text: "Draft" },
+  ]);
+});
+
+test("blockNodes gives the element of each block, in the order and with the keys of blocks", () => {
+  const p = el("p", ["One"]);
+  const h = el("h2", ["Two"]);
+  const main = el("main", [p, el("p", [" "]), h]);
+  const nodes = blockNodes(main);
+  assert.deepStrictEqual(nodes.map((n) => [n.key, n.text]), blocks(main).map((b) => [b.key, b.text]));
+  assert.strictEqual(nodes[0].el, p);
+  assert.strictEqual(nodes[1].el, h);
 });
