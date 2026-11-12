@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Papercuts · Tim Conrad</title>
+<meta name="description" content="Papercuts: one place where Tim Conrad and his coding agents report friction on local sites and in the terminal. Each report becomes a GitHub issue.">
+<link rel="canonical" href="https://t7d.dev/tools/papercuts/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Papercuts">
+<meta property="og:description" content="Papercuts: one place where Tim Conrad and his coding agents report friction on local sites and in the terminal. Each report becomes a GitHub issue.">
+<meta property="og:url" content="https://t7d.dev/tools/papercuts/">
+<meta property="og:image" content="https://t7d.dev/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/theme.js"></script>
+<script src="/assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="/">Tim Conrad</a>
+    <nav class="nav__links" aria-label="Site">
+      <a href="/#games">Games</a>
+      <a href="/thoughts/">Thoughts</a>
+      <a class="opt3" href="/#research">Research</a>
+      <a class="opt2" href="/#verify">PGP key</a>
+      <a class="opt2" href="/#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="theme-toggle" type="button">dark</button>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+<header class="post-head">
+  <a class="crumb" href="/tools/">← Tools</a>
+  <h1>Papercuts</h1>
+  <p class="sub">One place where my coding agents and I report friction. Each report becomes a GitHub issue in the repo of the project.</p>
+  <p class="label">Tim Conrad · Coding agents · Feedback · Node.js</p>
+  <dl class="tmeta">
+    <div><dt>Version</dt><dd>v0.1.0</dd></div>
+    <div><dt>License</dt><dd>MIT</dd></div>
+    <div><dt>Source</dt><dd><a href="https://github.com/Tim-Conrad/papercuts">github.com/Tim-Conrad/papercuts</a></dd></div>
+  </dl>
+</header>
+
+<div class="post">
+  <article class="prose">
+    <h2 id="why-i-built-it">Why I built it</h2>
+    <p>Small things get in the way all day. A button overlaps on the phone. A tool prints output that my agent cannot use. A rule in a project file points to a file that moved. Each one costs a few minutes, and the next session pays them again.</p>
+    <p>I had built the same fix three times: a note tab on my pen-and-paper review site, a note tab on the review copy of this site, and a log where agents wrote down what slowed them down. Each kept its notes in its own place and its own shape.</p>
+    <p>Papercuts puts them together. I report on the page, my agent reports from the terminal or from the browser, and every report becomes a GitHub issue in the same format. The agent that picks up the work reads all of them the same way, and fixes them one by one.</p>
+    <p>It runs only on my local sites, behind my login. Visitors of a public site never see it.</p>
+    <!-- tool-readme: Tim-Conrad/papercuts -->
+<!-- Tim-Conrad/papercuts README, v0.4.1 -->
+<p>Papercuts is one place where you and your agents report friction. Each papercut becomes a GitHub issue in the repo of the project, or a row in a gitignored SQLite file of the repo (the local store).</p>
+<h2 id="why">Why</h2>
+<p>Small problems get lost. A button overlaps on the phone. A tool prints output that an agent cannot use. A rule in <code>AGENTS.md</code> points to a file that moved. Each one costs a few minutes, again and again.</p>
+<p>Papercuts gives people and agents the same short path to report them. All reports land in the same place, in the same format. The agent that picks up the work reads them all the same way. The result is a steady flow of small fixes.</p>
+<p>Papercuts is for local sites: dev and review copies on your own machine or home lab. It is not a feedback widget for public visitors.</p>
+<h2 id="the-parts">The parts</h2>
+<ul>
+<li><strong>Widget.</strong> A tab on the edge of a page. People only give feedback: one input, by voice or by text, then Send. Agents triage it, so people choose no kind and fill no fields. Everything else comes along in the background: the element that you touched last, the URL, the place, the viewport, the selected text and the console errors. "Mark" adds more: numbered elements, boxes around regions, and drawings on a picture or a screen picture. The panel also lists the open papercuts of the repo with their replies, and the ones fixed in the last 14 days with the fix note.</li>
+<li><strong>JS API.</strong> An agent that drives a browser calls <code>papercuts.report()</code> on the same page. It does not need to click the tab.</li>
+<li><strong>CLI.</strong> An agent in a terminal runs <code>papercuts add tool "..."</code>. The output follows the <a href="https://axi.md">AXI</a> rules for agent tools.</li>
+<li><strong>Relay.</strong> A small server that holds the GitHub credential, serves the widget, and creates the issues. The browser never sees a token.</li>
+</ul>
+<p>Papercuts has no runtime dependencies. It needs Node.js 22.13 or later (the local store uses the built-in <code>node:sqlite</code>).</p>
+<h2 id="integrate-papercuts-into-an-app">Integrate papercuts into an app</h2>
+<p>This checklist is for the agent or person who adds papercuts to an app. Do the steps in this order:</p>
+<ol>
+<li>In the repo of the app, run <code>papercuts init</code>, or <code>papercuts init --store local</code> for the local store (see <a href="#where-papercuts-go">Where papercuts go</a>). It detects the stack, writes <code>.github/papercuts.json</code> and the papercuts block in <code>AGENTS.md</code>, and prints the exact steps for your stack.</li>
+<li>Add the script tag on the server, only when <code>PAPERCUTS_URL</code> is set (see <a href="#load-papercuts-only-where-a-relay-exists">Load papercuts only where a relay exists</a>).</li>
+<li>Add a test: without <code>PAPERCUTS_URL</code> the page has no <code>papercuts</code>, with it the page has exactly one tag.</li>
+<li>Set <code>PAPERCUTS_URL</code> only for the copies with a relay, for example the lab and dev copies.</li>
+<li>Edit <code>.github/papercuts.json</code>: the kinds, the fields, the quick phrases and the labels of this app (see <a href="#the-ticket-config">The ticket config</a>).</li>
+<li>Run <code>papercuts config --file .github/papercuts.json --check</code> before the push, and <code>papercuts config --check</code> after it. Both exit 1 on a warning.</li>
+</ol>
+<h2 id="quick-start-a-site">Quick start: a site</h2>
+<p>First, run a relay (see <a href="#run-the-relay">Run the relay</a>). Then add one tag to the <code>&lt;head&gt;</code> of the page. Put it early, so that the widget sees console errors from the start:</p>
+<div class="code"><div class="code__bar"><span>html</span></div><pre><code class="language-html">&lt;script src=&quot;https://papercuts.lab.example.com/papercuts.js&quot; data-repo=&quot;owner/name&quot;&gt;&lt;/script&gt;
+</code></pre></div>
+<p>Load the page. The tab "Papercut" shows at the right edge. The keyboard shortcut is <code>Alt+Shift+P</code>. <code>Ctrl+Enter</code> sends. You can drag the tab up or down, and the page keeps the position.</p>
+<p>If the relay does not answer, the page shows no tab.</p>
+<p>Optional attributes on the script tag:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data-repo</code></td>
+<td>Required. The repo for the issues, as <code>owner/name</code>.</td>
+</tr>
+<tr>
+<td><code>data-lang</code></td>
+<td>The language of the widget: <code>en</code> (default), <code>de</code>, or a language that the site adds (see below). The JS API answers in English.</td>
+</tr>
+<tr>
+<td><code>data-speech-lang</code></td>
+<td>The language for speech input, for example <code>de-DE</code>. Default: the <code>lang</code> of the page.</td>
+</tr>
+<tr>
+<td><code>data-commit</code>, <code>data-branch</code></td>
+<td>The version of the site. The issue shows them.</td>
+</tr>
+<tr>
+<td><code>data-storage</code></td>
+<td>A comma list of <code>localStorage</code> keys to include, or <code>*</code> for all keys (at most 50). By default the widget sends no <code>localStorage</code>, because it can hold tokens or private data.</td>
+</tr>
+<tr>
+<td><code>data-storage-skip</code></td>
+<td>With <code>data-storage="*"</code>: a comma list of keys to leave out, for example a room code.</td>
+</tr>
+<tr>
+<td><code>data-mode</code></td>
+<td><code>download</code>: see <a href="#without-a-relay">Without a relay</a>.</td>
+</tr>
+<tr>
+<td><code>data-accent</code></td>
+<td>The accent color of the widget, any CSS color. Default: a coral red.</td>
+</tr>
+<tr>
+<td><code>data-shortcut</code></td>
+<td>The key combination that opens the panel. Default <code>alt+shift+p</code>. <code>off</code> turns it off.</td>
+</tr>
+<tr>
+<td><code>data-gesture</code></td>
+<td><code>off</code> turns off the two-finger long press on touch screens.</td>
+</tr>
+<tr>
+<td><code>data-voice</code></td>
+<td><code>off</code> turns off voice first on touch screens.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Hooks for the page:</p>
+<ul>
+<li><code>window.papercutsContext = (el) =&gt; ({ openCard: "c12" })</code> adds your own fields to each report. <code>el</code> is the first marked element, or <code>null</code>.</li>
+<li><code>window.papercutsHidden = () =&gt; true</code> hides the tab, for example in a print view or a kiosk mode. The widget asks once per second.</li>
+<li><code>window.papercutsReplay = () =&gt; [{ click: '.card[data-id="k12"]' }]</code> records up to five clicks that bring the page back to the reported state, for example a dialog without a URL. <code>papercuts replay</code> runs them.</li>
+<li><code>window.papercutsStrings = { fr: { send: "Envoyer", close: "Fermer" } }</code> adds or changes the words of a language. A missing word falls back to English. Set it before the page finishes loading. The keys are in the table <code>T</code> at the top of <code>widget/papercuts.js</code>.</li>
+</ul>
+<p>In a modal <code>&lt;dialog&gt;</code> or in fullscreen, the widget moves into the dialog or the fullscreen element, so that it stays usable.</p>
+<h3 id="mark-parts-of-the-page">Mark parts of the page</h3>
+<p>The element that you touched last, in the 15 seconds before you open the panel, is attached by itself. "Mark" opens the live page with a toolbar at the bottom:</p>
+<ul>
+<li><strong>Tap</strong> marks an element. A second tap removes the mark. Larger and Smaller move the newest mark to its parent and back.</li>
+<li><strong>Box</strong> marks a region: drag a box around it.</li>
+<li><strong>Draw</strong> opens a picture of the page in the drawing sheet: pen and numbered pins.</li>
+</ul>
+<p>Each mark gets a number on the page and a row in the panel, with an optional note. The issue lists the marks, and <code>papercuts replay</code> frames each one with its number.</p>
+<h3 id="load-papercuts-only-where-a-relay-exists">Load papercuts only where a relay exists</h3>
+<p>Do not put the tag into a published copy of a site. A published copy has no relay, and the tag shows the relay URL to every visitor. Add the tag on the server, and only when an environment variable is set:</p>
+<div class="code"><div class="code__bar"><span>python</span></div><pre><code class="language-python"># FastAPI: build index.html yourself when PAPERCUTS_URL is set.
+# Do not use FileResponse for it: its 304 keeps a cached copy without the tag.
+html = INDEX.read_text()
+if url := os.environ.get(&quot;PAPERCUTS_URL&quot;):
+    html = html.replace(&quot;&lt;/head&gt;&quot;, f'&lt;script src=&quot;{url}/papercuts.js&quot; data-repo=&quot;owner/name&quot;&gt;&lt;/script&gt;&lt;/head&gt;', 1)
+return HTMLResponse(html, headers={&quot;Cache-Control&quot;: &quot;no-cache&quot;})
+</code></pre></div>
+<div class="code"><div class="code__bar"><span>nginx</span></div><pre><code class="language-nginx"># nginx: a template under /etc/nginx/templates/ (the official image fills in ${PAPERCUTS_URL})
+sub_filter '&lt;/head&gt;' '&lt;script src=&quot;${PAPERCUTS_URL}/papercuts.js&quot; data-repo=&quot;owner/name&quot;&gt;&lt;/script&gt;&lt;/head&gt;';
+sub_filter_once on;
+</code></pre></div>
+<p>For nginx, use two config files and let the entrypoint choose one, so that no tag goes out when the variable is empty. For a static build (Vite), add the tag when the server delivers the page, not at build time, so that one build works with and without papercuts.</p>
+<h3 id="shortcuts-for-people">Shortcuts for people</h3>
+<ul>
+<li><strong>Keys.</strong> <code>Alt+Shift+P</code> opens and closes the panel. Change it with <code>data-shortcut</code>, for example <code>data-shortcut="ctrl+k"</code>.</li>
+<li><strong>A link.</strong> A URL with <code>#papercut</code> (or <code>?papercut=open</code>) opens the panel when the page loads. Use it for a bookmark, a QR code or a home-screen icon. The widget removes it from the URL.</li>
+<li><strong>Two fingers.</strong> On a touch screen, hold two fingers on the page for 0.6 seconds.</li>
+<li><strong>Quick phrases.</strong> The <code>presets</code> of the ticket config show as chips. One tap fills the kind and the sentence.</li>
+<li><strong>Your own button.</strong> <code>papercuts.open({ text: "...", kind: "idea", marks: ["#cart", element], fields: { ... } })</code> opens the panel with a draft, for a menu entry of the app. Every key is optional. <code>marks</code> takes elements or CSS selectors.</li>
+</ul>
+<h3 id="voice-input">Voice input</h3>
+<p>On a touch screen with speech input, a large "Tap to speak" button leads the panel. The words show while you speak, and you can edit them. On desktop, the microphone is a small button in the text field. Speech uses <code>data-speech-lang</code>, else the <code>lang</code> of the page. Without speech input in the browser, the panel leads with the text field.</p>
+<h3 id="without-a-relay">Without a relay</h3>
+<p>With <code>?papercuts=download</code> in the URL, or <code>data-mode="download"</code>, the widget shows the tab without a relay. Send becomes "Download report" and saves the report as a JSON file. File it later with <code>papercuts import &lt;file&gt;</code>. For this mode, serve a copy of <code>widget/papercuts.js</code> from the site itself.</p>
+<h2 id="the-ticket-config">The ticket config</h2>
+<p><code>.github/papercuts.json</code> in the repo of the app defines what a papercut of this app contains. The relay reads it from the default branch (cached for 5 minutes) and applies it to reports from the widget, the JS API and the CLI. Every key is optional. Without the file, the defaults apply.</p>
+<div class="code"><div class="code__bar"><span>json</span></div><pre><code class="language-json">{
+  &quot;$schema&quot;: &quot;https://raw.githubusercontent.com/Tim-Conrad/papercuts/main/schema/papercuts.schema.json&quot;,
+  &quot;kinds&quot;: [&quot;bug&quot;, &quot;ux&quot;, &quot;copy&quot;, &quot;idea&quot;],
+  &quot;fields&quot;: [
+    { &quot;id&quot;: &quot;expected&quot;, &quot;label&quot;: &quot;What did you expect?&quot;, &quot;required&quot;: true },
+    { &quot;id&quot;: &quot;device&quot;, &quot;label&quot;: &quot;Device&quot;, &quot;options&quot;: [&quot;phone&quot;, &quot;tablet&quot;, &quot;desktop&quot;] }
+  ],
+  &quot;presets&quot;: [{ &quot;kind&quot;: &quot;ux&quot;, &quot;text&quot;: &quot;Too small to tap&quot; }],
+  &quot;labels&quot;: [&quot;area:web&quot;],
+  &quot;labelsByKind&quot;: { &quot;bug&quot;: [&quot;bug&quot;] },
+  &quot;assignees&quot;: [&quot;your-login&quot;],
+  &quot;context&quot;: { &quot;storage&quot;: [&quot;theme&quot;], &quot;skipStorage&quot;: [&quot;room-code&quot;] },
+  &quot;lang&quot;: &quot;en&quot;
+}
+</code></pre></div>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kinds</code></td>
+<td>The kinds that agents use in this repo. Use the built-in kinds only, so that labels stay the same in all repos.</td>
+</tr>
+<tr>
+<td><code>fields</code></td>
+<td>At most 8 extra fields for agents. A field with <code>options</code> is a choice, else one line of text. A required field is required for agent reports. A field with <code>kinds</code> belongs to those kinds only, for example <code>{ "id": "severity", "label": "Severity", "options": ["low", "high"], "kinds": ["bug"] }</code>. People never see the fields. <code>open({ fields })</code> can fill them for a person.</td>
+</tr>
+<tr>
+<td><code>presets</code></td>
+<td>At most 12 quick phrases for the widget. One tap fills the sentence and, silently, the kind.</td>
+</tr>
+<tr>
+<td><code>labels</code>, <code>labelsByKind</code>, <code>assignees</code></td>
+<td>Added to each new issue.</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>The <code>localStorage</code> keys to include, the same as <code>data-storage</code> and <code>data-storage-skip</code>.</td>
+</tr>
+<tr>
+<td><code>lang</code></td>
+<td>The language of the widget when the page sets no <code>data-lang</code>.</td>
+</tr>
+<tr>
+<td><code>store</code></td>
+<td><code>github</code> (default) or <code>local</code>. See <a href="#where-papercuts-go">Where papercuts go</a>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A broken part never breaks the page or a report. The relay drops it, uses the default, and lists a warning. <code>papercuts config</code> shows the warnings. The schema in <code>schema/papercuts.schema.json</code> lets an editor check the file. Page attributes win over the file.</p>
+<p>Agents fill the fields with <code>papercuts add &lt;kind&gt; "&lt;text&gt;" --field expected="..."</code>, and pages with <code>papercuts.report({ ..., fields: { expected: "..." } })</code>. An unknown field or a missing required field gives an error with the list of valid fields.</p>
+<h2 id="quick-start-an-agent">Quick start: an agent</h2>
+<p>In a terminal:</p>
+<div class="code"><div class="code__bar"><span>sh</span></div><pre><code class="language-sh">npx github:Tim-Conrad/papercuts add tool &quot;gh-axi pr view drops the PR body&quot; --where &quot;gh-axi pr view&quot;
+npx github:Tim-Conrad/papercuts            # the open papercuts of this repo
+npx github:Tim-Conrad/papercuts view 12
+npx github:Tim-Conrad/papercuts shot 12    # save the picture of #12 as a PNG
+npx github:Tim-Conrad/papercuts replay 12  # show the page as the reporter saw it
+npx github:Tim-Conrad/papercuts comment 12 &quot;Option A: ... Option B: ...&quot;
+npx github:Tim-Conrad/papercuts done 12 --fix &quot;gh-axi prints the body since commit abc1234&quot;
+npx github:Tim-Conrad/papercuts config     # the ticket config of this repo
+npx github:Tim-Conrad/papercuts init       # set up papercuts in the repo of an app
+</code></pre></div>
+<p>The CLI uses the <code>gh</code> login of the host, or the token file of <code>papercuts setup</code>. It finds the repo from the git remote <code>origin</code>, or from <code>--repo owner/name</code>.</p>
+<p><code>replay</code> opens the URL of the report with the same viewport, hash, scroll position and <code>localStorage</code> keys, frames the element in red, and writes a PNG. It runs Playwright through <a href="https://docs.astral.sh/uv/">uv</a>. Without <code>uv</code>, it prints the replay data, so that an agent can drive its own browser. Use <code>--base &lt;url&gt;</code> to open the same page on another host, for example a dev copy without login.</p>
+<p>In a browser, on a page with the widget:</p>
+<div class="code"><div class="code__bar"><span>js</span></div><pre><code class="language-js">if (window.papercuts) {
+  await papercuts.report({ kind: &quot;ux&quot;, text: &quot;The save button is under the keyboard at 412 px&quot;, where: &quot;/settings&quot; });
+}
+</code></pre></div>
+<p><code>report()</code> takes <code>kind</code>, <code>text</code>, <code>where</code>, <code>fields</code>, <code>marks</code> and <code>from</code> (<code>"agent"</code> by default, <code>"human"</code> for a report that a person wrote in the app's own form). <code>report()</code> never throws. It returns <code>{ ok, issue, url, deduped }</code>, or <code>{ ok: false, error, help, queued }</code>. A report that the relay cannot take now waits in the browser (IndexedDB) and goes out later. The browser removes known secret patterns before it stores a report.</p>
+<p>The repo includes a skill for agents (<code>skills/papercuts/SKILL.md</code>). The file <code>AGENTS.md</code> holds a block to copy into the <code>AGENTS.md</code> of a project.</p>
+<h2 id="setup">Setup</h2>
+<p>Run <code>papercuts setup</code> once per machine. It writes <code>~/.config/papercuts/config.json</code> and installs a session-start hook for Claude Code and Codex. The hook shows the open papercuts of the current repo at the start of each agent session, and nothing when there are none. The hook calls <code>papercuts</code> from the <code>PATH</code> first, so that a Node.js upgrade does not break it.</p>
+<h3 id="where-papercuts-go">Where papercuts go</h3>
+<p>Each repo chooses its store when you integrate papercuts:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Command</th>
+<th>Where papercuts go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GitHub (default)</td>
+<td><code>papercuts init</code></td>
+<td>GitHub issues, see the targets below</td>
+</tr>
+<tr>
+<td>Local</td>
+<td><code>papercuts init --store local</code></td>
+<td><code>.papercuts/papercuts.db</code>, a SQLite file in the main checkout. <code>init</code> adds <code>.papercuts/</code> to <code>.gitignore</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The local store needs no GitHub account, no credential and no network. Use it for a project without a GitHub remote, for private notes that must not become issues, or offline. <code>init --store local</code> writes <code>"store": "local"</code> into <code>.github/papercuts.json</code>. All commands then read and write the local file: <code>add</code>, the home view, the session hook, <code>list</code>, <code>view</code>, <code>comment</code>, <code>done</code>, <code>shot</code> and <code>doctor</code>. A git worktree uses the file of its main checkout. Pictures go to <code>.papercuts/shots/</code>. <code>PAPERCUTS_STORE=github|local</code> overrides the setting for one command. A <code>--repo</code> for another repo always goes to GitHub.</p>
+<p>For the widget, start a local relay in the repo folder: <code>PORT=8787 papercuts serve</code>. With the local store, the relay accepts the origins <code>http://localhost:*</code> and <code>http://127.0.0.1:*</code> and any repo name by default. Set <code>PAPERCUTS_URL=http://localhost:8787</code> for the dev server.</p>
+<p>For the GitHub store, <code>papercuts setup</code> chooses the target:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Command</th>
+<th>Where issues go</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per project</td>
+<td><code>papercuts setup --target per-project</code></td>
+<td>The repo of the page or of the git remote</td>
+</tr>
+<tr>
+<td>Central</td>
+<td><code>papercuts setup --target central --repo owner/papercuts-inbox</code></td>
+<td>One inbox repo. The label <code>project:owner/name</code> keeps the source.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="the-credential">The credential</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Credential</th>
+<th>Command</th>
+<th>Scope</th>
+<th>Pictures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gh</code> login (default)</td>
+<td><code>papercuts setup --target per-project</code></td>
+<td>All scopes of your <code>gh</code> login</td>
+<td>Upload into the issue</td>
+</tr>
+<tr>
+<td>Fine-grained token</td>
+<td><code>papercuts setup --target per-project --credential file --token-file &lt;path&gt;</code></td>
+<td>"Issues: read and write" and "Contents: read" (for the ticket config), only the repos you choose</td>
+<td>GitHub refuses them. The relay keeps them and the issue links to them.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The <code>gh</code> login works at once. Its token usually has the scopes <code>repo</code> and <code>workflow</code>, which is much more than papercuts needs. If an attacker takes over the relay, the attacker can do everything that the token allows. Use a fine-grained token if that risk is too high for you.</p>
+<p>Run <code>papercuts doctor</code> to check the credential and the access.</p>
+<h2 id="run-the-relay">Run the relay</h2>
+<p>The relay reads its settings from the environment:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PORT</code></td>
+<td><code>8000</code></td>
+<td>The port of the relay.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_STORE</code></td>
+<td>the <code>store</code> of <code>.github/papercuts.json</code> in the folder, else <code>github</code></td>
+<td><code>github</code> or <code>local</code>.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_HOST</code></td>
+<td><code>0.0.0.0</code>, local store: <code>127.0.0.1</code></td>
+<td>The address that the relay listens on.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_DB</code></td>
+<td><code>.papercuts/papercuts.db</code> of the main checkout</td>
+<td>The SQLite file of the local store.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_ORIGINS</code></td>
+<td><code>https://*.lab.t7d.dev</code>, local store: <code>http://localhost:*,http://127.0.0.1:*</code></td>
+<td>Sites that can send reports and read the list. <code>*</code> matches one host label or one port.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_REPOS</code></td>
+<td><code>Tim-Conrad/*</code>, local store: <code>*/*</code></td>
+<td>Repos that can receive issues.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_TARGET</code></td>
+<td><code>per-project</code></td>
+<td><code>per-project</code> or <code>central</code>.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_CENTRAL_REPO</code></td>
+<td>none</td>
+<td>The inbox repo for the central target.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_CREDENTIAL</code></td>
+<td><code>gh</code>, or <code>file</code> if a token file is set</td>
+<td><code>gh</code> or <code>file</code>.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_TOKEN_FILE</code></td>
+<td>none</td>
+<td>A file with a fine-grained token.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_GH_MOUNT</code></td>
+<td>none</td>
+<td>A read-only folder with the <code>gh</code> login (<code>config.yml</code>, <code>hosts.yml</code>). The relay gives <code>gh</code> a private copy in its temp folder before each call.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_PUBLIC_URL</code></td>
+<td>none</td>
+<td>The public URL of the relay, for the links to pictures that GitHub refused.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_SHOTS_DIR</code></td>
+<td><code>shots</code></td>
+<td>The folder for those pictures.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_LIST_CACHE_MS</code></td>
+<td><code>30000</code></td>
+<td>How long the relay keeps the list of open papercuts per repo.</td>
+</tr>
+<tr>
+<td><code>PAPERCUTS_CONFIG_CACHE_MS</code></td>
+<td><code>300000</code></td>
+<td>How long the relay keeps the ticket config per repo.</td>
+</tr>
+</tbody>
+</table></div>
+<p>On a laptop, for sites on <code>localhost</code>:</p>
+<div class="code"><div class="code__bar"><span>sh</span></div><pre><code class="language-sh">PAPERCUTS_ORIGINS=&quot;http://localhost:*&quot; PAPERCUTS_REPOS=&quot;owner/*&quot; npx github:Tim-Conrad/papercuts serve
+</code></pre></div>
+<p>Then use <code>http://localhost:8000/papercuts.js</code> in the script tag.</p>
+<p>In a home lab, run the container behind your single sign-on proxy. <code>docker-compose.yml</code> shows the setup of the author with Traefik and Authelia. It mounts <code>~/.config/gh</code> read-only and runs the container as the user that owns it, because <code>gh</code> keeps <code>hosts.yml</code> with mode 600. Change the host names, the origins, the repos and the user ID for your lab.</p>
+<p>The widget sends only simple requests: <code>POST</code> with <code>Content-Type: text/plain</code> and no custom headers. Browsers then send no CORS preflight. A login proxy can therefore stay in front of every route of the relay. The session cookie of the proxy must cover the domain of the site and of the relay. If the login expired, the widget keeps the report and asks you to log in again.</p>
+<p>Routes:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /papercuts.js</code></td>
+<td>The widget.</td>
+</tr>
+<tr>
+<td><code>POST /report</code></td>
+<td>File one report (max 12 MB with a picture).</td>
+</tr>
+<tr>
+<td><code>GET /list?repo=owner/name</code></td>
+<td>The open papercuts and the ones closed in the last 14 days, with replies, fix note and place. A browser must come from an allowed origin.</td>
+</tr>
+<tr>
+<td><code>GET /config?repo=owner/name</code></td>
+<td>The checked ticket config of the repo, with warnings. A browser must come from an allowed origin.</td>
+</tr>
+<tr>
+<td><code>GET /shots/&lt;id&gt;.png</code></td>
+<td>A picture that GitHub refused.</td>
+</tr>
+<tr>
+<td><code>GET /status</code>, <code>GET /healthz</code></td>
+<td>Health.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>papercuts shot</code> reads relay pictures from <code>PAPERCUTS_RELAY_INTERNAL</code> if you set it, for example the address of the container on the Docker network. Otherwise it uses the public link.</p>
+<h2 id="issue-format">Issue format</h2>
+<ul>
+<li>Title: <code>papercut:</code> and the first 70 characters of the sentence.</li>
+<li>Labels: <code>papercut</code>, <code>from:human</code> or <code>from:agent</code>, and <code>kind:&lt;kind&gt;</code>. The central target adds <code>project:&lt;owner/name&gt;</code>.</li>
+<li>Kinds: <code>bug</code>, <code>ux</code>, <code>copy</code>, <code>tool</code>, <code>rule</code>, <code>path</code>, <code>idea</code>, <code>other</code>. People choose no kind: a report from the widget is <code>other</code>, unless a preset or <code>open()</code> sets one. Agents choose the kind.</li>
+<li>Body: the sentence, the picture and the numbered pins if there are any, a YAML block with the context, and HTML comments: <code>papercut-id</code> (one per report), <code>papercut-place</code> (where the reporter was), and for agents <code>papercut-fp</code> (the fingerprint).</li>
+</ul>
+<p>Repeats:</p>
+<ul>
+<li>A report with an ID that exists already returns the first issue. A retry therefore never makes a second issue. This also holds in the first seconds, before GitHub lists a new issue.</li>
+<li>A report from an agent with the same kind, place and sentence as an open papercut adds a <code>+1</code> comment to that issue. Digits, case and spaces do not change the fingerprint.</li>
+<li>A report from a person always opens a new issue.</li>
+</ul>
+<h2 id="security">Security</h2>
+<ul>
+<li>The token stays on the relay or in the <code>gh</code> login of the host. It never goes to the browser, into an issue, into a log, or into a command line. <code>papercuts shot</code> sends it only to <code>github.com</code>.</li>
+<li>Papercuts replaces known secret patterns with <code>[redacted]</code> before a report leaves the browser or the machine. Examples are GitHub tokens, <code>Bearer</code> values, AWS keys, and <code>password=...</code>. The relay does it again. This catches common mistakes. It does not find every secret.</li>
+<li>The relay accepts reports only from the origins in <code>PAPERCUTS_ORIGINS</code>, and only for the repos in <code>PAPERCUTS_REPOS</code>. A report without an <code>Origin</code> header gets a 403. A browser from another origin cannot read the list.</li>
+<li>The relay has no login of its own. Run it behind a login proxy, and do not expose it on a network that you do not trust.</li>
+<li>The widget sends no <code>localStorage</code> unless the site names the keys.</li>
+<li>Do not load papercuts on a page that shows decrypted or secret content. A report copies the text of the picked element and can include a picture of the page.</li>
+<li>A token file on the host is still readable by any program of the same user. A later version adds a credential source that asks a separate broker process to do the call, so that the token never leaves it.</li>
+</ul>
+<h2 id="agent-experience-axi">Agent experience (AXI)</h2>
+<p>The CLI follows the ten <a href="https://axi.md">AXI</a> principles:</p>
+<ul>
+<li>Output is TOON on stdout.</li>
+<li><code>papercuts</code> with no arguments shows the open papercuts.</li>
+<li>Lists carry counts, and empty results say what is empty.</li>
+<li>Long bodies are cut, with the total size and a <code>--full</code> hint.</li>
+<li>Each error has a <code>help:</code> line with the command that fixes it.</li>
+<li>Exit codes: <code>0</code> success (also a no-op), <code>1</code> error, <code>2</code> usage error.</li>
+<li>An unknown flag fails at once, before any network call.</li>
+<li>Each command has <code>--help</code> with examples. <code>--version</code> prints the version.</li>
+</ul>
+<h2 id="develop">Develop</h2>
+<div class="code"><div class="code__bar"><span>sh</span></div><pre><code class="language-sh">npm test                 # unit tests (node:test)
+npm run check:browser    # browser check of the widget (Playwright through uv)
+node bin/papercuts.js skill --check
+</code></pre></div>
+<h2 id="license">License</h2>
+<p>MIT. See <a href="https://github.com/Tim-Conrad/papercuts/blob/main/LICENSE">LICENSE</a>.</p>
+<!-- /tool-readme -->
+  </article>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Tim Conrad</span>
+    <span>No cookies, no trackers, no third-party requests</span>
+  </div>
+</footer>
+
+</body>
+</html>

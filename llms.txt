@@ -1,6 +1,6 @@
 # Tim Conrad
 
-> Tim Conrad does security research and builds browser games. This site holds two games, his thoughts, the CVE-2022-46166 write-up and a PGP key.
+> Tim Conrad does security research and builds browser games. This site holds two games, his thoughts, the CVE-2022-46166 write-up, his tools and a PGP key.
 
 The personal site of Tim Conrad: security research and browser games. Plain HTML with no tracking.
 Each page below is a normal HTML page; the thoughts have an RSS feed.
