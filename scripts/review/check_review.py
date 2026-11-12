@@ -9,6 +9,7 @@ Round 1 changes the heading. Round 2 changes one word, removes one paragraph, ad
 """
 import argparse
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -29,6 +30,7 @@ P2 = "This second paragraph goes away in round two."
 P3 = "The third paragraph stays the same."
 P4 = "Round two adds this closing text."
 SIZES = ((1440, 900), (390, 844), (320, 640))
+WIDE = 960   # from this width the bar is one row with every select; below it the selects open on a tap
 MARKS = "ins.rv-add, del.rv-del, .rv-gone, .rv-newpage"
 
 
@@ -38,8 +40,11 @@ def page(title, paras):
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             '<meta http-equiv="Content-Security-Policy" content="%s"><title>%s</title>'
             '<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">'
-            '<link rel="stylesheet" href="/assets/site.css"><script src="/assets/theme.js"></script></head>'
-            '<body><main class="wrap prose"><h1>%s</h1>\n%s\n</main></body></html>') % (CSP, title, title, body)
+            '<link rel="stylesheet" href="/assets/site.css"><script src="/assets/theme.js"></script>'
+            '<script src="/assets/site.js" defer></script></head>'
+            '<body><header class="nav"><div class="wrap nav__in"><a class="brand" href="/">Fixture</a>'
+            '<button class="toggle" id="theme-toggle" type="button">dark</button></div></header>'
+            '<main class="wrap prose"><h1>%s</h1>\n%s\n</main></body></html>') % (CSP, title, title, body)
 
 
 def git(cwd, *args):
@@ -57,10 +62,11 @@ def fixture(base):
     """The main clone (master) and the worktree of t/a below base/wts. Returns (main, wts)."""
     main, wts = os.path.join(base, "main"), os.path.join(base, "wts")
     os.makedirs(os.path.join(main, "assets"))
-    for f in ("site.css", "theme.js", "favicon.svg"):
+    for f in ("site.css", "theme.js", "site.js", "favicon.svg"):
         shutil.copy(os.path.join(REPO, "assets", f), os.path.join(main, "assets", f))
     shutil.copytree(os.path.join(REPO, "assets", "fonts"), os.path.join(main, "assets", "fonts"))
     write(main, "index.html", page("Fixture", [P1_OLD, P2, P3]))
+    write(main, "long/index.html", page("Long", ["Paragraph %d of a page that scrolls." % i for i in range(60)]))
     git(main, "init", "-b", "master")
     git(main, "add", "-A")
     git(main, "commit", "-m", "base")
@@ -127,6 +133,27 @@ def bar_ready(pg):
     pg.wait_for_selector(".rv-bar[data-ready]", state="attached")
 
 
+def open_bar(pg):
+    """On a narrow screen the selects are in a part that opens on a tap."""
+    if pg.is_visible(".rv-more-toggle") and pg.get_attribute(".rv-more-toggle", "aria-expanded") != "true":
+        pg.click(".rv-more-toggle")
+
+
+def pick(pg, sel, value):
+    open_bar(pg)
+    pg.select_option(sel, value)
+
+
+def small_targets(pg):
+    return pg.evaluate("[...document.querySelectorAll('.rv-bar select, .rv-bar label, .rv-bar button')]"
+                       ".filter(n => n.offsetParent).map(n => n.getBoundingClientRect().height).filter(x => x < 40)")
+
+
+def theme_now(pg):
+    return pg.evaluate("document.documentElement.dataset.theme || "
+                       "(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')")
+
+
 def run(base, shots):
     c = Check()
     with sync_playwright() as p:
@@ -144,6 +171,7 @@ def run(base, shots):
                 # master has no rounds: only the branch select
                 pg.goto(base + "/?branch=master")
                 bar_ready(pg)
+                open_bar(pg)
                 c.that(pg.is_visible(".rv-branch-pick") and not pg.is_visible(".rv-from")
                        and not pg.is_visible(".rv-to") and not pg.is_visible(".rv-switch"),
                        tag + ": on master the bar shows only the branch select")
@@ -153,7 +181,7 @@ def run(base, shots):
 
                 # the branch select opens t/a, with Round 2 against Round 1
                 with pg.expect_navigation():
-                    pg.select_option(".rv-branch-pick", "t/a")
+                    pick(pg, ".rv-branch-pick", "t/a")
                 bar_ready(pg)
                 c.that("branch=t%2Fa" in pg.url or "branch=t/a" in pg.url, tag + ": the branch select loads t/a")
                 c.that(pg.input_value(".rv-to") == pg.eval_on_selector(".rv-to", "s => s.options[s.options.length - 1].value"),
@@ -166,11 +194,10 @@ def run(base, shots):
                 c.that(pg.evaluate("document.querySelector('.rv-gone').nextElementSibling.textContent") == P3,
                        tag + ": rv-gone is before the next kept paragraph")
                 c.that(pg.evaluate("[...document.querySelectorAll('[class^=rv-], [class*=\" rv-\"]')]"
-                                   ".filter(n => !n.closest('[data-review-ui]') && !n.matches('ins, del')).length") == 0,
+                                   ".filter(n => n !== document.documentElement && !n.closest('[data-review-ui]') && !n.matches('ins, del')).length") == 0,
                        tag + ": every review element outside the marks carries data-review-ui")
                 c.that(no_side_scroll(pg), tag + ": no horizontal scroll with marks")
-                small = pg.evaluate("[...document.querySelectorAll('.rv-bar select, .rv-bar label, .rv-bar button')]"
-                                    ".filter(n => n.offsetParent).map(n => n.getBoundingClientRect().height).filter(x => x < 40)")
+                small = small_targets(pg)
                 c.that(small == [], tag + ": touch targets are 40 px or more (%r)" % small)
                 if shots:
                     pg.screenshot(path=os.path.join(shots, "marks-%d-%s.png" % (w, scheme)), full_page=True)
@@ -188,24 +215,50 @@ def run(base, shots):
                 c.that(texts(pg, "del.rv-del") == ["quick"] and texts(pg, ".rv-gone") == [P2],
                        tag + ": switch on shows the marks again")
 
+                # one failed request: the same version loads when it is selected again
+                round1 = pg.eval_on_selector(".rv-to", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value")
+                pg.route(re.compile(r"/__review/api/text\?.*rev=master"), lambda route: route.abort(), times=1)
+                n_errors = len(errors)
+                pick(pg, ".rv-from", "master")
+                wait_for(pg, "document.querySelector('.rv-status').textContent !== ''")
+                c.that(pg.locator(MARKS).count() == 0, tag + ": a failed request shows no marks")
+                errors[n_errors:] = [e for e in errors[n_errors:] if "net::ERR_FAILED" not in e]
+                pick(pg, ".rv-from", round1)
+                wait_for(pg, "document.querySelectorAll('del.rv-del').length === 1")
+                pick(pg, ".rv-from", "master")
+                try:
+                    wait_for(pg, "document.querySelector('main h1 ins.rv-add') !== null")
+                    again = True
+                except AssertionError:
+                    again = False
+                c.that(again and pg.text_content(".rv-status") == "",
+                       tag + ": after a failed request the version loads when it is selected again")
+
                 # to = Round 1 is an older round: the page shows round 1, marked against master
-                pg.select_option(".rv-from", "master")
-                to1 = pg.eval_on_selector(".rv-to", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value")
-                pg.select_option(".rv-to", to1)
+                pick(pg, ".rv-to", round1)
                 wait_for(pg, "document.querySelector('main h1 ins.rv-add') !== null")
                 c.that(texts(pg, "main > p") == [P1_OLD, P2, P3], tag + ": to = Round 1 shows the text of round 1")
                 c.that(texts(pg, "ins.rv-add") == [" page"] and pg.locator("del.rv-del, .rv-gone").count() == 0,
                        tag + ": Round 1 against master marks only the heading (%r)" % texts(pg, "ins.rv-add"))
+                header = pg.evaluate("document.querySelector('header.nav') !== null")
+                before = theme_now(pg)
+                pg.evaluate("document.getElementById('theme-toggle').click()")
+                after = theme_now(pg)
+                pg.evaluate("document.getElementById('theme-toggle').click()")
+                c.that(header and after != before and theme_now(pg) == before,
+                       tag + ": in an older round the theme toggle of the header still works (%s -> %s)" % (before, after))
+                if pg.get_attribute(".rv-more-toggle", "aria-expanded") == "true":
+                    pg.click(".rv-more-toggle")
                 if shots and w != 1440:
                     pg.screenshot(path=os.path.join(shots, "round1-%d-%s.png" % (w, scheme)))
-                pg.select_option(".rv-to", pg.eval_on_selector(".rv-to", "s => s.options[s.options.length - 1].value"))
+                pick(pg, ".rv-to", pg.eval_on_selector(".rv-to", "s => s.options[s.options.length - 1].value"))
                 wait_for(pg, "document.querySelectorAll('main > p').length === 3")
                 wait_for(pg, "document.querySelectorAll('.rv-gone').length === 1")
                 c.that(texts(pg, "ins.rv-add") == [" page", "slow", P4] and texts(pg, "del.rv-del") == ["quick"],
                        tag + ": back to Round 2 shows the page on disk, marked against master (%r)" % texts(pg, "ins.rv-add"))
 
                 # a page new in "to"
-                pg.select_option(".rv-from", pg.eval_on_selector(".rv-from", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value"))
+                pick(pg, ".rv-from", pg.eval_on_selector(".rv-from", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value"))
                 pg.goto(base + "/new/?branch=t/a")
                 bar_ready(pg)
                 c.that(texts(pg, ".rv-newpage") == ["New page in this round"], tag + ": a new page has one line")
@@ -213,6 +266,38 @@ def run(base, shots):
                 c.that(no_side_scroll(pg), tag + ": no horizontal scroll on the new page")
                 if shots and w == 390:
                     pg.screenshot(path=os.path.join(shots, "newpage-%d-%s.png" % (w, scheme)))
+
+                # a long page: the closed bar is small, sticks to the bottom and opens on a tap
+                pg.goto(base + "/long/?branch=t/a")
+                bar_ready(pg)
+                box = pg.evaluate("(() => { const r = document.querySelector('.rv-bar').getBoundingClientRect();"
+                                  " return {top: r.top, bottom: r.bottom, h: r.height, vh: innerHeight}; })()")
+                c.that(abs(box["bottom"] - box["vh"]) < 2, tag + ": the bar sticks to the bottom of a long page (%r)" % box)
+                pad = pg.evaluate("parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) || 0")
+                c.that(pad >= box["h"], tag + ": scroll-padding-bottom (%s px) is at least the bar height (%s px)" % (pad, box["h"]))
+                if w < WIDE:
+                    c.that(box["h"] <= 0.15 * h, tag + ": the closed bar is at most 15%% of the screen (%s px)" % box["h"])
+                    c.that(pg.get_attribute(".rv-more-toggle", "aria-expanded") == "false" and not pg.is_visible(".rv-from"),
+                           tag + ": the selects are closed at first")
+                    c.that(pg.text_content(".rv-more-toggle").strip() == "Round 2 vs Round 1",
+                           tag + ": the closed bar shows the comparison (%r)" % pg.text_content(".rv-more-toggle"))
+                    c.that(small_targets(pg) == [], tag + ": closed bar: touch targets are 40 px or more")
+                    if shots:
+                        pg.screenshot(path=os.path.join(shots, "long-closed-%d-%s.png" % (w, scheme)))
+                    pg.click(".rv-more-toggle")
+                    c.that(pg.get_attribute(".rv-more-toggle", "aria-expanded") == "true"
+                           and pg.is_visible(".rv-branch-pick") and pg.is_visible(".rv-from") and pg.is_visible(".rv-to"),
+                           tag + ": a tap opens the selects")
+                    c.that(small_targets(pg) == [] and no_side_scroll(pg),
+                           tag + ": open bar: touch targets are 40 px or more, no horizontal scroll")
+                    if shots:
+                        pg.screenshot(path=os.path.join(shots, "long-open-%d-%s.png" % (w, scheme)))
+                    pg.click(".rv-more-toggle")
+                    c.that(pg.get_attribute(".rv-more-toggle", "aria-expanded") == "false" and not pg.is_visible(".rv-from"),
+                           tag + ": a second tap closes the selects")
+                else:
+                    c.that(not pg.is_visible(".rv-more-toggle") and pg.is_visible(".rv-from"),
+                           tag + ": a wide screen shows every select in one row")
 
                 c.that(errors == [], tag + ": no console error (%r)" % errors)
                 ctx.close()

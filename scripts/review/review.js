@@ -34,8 +34,21 @@
   var approve = ui('button', 'rv-approve', 'Approve');
   approve.type = 'button'; approve.hidden = true;   /* Task 6 of the review rounds connects it */
   var status = ui('span', 'rv-status'); status.setAttribute('role', 'status');
-  bar.append(branchField.label, fromField.label, toField.label, sw, approve, status);
+  /* On a narrow screen the bar is one row: the comparison and the switch. A tap on the comparison opens the selects. */
+  var more = ui('div', 'rv-more'), moreToggle = ui('button', 'rv-more-toggle');
+  more.id = 'rv-more'; more.append(branchField.label, fromField.label, toField.label);
+  moreToggle.type = 'button'; moreToggle.setAttribute('aria-controls', more.id); moreToggle.setAttribute('aria-expanded', 'false');
+  bar.append(moreToggle, more, sw, approve, status);
   var versionParts = [fromField.label, toField.label, sw];
+  function setOpen(open) {
+    bar.classList.toggle('rv-open', open);
+    document.documentElement.classList.toggle('rv-bar-open', open);
+    moreToggle.setAttribute('aria-expanded', String(open));
+  }
+  moreToggle.addEventListener('click', function () { setOpen(!bar.classList.contains('rv-open')); });
+  bar.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && bar.classList.contains('rv-open')) { setOpen(false); moreToggle.focus(); }
+  });
 
   /* the choice per branch in localStorage; "last" is the newest version when it was saved */
   function load(branch) {
@@ -50,38 +63,44 @@
     if (!(rev in texts)) {
       texts[rev] = fetch(API + 'text?' + q(branch) + '&rev=' + encodeURIComponent(rev) + '&path=' + encodeURIComponent(location.pathname))
         .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-        .then(function (d) { return d.html; });
+        .then(function (d) { return d.html; }, function (err) { delete texts[rev]; throw err; });   /* keep no failure */
     }
     return texts[rev];
   }
   function parse(html) { return new DOMParser().parseFromString(html, 'text/html'); }
 
-  /* ---- the version on screen: the page on disk, or the body of an older version ---- */
-  var own = null;      /* the nodes of the page on disk while an older version is on screen */
+  /* ---- the version on screen: the page on disk, or the content of main of an older version ----
+     Only main changes, so the header, the nav and the footer keep the listeners of site.js. A page without main
+     changes its whole body. */
+  var own = null;      /* {el, nodes}: the content of the page on disk while an older version is on screen */
   var shown = null;    /* the rev of the older version on screen, or null */
-  function pageNodes() {
-    return Array.prototype.filter.call(document.body.childNodes, function (n) { return n !== bar; });
+  function contentOf(el) {
+    return Array.prototype.filter.call(el.childNodes, function (n) { return n !== bar; });
+  }
+  function put(el, nodes) {
+    nodes.forEach(function (n) { el.insertBefore(n, el === document.body ? bar : null); });
   }
   function showOwn() {
     if (!own) return;
-    pageNodes().forEach(function (n) { n.remove(); });
-    own.forEach(function (n) { document.body.insertBefore(n, bar); });
+    contentOf(own.el).forEach(function (n) { n.remove(); });
+    put(own.el, own.nodes);
     own = null; shown = null;
   }
   function showOther(rev, html) {
     if (shown === rev) return;
-    if (!own) own = pageNodes();
-    pageNodes().forEach(function (n) { n.remove(); });
+    if (!own) { var el = document.querySelector('main') || document.body; own = { el: el, nodes: contentOf(el) }; }
+    contentOf(own.el).forEach(function (n) { n.remove(); });
     var nodes;
     if (html === null) {
       nodes = [ui('p', 'rv-missing wrap', 'This page is not in this version.')];
     } else {
-      var body = parse(html).body;
+      var doc = parse(html), from = own.el === document.body ? doc.body : (doc.querySelector('main') || doc.body);
       /* the scripts of the page ran once already */
-      Array.prototype.forEach.call(body.querySelectorAll('script'), function (s) { s.remove(); });
-      nodes = Array.prototype.map.call(body.childNodes, function (n) { return document.adoptNode(n); });
+      Array.prototype.forEach.call(from.querySelectorAll('script'), function (s) { s.remove(); });
+      /* a copy first: adoptNode takes each node out of the live childNodes list */
+      nodes = Array.prototype.slice.call(from.childNodes).map(function (n) { return document.adoptNode(n); });
     }
-    nodes.forEach(function (n) { document.body.insertBefore(n, bar); });
+    put(own.el, nodes);
     shown = rev;
   }
 
@@ -197,8 +216,13 @@
   /* ---- the bar ---- */
   var v = null, versions = [], choice = {}, run = 0;
   function onDisk() { return versions[versions.length - 1].value; }
+  function nameOf(value) {
+    for (var i = 0; i < versions.length; i++) if (versions[i].value === value) return versions[i].short;
+    return value;
+  }
   function render() {
     var mine = ++run;
+    moreToggle.textContent = nameOf(choice.to) + ' vs ' + nameOf(choice.from);
     unmark();
     status.textContent = '';
     var to = choice.to, from = choice.from;
@@ -220,11 +244,12 @@
   function start(data) {
     v = data;
     fill(branchField.select, v.branches.map(function (b) { return { value: b, label: b }; }), v.branch);
-    versions = [{ value: v.base, label: v.base }].concat(v.rounds.map(function (r) {
-      return { value: r.sha, label: 'Round ' + r.n + ': ' + r.subject };
+    versions = [{ value: v.base, label: v.base, short: v.base }].concat(v.rounds.map(function (r) {
+      return { value: r.sha, label: 'Round ' + r.n + ': ' + r.subject, short: 'Round ' + r.n };
     }));
-    if (v.working) versions.push({ value: 'working', label: 'Working' });
+    if (v.working) versions.push({ value: 'working', label: 'Working', short: 'Working' });
     if (versions.length < 2) {
+      moreToggle.textContent = v.branch;
       versionParts.forEach(function (n) { n.hidden = true; });
       return Promise.resolve();
     }
@@ -248,6 +273,8 @@
 
   function mount() {
     document.body.appendChild(bar);
+    document.documentElement.classList.add('rv-has-bar');
+    moreToggle.textContent = 'Review';
     versionParts.forEach(function (n) { n.hidden = true; });
     fetch(API + 'versions?' + q(asked))
       .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
