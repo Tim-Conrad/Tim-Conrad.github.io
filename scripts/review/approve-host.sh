@@ -4,16 +4,22 @@
 # .review/approve/request.json exists in the main clone. It runs as the host user, with the GitHub login of that user.
 #
 # The steps, in this order. Each step goes to .review/approve-status/status.json before it runs:
-#  1. Read the request and remove it. A crash then cannot start the path unit again and again.
-#     A request that is not valid becomes state "failed".
+#  1. Move the request into a private path in the status folder (the container cannot write there), then read it.
+#     A crash then cannot start the path unit again and again. Only a regular file counts, and only its first
+#     4096 bytes are read: a folder, a symlink or a FIFO from the container cannot block or fill the host.
+#     A request that is not valid becomes state "failed" and is removed.
 #  2. The sha of the request must be the head of the branch in the main clone.
 #  3. The worktree of the branch must be clean.
-#  4. python3 scripts/check.py in that worktree.
-#  5. git push origin <sha>:refs/heads/<branch>, with no force. A rejected push stops.
-#  6. gh pr create, if no PR has this head (title: the subject of round 1, body: the list of rounds).
-#  7. scripts/ship.sh <pr> <sha> in the main clone. It merges only if the head of the PR is still <sha>.
-#  8. git worktree remove (no --force) and git branch -d.
+#  4. python3 scripts/check.py in that worktree. Then steps 2 and 3 again: the check saw the approved commit only if
+#     nothing changed while it ran.
+#  5. If a merged PR to master has the head <sha>, an earlier run failed after the merge: skip 6 and 7.
+#  6. git push origin <sha>:refs/heads/<branch>, with no force. A rejected push stops.
+#  7. gh pr create, if no open PR to master has this head (title: the subject of round 1, body: the list of rounds).
+#  8. scripts/ship.sh <pr> <sha> in the main clone. It merges only if the head of the PR is still <sha>.
+#  9. git worktree remove (no --force) and git branch -d.
 # A failed step writes state "failed" with the step and the last line of its output, and removes nothing.
+# SIGTERM or SIGINT (systemd stops the unit) writes state "failed" with the step and the line "killed".
+# Each status has the branch, the sha and the time of its request ("request"), so a client can find its own.
 #
 # One run at a time: a second run waits for the lock (flock) of the first run, then reads its own request.
 # It does not exit and leave the request, because the path unit then starts it again at once, in a loop.
@@ -29,20 +35,20 @@ request=$main/.review/approve/request.json
 status_dir=$main/.review/approve-status
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT
-branch="" sha="" pr="" wt=""
+branch="" sha="" asked="" pr="" wt="" now_step=""
 
 # status <state> <step> [<line>]: write status.json atomically (a temporary file, then a rename)
 status() {
   python3 -c '
 import datetime, json, os, sys
-d, state, step, line, pr, branch, sha = sys.argv[1:]
-st = {"state": state, "step": step, "line": line, "pr": pr or None, "branch": branch, "sha": sha,
+d, state, step, line, pr, branch, sha, asked = sys.argv[1:]
+st = {"state": state, "step": step, "line": line, "pr": pr or None, "branch": branch, "sha": sha, "request": asked,
       "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
 tmp = os.path.join(d, ".status.%d.tmp" % os.getpid())
 with open(tmp, "w") as f:
     json.dump(st, f)
 os.replace(tmp, os.path.join(d, "status.json"))
-' "$status_dir" "$1" "$2" "${3:-}" "$pr" "$branch" "$sha"
+' "$status_dir" "$1" "$2" "${3:-}" "$pr" "$branch" "$sha" "$asked"
   echo "== $1: $2${3:+ ($3)}"
 }
 
@@ -51,6 +57,7 @@ os.replace(tmp, os.path.join(d, "status.json"))
 step() {
   local name=$1
   shift
+  now_step=$name
   status running "$name"
   if ! "$@" >"$log" 2>&1; then
     cat "$log"
@@ -61,9 +68,15 @@ step() {
 }
 
 read_request() {
-  local req out
-  req=$(cat "$request") || true
-  rm -f "$request"
+  local taken=$status_dir/.request.$$ req out
+  mv -T -- "$request" "$taken" || return 1
+  if [ -L "$taken" ] || [ ! -f "$taken" ]; then
+    rm -rf -- "$taken"
+    echo "the request is not a regular file"
+    return 1
+  fi
+  req=$(head -c 4096 -- "$taken") || true
+  rm -f -- "$taken"
   out=$(python3 -c '
 import json, sys
 sys.path.insert(0, sys.argv[1])
@@ -77,10 +90,14 @@ if not isinstance(b, str) or not gitread.valid_branch(b) or b == approve.BASE:
     sys.exit("the request has no valid branch")
 if not isinstance(s, str) or not approve.SHA.match(s):
     sys.exit("the request has no full sha")
+t = r.get("time")
+if not isinstance(t, str) or "\n" in t:
+    sys.exit("the request has no time")
 print(b)
 print(s)
+print(t)
 ' "$here" "$req") || return 1
-  { read -r branch; read -r sha; } <<<"$out"
+  { read -r branch; read -r sha; read -r asked; } <<<"$out"
 }
 
 check_head() {
@@ -122,16 +139,26 @@ if what == "title":
 print("The rounds of %s, approved at round %d (%s) on the review site:\n" % (branch, len(rounds), sha[:7]))
 for r in rounds:
     print("%d. %s %s" % (r["n"], r["sha"][:7], r["subject"]))
-print("\n\U0001F916 Generated with [Claude Code](https://claude.com/claude-code)\n")
-print("https://claude.ai/code/session_01KFxuEteUiyeGMzLJ2VGnGc")
+print("\n\U0001F916 Generated with [Claude Code](https://claude.com/claude-code)")
 ' "$here" "$1" "$main" "$branch" "$sha"
 }
 
-# open_pr: the PR whose head is the approved sha (open or merged), else a new one
+# find_pr <state>: the URL of the PR to master in that state (OPEN or MERGED) whose head is the approved sha
+find_pr() {
+  (cd "$main" && "$gh" pr list --base master --head "$branch" --state all --json url,headRefOid,state \
+    --jq "map(select(.headRefOid == \"$sha\" and .state == \"$1\"))[0].url // empty")
+}
+
+# merged_pr: sets pr if an earlier run merged this sha already
+merged_pr() {
+  pr=$(find_pr MERGED) || return 1
+  echo "${pr:-no merged PR has the head ${sha:0:7}}"
+}
+
+# open_pr: the open PR whose head is the approved sha, else a new one
 open_pr() {
   local title body
-  pr=$(cd "$main" && "$gh" pr list --head "$branch" --state all --json url,headRefOid,state \
-        --jq "map(select(.headRefOid == \"$sha\" and .state != \"CLOSED\"))[0].url // empty") || return 1
+  pr=$(find_pr OPEN) || return 1
   if [ -z "$pr" ]; then
     title=$(rounds title) || return 1
     body=$(rounds body) || return 1
@@ -153,13 +180,20 @@ clean_up() {
 mkdir -p "$status_dir"
 exec 9>"$status_dir/.lock"
 flock 9
-[ -e "$request" ] || exit 0   # the run before this one took the request while this one waited
+# -L too: a symlink to a missing file is still a request to remove
+[ -e "$request" ] || [ -L "$request" ] || exit 0   # the run before this one took the request while this one waited
+trap 'status failed "$now_step" killed; exit 143' TERM INT
 step "read the request" read_request
 step "check that ${sha:0:7} is the head of $branch" check_head
 step "check that the worktree of $branch is clean" check_worktree
 step "run scripts/check.py" run_check
-step "push $branch" push
-step "open the PR" open_pr
+step "check that ${sha:0:7} is still the head of $branch" check_head
+step "check that the worktree of $branch is still clean" check_worktree
+step "look for a merged PR" merged_pr
+if [ -z "$pr" ]; then
+  step "push $branch" push
+  step "open the PR" open_pr
+fi
 step "ship $pr" run_ship
 step "remove the worktree and the branch" clean_up
 status done "published $branch at ${sha:0:7}"

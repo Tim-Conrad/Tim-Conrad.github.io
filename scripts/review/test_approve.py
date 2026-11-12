@@ -7,6 +7,7 @@ Fake gh and ship scripts log their arguments. Nothing goes to the network.
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -26,11 +27,12 @@ HOST = os.path.join(HERE, "approve-host.sh")
 SHIP = os.path.join(HERE, "..", "ship.sh")
 PR_URL = "https://github.com/Tim-Conrad/Tim-Conrad.github.io/pull/7"
 
-# gh: logs each call, one per line, as JSON. "pr list" finds no PR, "pr create" prints the URL of the new PR.
+# gh: logs each call, one per line, as JSON. "pr list" finds no PR (FAKE_PR_MERGED and FAKE_PR_LIST set the answer
+# for the merged and the open lookup), "pr create" prints the URL of the new PR.
 FAKE_GH = """#!/usr/bin/env bash
 python3 -c 'import json, sys; print(json.dumps(sys.argv[1:]))' "$@" >>"$LOG_DIR/gh.log"
 case "$1 $2" in
-  "pr list") echo "${FAKE_PR_LIST:-}" ;;
+  "pr list") if [[ "$*" == *MERGED* ]]; then echo "${FAKE_PR_MERGED:-}"; else echo "${FAKE_PR_LIST:-}"; fi ;;
   "pr create") echo "%s" ;;
 esac
 """ % PR_URL
@@ -89,10 +91,20 @@ class Fixture(unittest.TestCase):
         self.tmp.cleanup()
 
     def request(self, sha=None):
-        return approve.write_request(self.main, self.approve_dir, "t/a", sha or self.head, "agent")
+        return approve.write_request(self.main, self.approve_dir, "t/a", sha or self.head, "agent",
+                                     status_dir=self.status_dir)
 
-    def host(self):
-        return subprocess.run(["bash", HOST], env=self.env, capture_output=True, text=True, timeout=60)
+    def host(self, timeout=60):
+        return subprocess.run(["bash", HOST], env=self.env, capture_output=True, text=True, timeout=timeout)
+
+    def new_round(self, check_py):
+        """Round three changes only scripts/check.py of the worktree. It becomes the head."""
+        write(os.path.join(self.wt, "scripts", "check.py"), check_py)
+        git(self.wt, "commit", "-qam", "Round three")
+        self.head = git(self.main, "rev-parse", "t/a")
+
+    def gh_calls(self, verb):
+        return [json.loads(line) for line in self.log("gh.log") if json.loads(line)[:2] == ["pr", verb]]
 
     def status(self):
         with open(os.path.join(self.status_dir, "status.json")) as f:
@@ -113,13 +125,18 @@ class Fixture(unittest.TestCase):
 class Host(Fixture):
     def test_ship_gets_the_approved_sha(self):
         round1 = git(self.main, "rev-parse", "t/a~1")
-        self.request()
+        req = self.request()
         res = self.host()
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
         self.assertEqual(self.log("ship.log"), ["7 " + self.head])
         self.assertEqual(self.remote_branch(), self.head)
         st = self.status()
         self.assertEqual((st["state"], st["pr"], st["branch"], st["sha"]), ("done", PR_URL, "t/a", self.head))
+        self.assertEqual(st["request"], req["time"])
+        lists = self.gh_calls("list")
+        self.assertTrue(lists)
+        for args in lists + self.gh_calls("create"):
+            self.assertEqual(args[args.index("--base") + 1], "master", args)
         create = [json.loads(line) for line in self.log("gh.log") if '"create"' in line]
         self.assertEqual(len(create), 1)
         args = create[0]
@@ -127,9 +144,9 @@ class Host(Fixture):
         body = args[args.index("--body") + 1]
         self.assertIn("1. %s Round one" % round1[:7], body)
         self.assertIn("2. %s Round two" % self.head[:7], body)
-        self.assertTrue(body.endswith("https://claude.ai/code/session_01KFxuEteUiyeGMzLJ2VGnGc\n")
-                        or body.endswith("https://claude.ai/code/session_01KFxuEteUiyeGMzLJ2VGnGc"), body)
-        self.assertIn("Generated with [Claude Code](https://claude.com/claude-code)", body)
+        self.assertEqual(body.rstrip("\n").splitlines()[-1],
+                         "\U0001F916 Generated with [Claude Code](https://claude.com/claude-code)")
+        self.assertNotIn("claude.ai/code/session", body)
 
     def test_an_open_pr_is_not_created_again(self):
         self.env["FAKE_PR_LIST"] = PR_URL
@@ -162,9 +179,7 @@ class Host(Fixture):
         self.assertEqual(self.log("ship.log"), [])
 
     def test_failed_check_stops(self):
-        write(os.path.join(self.wt, "scripts", "check.py"), "raise SystemExit('check: bad CSP')\n")
-        git(self.wt, "commit", "-qam", "Round three")
-        self.head = git(self.main, "rev-parse", "t/a")
+        self.new_round("raise SystemExit('check: bad CSP')\n")
         self.request()
         self.assertNotEqual(self.host().returncode, 0)
         st = self.status()
@@ -197,6 +212,81 @@ class Host(Fixture):
                                         capture_output=True).returncode, 1)
         self.assertFalse(os.path.exists(os.path.join(self.approve_dir, "request.json")))
 
+    def test_commit_during_check_stops_before_push(self):
+        self.new_round("import subprocess\nsubprocess.run(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', "
+                       "'-q', '--allow-empty', '-m', 'during the check'], check=True)\n")
+        self.request()
+        self.assertNotEqual(self.host().returncode, 0)
+        st = self.status()
+        self.assertEqual(st["state"], "failed")
+        self.assertIn("head", st["step"])
+        self.assertEqual(self.remote_branch(), "")
+        self.assertEqual(self.log("ship.log"), [])
+
+    def test_edit_during_check_stops_before_push(self):
+        self.new_round("open('index.html', 'a').write('edit during the check')\n")
+        self.request()
+        self.assertNotEqual(self.host().returncode, 0)
+        st = self.status()
+        self.assertEqual(st["state"], "failed")
+        self.assertIn("clean", st["step"])
+        self.assertEqual(self.remote_branch(), "")
+
+    def test_merged_pr_skips_push_and_create(self):
+        """A run after a failure that came after the merge: no new push and no new PR, ship.sh does the rest."""
+        self.env["FAKE_PR_MERGED"] = PR_URL
+        self.request()
+        res = self.host()
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(self.remote_branch(), "")
+        self.assertEqual(self.gh_calls("create"), [])
+        self.assertEqual(self.log("ship.log"), ["7 " + self.head])
+        self.assertEqual(self.status()["state"], "done")
+
+    def test_term_marks_the_run_failed(self):
+        """systemd stops the unit with SIGTERM to its cgroup: the status says killed, not running."""
+        started = os.path.join(self.logs, "check-started")
+        self.new_round("import time\nopen(%r, 'w').close()\ntime.sleep(30)\n" % started)
+        self.request()
+        proc = subprocess.Popen(["bash", HOST], env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=True)
+        for _ in range(200):
+            if os.path.exists(started):
+                break
+            threading.Event().wait(0.05)
+        self.assertTrue(os.path.exists(started))
+        os.killpg(proc.pid, signal.SIGTERM)
+        proc.wait(timeout=15)
+        st = self.status()
+        self.assertEqual((st["state"], st["step"], st["line"]), ("failed", "run scripts/check.py", "killed"))
+        self.assertEqual(self.remote_branch(), "")
+
+    def odd_request(self, make):
+        path = os.path.join(self.approve_dir, "request.json")
+        make(path)
+        res = self.host(timeout=20)
+        self.assertNotEqual(res.returncode, 0)
+        st = self.status()
+        self.assertEqual((st["state"], st["step"]), ("failed", "read the request"))
+        self.assertFalse(os.path.lexists(path))
+        self.assertEqual(sorted(os.listdir(self.status_dir)), [".lock", "status.json"])
+        self.assertEqual(self.log("gh.log"), [])
+
+    def test_folder_request_fails_and_is_removed(self):
+        def make(path):
+            os.mkdir(path)
+            write(os.path.join(path, "x"), "{}")
+        self.odd_request(make)
+
+    def test_symlink_request_fails_and_is_removed(self):
+        self.odd_request(lambda path: os.symlink("/dev/urandom", path))
+
+    def test_fifo_request_fails_and_is_removed(self):
+        self.odd_request(os.mkfifo)
+
+    def test_big_request_is_read_only_in_part(self):
+        self.odd_request(lambda path: write(path, '{"branch": "t/a", "sha": "%s", "pad": "%s"}' % (self.head, "x" * 5000)))
+
     def test_invalid_request_fails_and_is_removed(self):
         write(os.path.join(self.approve_dir, "request.json"), '{"branch": "--force", "sha": "x"}')
         self.assertNotEqual(self.host().returncode, 0)
@@ -223,12 +313,48 @@ class Request(Fixture):
         self.assertEqual(cli.returncode, 1)
         self.assertIn("already", cli.stderr)
 
+    def test_request_is_refused_while_a_run_is_going(self):
+        st = {"state": "running", "step": "push t/a", "line": "", "pr": None, "branch": "t/b", "sha": "b" * 40,
+              "request": "2026-11-12T00:00:00Z", "time": approve.now()}
+        write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
+        with self.assertRaises(approve.Refused) as e:
+            self.request()
+        self.assertEqual(e.exception.code, 409)
+        self.assertEqual(os.listdir(self.approve_dir), [])
+        st["time"] = "2026-11-12T00:00:00Z"   # stale: a run that stopped without a word blocks nothing
+        write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
+        self.request()
+
+    def test_cli_ignores_the_status_of_another_request(self):
+        proc = subprocess.Popen([sys.executable, os.path.join(HERE, "approve.py"), "t/a", "--root", self.main,
+                                 "--poll", "0.05", "--timeout", "30"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                text=True)
+        path = os.path.join(self.approve_dir, "request.json")
+        for _ in range(200):
+            if os.path.exists(path):
+                break
+            threading.Event().wait(0.05)
+        with open(path) as f:
+            req = json.load(f)
+        os.remove(path)
+        st = {"state": "done", "step": "published t/a", "line": "", "pr": PR_URL, "branch": "t/a", "sha": self.head,
+              "request": "2026-01-01T00:00:00Z", "time": approve.now()}
+        write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
+        threading.Event().wait(0.5)
+        self.assertIsNone(proc.poll(), "approve.py took the status of another request")
+        st.update(state="failed", step="push t/a", line="rejected", pr=None, request=req["time"])
+        write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
+        out, err = proc.communicate(timeout=10)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("rejected", err)
+
     def test_old_round_and_master_are_refused(self):
         with self.assertRaises(approve.Refused) as e:
             self.request(self.head_of_round_one())
         self.assertEqual(e.exception.code, 409)
         with self.assertRaises(approve.Refused):
-            approve.write_request(self.main, self.approve_dir, "master", git(self.main, "rev-parse", "master"), "agent")
+            approve.write_request(self.main, self.approve_dir, "master", git(self.main, "rev-parse", "master"), "agent",
+                                  status_dir=self.status_dir)
         self.assertEqual(os.listdir(self.approve_dir), [])
 
     def head_of_round_one(self):
@@ -297,6 +423,13 @@ class Api(Fixture):
               "time": approve.now()}
         write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
         self.assertEqual(self.call(), (200, st))
+
+    def test_api_refuses_while_a_run_is_going(self):
+        st = {"state": "running", "step": "push t/b", "line": "", "pr": None, "branch": "t/b", "sha": "b" * 40,
+              "request": approve.now(), "time": approve.now()}
+        write(os.path.join(self.status_dir, "status.json"), json.dumps(st))
+        self.assertEqual(self.call({"branch": "t/a", "sha": self.head})[0], 409)
+        self.assertFalse(os.path.exists(os.path.join(self.approve_dir, "request.json")))
 
     def test_api_without_the_approve_folder_is_503(self):
         shutil.rmtree(self.approve_dir)

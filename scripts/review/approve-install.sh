@@ -33,6 +33,8 @@ Environment=PATH=$(dirname "$gh"):/usr/local/bin:/usr/bin:/bin
 ExecStart=$repo/scripts/review/approve-host.sh
 # Keep this below STALE in approve.py (1800 s): after that time the page treats "running" as stopped.
 TimeoutStartSec=1500
+# A cap, so a run that goes wrong cannot take the memory of the platform (a 4 GB host).
+MemoryMax=256M
 EOF
 
 systemctl --user daemon-reload

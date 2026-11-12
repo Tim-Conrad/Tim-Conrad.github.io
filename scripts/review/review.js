@@ -216,12 +216,13 @@
 
   /* ---- approve: the host checks, merges and publishes the newest round (approve-host.sh) ---- */
   var job = { state: 'idle' };   /* the status of the host, from GET /api/approve */
-  var since = null;              /* the time of the request that this page sent: an older end state does not count */
+  var mine = null;               /* the request that this page sent: then only a status of that request counts */
   var polling = false, diffNote = '', approveNote = '';
   function newest() { return v && v.rounds.length ? v.rounds[v.rounds.length - 1] : null; }
   function updateApprove() {
     var last = newest();
-    approve.hidden = !(last && v.branch !== v.base && choice.to === last.sha);   /* only a commit can ship, not Working */
+    /* only a commit can ship, not Working. The host refuses a worktree with changes, so then no button either. */
+    approve.hidden = !(last && v.branch !== v.base && choice.to === last.sha && !v.working);
     if (last) approve.textContent = 'Approve round ' + last.n;
     approve.disabled = job.state === 'running';
   }
@@ -246,7 +247,10 @@
     (function tick() {
       fetch(API + 'approve')
         .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-        .then(function (s) { if (s.state === 'running' || !since || (s.time && s.time >= since)) job = s; })
+        .then(function (s) {
+          /* the host copies branch, sha and time of the request into each status */
+          if (!mine || (s.branch === mine.branch && s.sha === mine.sha && s.request === mine.time)) job = s;
+        })
         .catch(function () { /* the next tick asks again */ })
         .then(function () {
           updateApprove(); showStatus();
@@ -265,7 +269,7 @@
     }).then(function (r) {
       return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || String(r.status)); return d; });
     }).then(function (req) {
-      since = req.time;
+      mine = req;
       job = { state: 'running', step: 'wait for the host', branch: v.branch, time: req.time };
       updateApprove(); showStatus(); poll();
     }).catch(function (err) {

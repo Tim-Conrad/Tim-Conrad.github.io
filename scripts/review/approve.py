@@ -4,8 +4,10 @@
     python3 scripts/review/approve.py <branch> [<sha>] [--root <main clone>]
 
 - Writes .review/approve/request.json in the main clone. The sha must be the head of the branch (default: the head).
-- Then prints each step that the host writes to .review/approve-status/status.json.
-- Exit 0 when the host is done, 1 when it fails, when a request is waiting already, or after --timeout seconds.
+- Then prints each step that the host writes for this request to .review/approve-status/status.json.
+  A status belongs to this request if its branch, sha and request time are those of the request.
+- Exit 0 when the host is done. Exit 1 when it fails, when a request is waiting already, while the host runs,
+  or after --timeout seconds.
 The review server (devserver.py) uses write_request and read_status of this module for the Approve button.
 """
 import argparse
@@ -36,8 +38,9 @@ def now():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def write_request(main, approve_dir, branch, sha, by):
-    """Write the request for the newest round of branch and return it. Raises Refused (400, 409 or 503)."""
+def write_request(main, approve_dir, branch, sha, by, *, status_dir):
+    """Write the request for the newest round of branch and return it. Raises Refused (400, 409 or 503).
+    While the status in status_dir is "running" (and not stale), a new request is refused."""
     if not isinstance(branch, str) or not gitread.valid_branch(branch) or branch == BASE:
         raise Refused(400, "not a branch that can ship: %r" % (branch,))
     if not isinstance(sha, str) or not SHA.match(sha):
@@ -45,6 +48,9 @@ def write_request(main, approve_dir, branch, sha, by):
     rounds = gitread.rounds(main, branch, BASE)
     if not rounds or gitread.branch_head(main, branch) != sha or rounds[-1]["sha"] != sha:
         raise Refused(409, "%s is not the newest round of %s" % (sha[:7], branch))
+    st = read_status(status_dir)
+    if st["state"] == "running":
+        raise Refused(409, "the host is publishing %s now" % (st.get("branch") or "a request"))
     req = {"branch": branch, "sha": sha, "round": len(rounds), "by": by, "time": now()}
     path = os.path.join(approve_dir, REQUEST)
     tmp = os.path.join(approve_dir, ".request.%d.tmp" % os.getpid())
@@ -62,6 +68,11 @@ def write_request(main, approve_dir, branch, sha, by):
         except FileNotFoundError:
             pass
     return req
+
+
+def is_for(st, req):
+    """True if the status st belongs to the request req: the host copies branch, sha and the request time."""
+    return (st.get("branch"), st.get("sha"), st.get("request")) == (req["branch"], req["sha"], req["time"])
 
 
 def read_status(status_dir):
@@ -100,7 +111,7 @@ def main():
         print("approve: no branch %s in %s" % (a.branch, a.root), file=sys.stderr)
         return 1
     try:
-        req = write_request(a.root, approve_dir, a.branch, sha, "agent")
+        req = write_request(a.root, approve_dir, a.branch, sha, "agent", status_dir=status_dir)
     except Refused as e:
         print("approve: " + e.message, file=sys.stderr)
         return 1
@@ -118,8 +129,10 @@ def main():
     last = None
     while True:
         st = read_status(status_dir)
+        if not is_for(st, req):   # the status of an earlier request, or the first step before the host read ours
+            st = {"state": "waiting"}
         seen = (st.get("state"), st.get("step"))
-        if seen != last and st.get("state") != "idle":
+        if seen != last and st["state"] not in ("idle", "waiting"):
             print("   %s: %s" % (st["state"], st.get("step", "")), flush=True)
             last = seen
         if st.get("state") == "done":

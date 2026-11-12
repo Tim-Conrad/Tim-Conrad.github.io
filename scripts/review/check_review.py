@@ -177,7 +177,7 @@ def fake_status(status_dir, **fields):
         if os.path.exists(path):
             os.remove(path)
         return
-    st = {"state": "running", "step": "", "line": "", "pr": None, "branch": "t/a", "sha": "", "time": now()}
+    st = {"state": "running", "step": "", "line": "", "pr": None, "branch": "t/a", "sha": "", "request": "", "time": now()}
     st.update(fields)
     with open(path, "w") as f:
         json.dump(st, f)
@@ -339,14 +339,14 @@ def run(base, shots, status_dir, head):
                     c.that(not pg.is_visible(".rv-more-toggle") and pg.is_visible(".rv-from"),
                            tag + ": a wide screen shows every select in one row")
 
-                # Working is not a commit: no approve. The newest round of t/b is.
+                # Working is not a commit: no approve. With changes in the worktree the host refuses, so the newest round
+                # of t/b has no button either.
                 pg.goto(base + "/?branch=t/b")
                 bar_ready(pg)
                 c.that(pg.input_value(".rv-to") == "working" and not approve_shown(pg),
                        tag + ": to = Working hides the approve button")
                 pick(pg, ".rv-to", pg.eval_on_selector(".rv-to", "s => [...s.options].find(o => o.text.startsWith('Round 1')).value"))
-                c.that(approve_shown(pg) and pg.text_content(".rv-approve") == "Approve round 1",
-                       tag + ": the newest round of t/b shows \"Approve round 1\"")
+                c.that(not approve_shown(pg), tag + ": a worktree with changes hides the button on its newest round too")
 
                 # the approve flow: confirm, a POST with the header and the head sha, then the status of the host
                 fake_status(status_dir)
@@ -354,27 +354,34 @@ def run(base, shots, status_dir, head):
                 bar_ready(pg)
                 c.that(pg.text_content(".rv-status") == "" and approve_shown(pg) and pg.is_enabled(".rv-approve"),
                        tag + ": with no status the line is empty and the button works")
-                posts, dialogs = [], []
+                posts, dialogs, asked = [], [], now()
 
                 def on_approve(route):
                     if route.request.method != "POST":
                         return route.continue_()
                     posts.append({"header": route.request.headers.get("x-t7d-review"), "body": route.request.post_data_json})
-                    body = {"branch": "t/a", "sha": head, "round": 2, "by": "button", "time": now()}
+                    body = {"branch": "t/a", "sha": head, "round": 2, "by": "button", "time": asked}
                     route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
                 pg.route(re.compile(r"/__review/api/approve$"), on_approve)
                 pg.once("dialog", lambda d, dl=dialogs: (dl.append(d.message), d.accept()))
-                fake_status(status_dir, step="run scripts/check.py", sha=head)
+                # the status of another request does not count for this page, even if it is newer than the request
                 pg.click(".rv-approve")
+                fake_status(status_dir, state="failed", step="push t/a", line="other", sha=head, request="2026-01-01T00:00:00Z",
+                            time="2099-01-01T00:00:00Z")
                 c.that(dialogs == ["Publish t/a at round 2 to t7d.dev?"], tag + ": the confirm text (%r)" % dialogs)
-                wait_for(pg, "document.querySelector('.rv-status').textContent.indexOf('check.py') >= 0")
+                wait_for(pg, "document.querySelector('.rv-status').textContent !== ''")
                 c.that(posts == [{"header": "1", "body": {"branch": "t/a", "sha": head}}],
                        tag + ": the POST has the header and the head sha (%r)" % posts)
+                pg.wait_for_timeout(2500)   # one poll of the status, which belongs to another request
+                c.that(pg.text_content(".rv-status") == "Publishing t/a: wait for the host." and pg.is_disabled(".rv-approve"),
+                       tag + ": the status of another request is not shown (%r)" % pg.text_content(".rv-status"))
+                fake_status(status_dir, step="run scripts/check.py", sha=head, request=asked)
+                wait_for(pg, "document.querySelector('.rv-status').textContent.indexOf('check.py') >= 0")
                 c.that(pg.text_content(".rv-status") == "Publishing t/a: run scripts/check.py." and pg.is_disabled(".rv-approve"),
                        tag + ": while the host runs, the line shows the step and the button is off (%r)" % pg.text_content(".rv-status"))
                 if shots and w in (1440, 390):
                     pg.screenshot(path=os.path.join(shots, "approve-running-%d-%s.png" % (w, scheme)))
-                fake_status(status_dir, state="done", step="published t/a", sha=head, pr=PR)
+                fake_status(status_dir, state="done", step="published t/a", sha=head, pr=PR, request=asked)
                 wait_for(pg, "document.querySelector('.rv-status a') !== null")
                 c.that(pg.text_content(".rv-status") == "Published t/a. Open the PR"
                        and pg.get_attribute(".rv-status a", "href") == PR and pg.is_enabled(".rv-approve"),

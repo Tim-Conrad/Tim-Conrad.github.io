@@ -14,7 +14,8 @@
 - /__review/api/versions?branch=<b>: the branches, the rounds of the branch since master, and if the worktree has changes.
 - /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
 - POST /__review/api/approve with the header X-T7d-Review and JSON {branch, sha}: writes the approve request of the newest
-  round (approve.py) to --approve. GET /__review/api/approve: the status that the host writes to --approve-status.
+  round (approve.py) to --approve, unless the host runs (409). GET /__review/api/approve: the status that the host
+  writes to --approve-status.
   This request is the only file that the server writes.
 - Env PAPERCUTS_URL (the relay of the papercuts widget): each page gets its script tag, and the origin of the URL goes into
   script-src, connect-src and img-src of the CSP. Without it, the page has no widget.
@@ -261,7 +262,7 @@ class Handler(SimpleHTTPRequestHandler):
         if name == "api/text":
             return self.text()
         if name == "api/approve":
-            return self.send_json(200, approve.read_status(self.status_dir or os.path.join(self.root, ".review", "approve-status")))
+            return self.send_json(200, approve.read_status(self.status_path()))
         self.send_error(404)
 
     def versions(self):
@@ -309,6 +310,9 @@ class Handler(SimpleHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass   # the page closed
 
+    def status_path(self):
+        return self.status_dir or os.path.join(self.root, ".review", "approve-status")
+
     def do_POST(self):
         if self.path.split("?", 1)[0] != PREFIX + "api/approve":
             return self.send_error(404)
@@ -328,7 +332,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(400, {"error": "unknown branch"})
         try:
             req = approve.write_request(self.root, self.approve_dir or os.path.join(self.root, ".review", "approve"),
-                                        branch, sha, "button")
+                                        branch, sha, "button", status_dir=self.status_path())
         except approve.Refused as e:
             return self.send_json(e.code, {"error": e.message})
         return self.send_json(200, req)
