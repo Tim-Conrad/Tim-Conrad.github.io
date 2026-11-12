@@ -38,6 +38,15 @@ The voice is DESIGN.md "Wording": first person, short sentences, plain words, no
 - Figures carry the ideas that are easier to see than to read. Use `figure.anim` (DESIGN.md "Animated diagram"): a drawing that plays once on screen, a two-state switch, parts to tap, a running token. Draw a narrow version (`.dg-n`) for phones. Use only the `.dg` classes, no colours, no `style` attributes.
 - End with what Tim takes from it: a rule, a draft, a file, or open questions.
 
+Write for a technical reader who does not know every concept. Tim's feedback on encrypted-patches (12 Nov 2026): the TUF and drand parts were too short and had too many new words, and the games and patents sections felt meaningless.
+
+- Explain each new term where it first appears, in one plain sentence: what it is, then why it matters here. "A bug that is already fixed and public is called an n-day." A name alone (TUF, Uptane, drand, tlock) is not an explanation.
+- Give a mechanism the room it needs. If the argument rests on it, explain how it works in a few short paragraphs, with an everyday comparison where one fits. Do not compress it into a list of terms.
+- Every section must carry the argument. End a detour or an example with what it teaches for the idea ("So the lesson from games is four rules"). If it teaches nothing, cut it or fold it into the section it serves. Background such as patents gets one short paragraph with the practical consequence.
+- Use few numbers in a row. After a dense list, say in one sentence what the numbers show.
+- Check every new explanation against a primary source, like any other claim.
+- If the thought will be read aloud, use the skill `narrating-a-thought` too. Text that reads well aloud also reads well on the page.
+
 ## 5. The page
 
 Copy `thoughts/humans-md/index.html` and keep its structure:
