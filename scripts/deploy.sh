@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Publishes the site files of the current commit to the gh-pages branch, which GitHub Pages serves at t7d.dev.
-# Only the site goes there: tools/, .claude/, .github/ and the README stay on master.
-# The workflow .github/workflows/deploy.yml runs this on every push to master. To run it by hand: tools/deploy.sh
+# Only the site goes there: scripts/, .claude/, .github/ and the README stay on master.
+# The workflow .github/workflows/deploy.yml runs this on every push to master. To run it by hand: scripts/deploy.sh
 #
 # The folder sealed/ on gh-pages is not from master: the admin app of sealed (Tim-Conrad/sealed) pushes the
 # encrypted sites there, one folder per site (sealed/<site>/). This script keeps that folder as it is.
 set -euo pipefail
 
-SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets thoughts blog research projects CVE)
+SITE=(index.html 404.html CNAME .nojekyll key.asc robots.txt sitemap.xml assets thoughts tools blog research projects CVE)
 
 root=$(git rev-parse --show-toplevel)
 src=$(git -C "$root" rev-parse HEAD)
@@ -22,7 +22,9 @@ if git cat-file -e HEAD:sealed 2>/dev/null; then
 fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
 # llms.txt and the RSS feed of the thoughts are made from the published pages, never by hand
-python3 "$root/tools/gen-feeds.py" "$tree"
+python3 "$root/scripts/gen-feeds.py" "$tree"
+# each tool page shows the README of the latest release of its repo; a failed fetch stops the deploy
+python3 "$root/scripts/gen-tools.py" "$tree"
 git add -A
 
 if git diff --cached --quiet; then

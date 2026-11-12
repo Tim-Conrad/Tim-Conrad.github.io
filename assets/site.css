@@ -279,6 +279,10 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 .prose li::marker { font-family: var(--mono); font-size: .85em; color: var(--muted); }
 .prose :not(pre) > code { background: var(--surface); border: 1px solid var(--soft); padding: .08em .35em; overflow-wrap: anywhere; }
 .prose a { overflow-wrap: anywhere; }
+.tbl { overflow-x: auto; min-width: 0; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: var(--step--1); }
+.tbl th, .tbl td { border: 1px solid var(--soft); padding: .4rem .6rem; text-align: left; vertical-align: top; }
+.tbl th { border-bottom: var(--rule) solid var(--ink); font-family: var(--mono); font-weight: 500; }
 .note { border: var(--rule) solid var(--ink); background: var(--surface); padding: 1rem 1.15rem; display: grid; gap: .4rem; }
 .payload { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--code-line); }
 .payload dl { margin: 0; display: grid; }

@@ -1,22 +1,32 @@
-# The review site: this clone with live reload and the note tab (tools/review/devserver.py), in the lab behind its
+# The review site: this clone with live reload and the papercuts widget (scripts/review/devserver.py), in the lab behind its
 # login. GitHub Pages still serves t7d.dev from gh-pages. This stack never touches it.
 #
-#   mkdir -p .review/notes           # first: else Docker makes the folder as root
-#   echo REVIEW_HOST=<host> > .env   # the host name of the review site (.env and .review/ are gitignored)
-#   docker-compose -p t7d-review -f docker-compose.dev.yml up -d
+#   # first, else Docker makes the folders as root:
+#   mkdir -p .review/approve .review/approve-status .papercuts ~/code/worktrees/t7d
+#   scripts/review/approve-install.sh   # once: the host side of the Approve button (a systemd user unit)
+#   # .env (gitignored): REVIEW_HOST=<host>, REVIEW_MAIN=<host path of this clone>,
+#   # REVIEW_WORKTREES=<host path of the folder with the site worktrees>
+#   # REVIEW_PAPERCUTS_HOST=<host of the relay>, PAPERCUTS_SRC=<folder of the relay source with its Dockerfile>
+#   docker-compose -p t7d-review -f docker-compose.dev.yml up -d --build
 #   docker-compose -p t7d-review -f docker-compose.dev.yml down
 #
-# The clone is read-only in the container. Only .review/notes is writable: one JSON file per note.
-# A checkout of another branch in this folder shows that branch at once, with its name in the note tab.
+# The clone and the worktrees are read-only in the container, at their host paths (git needs the same paths).
+# The review server writes only the approve request to .review/approve. It reads the status of the host from .review/approve-status.
+# The relay container writes only to .papercuts (the local store of papercuts).
+# The page shows the branch of ?branch=, else of the cookie, else of the clone. The image adds only the package git.
 services:
   t7d-review:
-    image: python:3.12-slim
+    build:
+      context: scripts/review
+      dockerfile: Dockerfile
+    image: t7d-review:local
     container_name: t7d-review
     restart: unless-stopped
     user: "1001:1001"
-    command: [python3, /repo/tools/review/devserver.py, --root, /repo, --notes, /repo/.review/notes, --host, 0.0.0.0, --port, "8000"]
+    command: [python3, "${REVIEW_MAIN:?set REVIEW_MAIN in .env}/scripts/review/devserver.py", --root, "${REVIEW_MAIN}", --worktrees, "${REVIEW_WORKTREES}", --host, 0.0.0.0, --port, "8000"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
+      PAPERCUTS_URL: https://${REVIEW_PAPERCUTS_HOST:?set REVIEW_PAPERCUTS_HOST in .env}
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
@@ -25,8 +35,10 @@ services:
       - /tmp:size=8m,mode=1777
     logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
     volumes:
-      - .:/repo:ro
-      - ./.review/notes:/repo/.review/notes:rw
+      - ${REVIEW_MAIN}:${REVIEW_MAIN}:ro
+      - ${REVIEW_WORKTREES:?set REVIEW_WORKTREES in .env}:${REVIEW_WORKTREES}:ro
+      - ${REVIEW_MAIN}/.review/approve:${REVIEW_MAIN}/.review/approve:rw
+      - ${REVIEW_MAIN}/.review/approve-status:${REVIEW_MAIN}/.review/approve-status:ro
     networks: [proxy]            # no ports: the lab proxy routes to it
     labels:
       - traefik.enable=true
@@ -37,8 +49,38 @@ services:
       - traefik.http.services.t7d-review.loadbalancer.server.port=8000
       - homepage.group=Apps
       - homepage.name=t7d.dev (Review)
-      - homepage.description=Working copy with live reload and notes
+      - homepage.description=Working copy with live reload and papercuts
       - homepage.href=https://${REVIEW_HOST}
+
+  t7d-review-papercuts:
+    build: ${PAPERCUTS_SRC:?set PAPERCUTS_SRC in .env}
+    container_name: t7d-review-papercuts
+    restart: unless-stopped
+    user: "1001:1001"
+    environment:
+      PAPERCUTS_STORE: local
+      PAPERCUTS_DB: /data/papercuts.db
+      PAPERCUTS_HOST: 0.0.0.0
+      PAPERCUTS_ORIGINS: https://${REVIEW_HOST}
+      PAPERCUTS_REPOS: Tim-Conrad/Tim-Conrad.github.io
+      PAPERCUTS_PUBLIC_URL: https://${REVIEW_PAPERCUTS_HOST}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    tmpfs:
+      - /tmp
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+    volumes:
+      - ${REVIEW_MAIN}/.papercuts:/data:rw
+    networks: [proxy]            # no ports: the lab proxy routes to it
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.t7d-review-papercuts.rule=Host(`${REVIEW_PAPERCUTS_HOST}`)
+      - traefik.http.routers.t7d-review-papercuts.entrypoints=websecure
+      - traefik.http.routers.t7d-review-papercuts.tls=true
+      - traefik.http.routers.t7d-review-papercuts.middlewares=authelia@file,security-headers@file
+      - traefik.http.services.t7d-review-papercuts.loadbalancer.server.port=8000
 
 networks:
   proxy:

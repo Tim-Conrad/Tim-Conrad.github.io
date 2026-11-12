@@ -1,5 +1,5 @@
 // Films the Wortzauber takes in real time. The dev server of the game must run (python3 devserver.py).
-// node tools/reels/wortzauber-takes.mjs <path to wortzauber> [--rec] [--only meadow,quest]
+// node scripts/reels/wortzauber-takes.mjs <path to wortzauber> [--rec] [--only meadow,quest]
 // Without --rec it only saves a still at each take's hold point, in <work>/wz/dry/.
 // With --rec the videos land in <work>/wz/rec/v-<take>/ and the cut points in <work>/wz/rec/marks.json.
 import fs from 'node:fs';

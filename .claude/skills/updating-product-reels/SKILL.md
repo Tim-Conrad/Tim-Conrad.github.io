@@ -6,7 +6,7 @@ description: Use when Kleinbahn (tiny-train) or Wortzauber changed and the reel,
 # Updating the product reels and pictures
 
 ## Overview
-Each game has a product page under `projects/<game>/` with a reel, a poster, four stills and a phone frame that loads the live demo. Everything visual comes from the real game, filmed headless by the scripts in `tools/reels/`. Nothing is drawn or generated.
+Each game has a product page under `projects/<game>/` with a reel, a poster, four stills and a phone frame that loads the live demo. Everything visual comes from the real game, filmed headless by the scripts in `scripts/reels/`. Nothing is drawn or generated.
 
 | Game | Repo | Product page | Live demo in the phone frame |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@ Both game repos are private. Clone them next to this repo first (in a cloud sess
 ## What needs a new capture
 - The live demo in the phone frame updates by itself when the game is published to beacon.host. Only its poster picture is from here.
 - A visual change of the game (art, UI, a scene in a shot): film that game again, then build and publish.
-- Only a caption or a title: change the text in `tools/reels/overlays.mjs`, then run overlays, build and publish. No filming.
+- Only a caption or a title: change the text in `scripts/reels/overlays.mjs`, then run overlays, build and publish. No filming.
 - Only the page text: edit `projects/<game>/index.html`. The text must stay true to the game: read its `README.md` before you claim a feature.
 - Wording, on the pages and in the captions: plain and down to earth. A caption names what the shot shows ("Trains", "Shuttle launch"). No slogans and no superlatives.
 
@@ -27,13 +27,13 @@ All of them write to a work folder: `$REELS_WORK`, or `.reels/` in this repo (gi
 
 | Step | Command | Time |
 | --- | --- | --- |
-| Kleinbahn preview | `node tools/reels/kleinbahn-shots.mjs ../tiny-train --test` | 1 min |
-| Kleinbahn frames | `node tools/reels/kleinbahn-shots.mjs ../tiny-train [--only b-train,c-town]` | 25 to 40 min for all nine shots |
-| Wortzauber dry run | `node tools/reels/wortzauber-takes.mjs ../wortzauber` | 3 min |
-| Wortzauber recording | `node tools/reels/wortzauber-takes.mjs ../wortzauber --rec [--only meadow]` | 3 min |
-| Titles and captions | `node tools/reels/overlays.mjs ../wortzauber` | seconds |
-| Cut a reel | `python3 tools/reels/build.py kb` and `python3 tools/reels/build.py wz ../wortzauber` | 1 to 2 min each |
-| Put it on the site | `python3 tools/reels/build.py publish` | 1 min |
+| Kleinbahn preview | `node scripts/reels/kleinbahn-shots.mjs ../tiny-train --test` | 1 min |
+| Kleinbahn frames | `node scripts/reels/kleinbahn-shots.mjs ../tiny-train [--only b-train,c-town]` | 25 to 40 min for all nine shots |
+| Wortzauber dry run | `node scripts/reels/wortzauber-takes.mjs ../wortzauber` | 3 min |
+| Wortzauber recording | `node scripts/reels/wortzauber-takes.mjs ../wortzauber --rec [--only meadow]` | 3 min |
+| Titles and captions | `node scripts/reels/overlays.mjs ../wortzauber` | seconds |
+| Cut a reel | `python3 scripts/reels/build.py kb` and `python3 scripts/reels/build.py wz ../wortzauber` | 1 to 2 min each |
+| Put it on the site | `python3 scripts/reels/build.py publish` | 1 min |
 
 `publish` writes `assets/projects/<game>-reel.mp4` (web size), `-poster.jpg`, `-1.jpg` to `-4.jpg`, `-loop.webp` (the gameplay loop of the game box on the front page) and `wortzauber-phone.jpg`. `kleinbahn-phone.jpg` is a separate step (below).
 
@@ -60,7 +60,7 @@ Before a run: start the dev server in `../wortzauber` with `python3 devserver.py
 - Rules of the game repo that hold here too: do not generate voice, music or images, and do not read the ElevenLabs key. The reels are silent: the site plays every video as a muted loop.
 
 ## Build and check
-1. `overlays.mjs` renders every title, caption and end card as a transparent 1280x720 PNG, in the fonts of each game (Fredoka and Nunito from `tools/reels/fonts/`, Andika from the Wortzauber repo).
+1. `overlays.mjs` renders every title, caption and end card as a transparent 1280x720 PNG, in the fonts of each game (Fredoka and Nunito from `scripts/reels/fonts/`, Andika from the Wortzauber repo).
 2. `build.py kb` and `build.py wz` cut the reels. The timeline of a reel is the `parts` list in `kb()` and `wz()`: one `seg` or `clip` per cut, with its overlays and their fade times.
 3. Look at the result before you publish. Make a contact sheet and read it:
    `ffmpeg -i <work>/kleinbahn-reel.mp4 -vf "fps=16/39,scale=320:180,tile=4x4" -frames:v 1 sheet.jpg` (16 pictures over a 39 s reel).

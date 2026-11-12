@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "n=$(ls \"${CLAUDE_PROJECT_DIR:-.}\"/.review/notes/*.json 2>/dev/null | wc -l); if [ \"$n\" -gt 0 ]; then echo \"$n open review notes in .review/notes/ (skill handling-review-notes)\"; fi; true"
+            "command": "p=\"${CLAUDE_PROJECT_DIR:-.}\"; g=$(git -C \"$p\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); d=\"$(dirname \"$g\")/.papercuts/papercuts.db\"; if [ -n \"$g\" ] && [ -f \"$d\" ]; then n=$(cd \"$p\" && PAPERCUTS_STORE=local PAPERCUTS_DB=\"$d\" papercuts list 2>/dev/null | sed -n 's/^count: \\([0-9]*\\) of.*/\\1/p'); if [ \"${n:-0}\" -gt 0 ]; then echo \"$n open papercuts of the review site (skill handling-review-papercuts)\"; fi; fi; exit 0"
           }
         ]
       }

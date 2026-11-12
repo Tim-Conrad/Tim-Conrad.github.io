@@ -1,5 +1,5 @@
 // The development timeline of Wortzauber: one stage per merged pull request that changed play, filmed in real time by
-// tools/reels/timeline-wz.mjs at `ref` (the merge commit).
+// scripts/reels/timeline-wz.mjs at `ref` (the merge commit).
 //   scene: the name of a layout-check scene of the game (.claude/skills/checking-device-layouts/scenes/<name>.js),
 //          read from the worktree at `ref`, so it is that version's own scene
 //   setup: an async function (source) run in the page instead of a scene

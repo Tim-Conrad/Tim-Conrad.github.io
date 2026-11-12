@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Tim-Conrad/papercuts/main/schema/papercuts.schema.json",
+  "fields": [
+    {
+      "id": "expected",
+      "label": "What did you expect?",
+      "required": false
+    }
+  ],
+  "presets": [
+    {
+      "kind": "bug",
+      "text": "This does not work"
+    },
+    {
+      "kind": "ux",
+      "text": "This is hard to use on the phone"
+    },
+    {
+      "kind": "copy",
+      "text": "This text is wrong or unclear"
+    }
+  ],
+  "labels": [],
+  "store": "local"
+}
