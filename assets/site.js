@@ -119,7 +119,7 @@
   $$('figure[data-steps]').forEach(function (fig) {
     var svg = $('svg', fig), items = $$('.steps__list li', fig), n = items.length;
     if (!svg || !n) return;
-    var parts = $$('[data-step]', svg), at = 0, timer = null;
+    var parts = $$('[data-step]', fig), at = 0, timer = null;   // the wide and the narrow drawing
     var bar = document.createElement('div'); bar.className = 'steps__bar';
     function button(label, text) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn--ghost btn--s';
