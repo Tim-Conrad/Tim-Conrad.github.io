@@ -1,6 +1,7 @@
 """Tests of the review server. Run: python3 -m unittest scripts/review/test_devserver.py"""
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -38,21 +39,18 @@ class Inject(unittest.TestCase):
         self.assertEqual(devserver.inject(page).count("connect-src"), 1)
 
 
-class CleanNote(unittest.TestCase):
-    def test_keeps_known_fields_with_limits(self):
-        n = devserver.clean_note({"note": " Fix it ", "path": "/x/", "theme": "dark", "evil": "x",
-                                  "viewport": {"w": 390, "h": 844, "dpr": 3, "q": 1},
-                                  "target": {"selector": "#a", "text": "t" * 999, "rect": {"x": 1, "y": 2, "w": 3, "h": True}}})
-        self.assertEqual(n["note"], "Fix it")
-        self.assertNotIn("evil", n)
-        self.assertEqual(n["viewport"], {"w": 390.0, "h": 844.0, "dpr": 3.0})
-        self.assertEqual(len(n["target"]["text"]), 300)
-        self.assertIsNone(n["target"]["rect"]["h"])
-
-    def test_rejects_an_empty_or_long_note(self):
-        for bad in ({"note": "  "}, {"note": "x" * 4001}, {"note": 5}, ["note"]):
-            with self.assertRaises(ValueError):
-                devserver.clean_note(bad)
+class Widget(unittest.TestCase):
+    def test_widget_tag_and_csp_only_with_the_env(self):
+        self.assertNotIn("papercuts", devserver.inject(PAGE).lower())
+        self.assertNotIn("papercuts", devserver.inject(PAGE, widget="").lower())
+        out = devserver.inject(PAGE, widget="https://p.example", branch="feat/x", commit="abc1234")
+        self.assertEqual(out.count("<script src=\"https://p.example/papercuts.js\""), 1)
+        self.assertIn('data-repo="Tim-Conrad/Tim-Conrad.github.io" data-branch="feat/x" data-commit="abc1234"', out)
+        policy = re.search(r'content="([^"]*)"', out).group(1)
+        for d in ("script-src", "connect-src", "img-src"):
+            self.assertRegex(policy, d + r"[^;]*https://p\.example")
+        self.assertIn("script-src 'self' https://p.example", policy)
+        self.assertEqual(re.search(r"style-src[^;]*", PAGE), re.search(r"style-src[^;]*", policy))
 
 
 class Server(unittest.TestCase):
@@ -68,8 +66,7 @@ class Server(unittest.TestCase):
         git(self.root, "add", "-A")
         git(self.root, "commit", "-m", "start")
         self.commit = git(self.root, "rev-parse", "--short=7", "HEAD")
-        self.notes = os.path.join(self.root, ".review", "notes")
-        h = partial(type("H", (devserver.Handler,), {"root": self.root, "notes": self.notes}), directory=self.root)
+        h = partial(type("H", (devserver.Handler,), {"root": self.root}), directory=self.root)
         self.srv = ThreadingHTTPServer(("127.0.0.1", 0), h)
         self.srv.daemon_threads = True
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
@@ -86,14 +83,12 @@ class Server(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, e.headers, e.read().decode()
 
-    def post(self, body, headers=None):
-        h = {"Content-Type": "application/json", "X-T7d-Review": "1"} if headers is None else headers
-        req = urllib.request.Request(self.base + "/__review/api/notes", data=json.dumps(body).encode(), headers=h, method="POST")
+    def post(self, path, body=b"{}"):
+        req = urllib.request.Request(self.base + path, data=body, headers={"Content-Type": "application/json", "X-T7d-Review": "1"}, method="POST")
         try:
-            r = urllib.request.urlopen(req)
-            return r.status, json.loads(r.read())
+            return urllib.request.urlopen(req).status
         except urllib.error.HTTPError as e:
-            return e.code, json.loads(e.read() or b"{}")
+            return e.code
 
     def test_pages_get_the_tab_and_no_cache(self):
         code, headers, body = self.get("/a/")
@@ -125,30 +120,34 @@ class Server(unittest.TestCase):
         self.assertIn("[Post](https://t7d.dev/thoughts/p/): About it.", body)
 
     def test_hidden_folders_are_not_served(self):
-        for p in ("/.git/HEAD", "/.review/notes/", "/a/../.git/HEAD"):
+        for p in ("/.git/HEAD", "/.review/approve/", "/a/../.git/HEAD"):
             self.assertEqual(self.get(p)[0], 404, p)
 
     def test_state_has_the_branch(self):
         s = json.loads(self.get("/__review/api/state")[2])
-        self.assertEqual((s["branch"], s["commit"], s["open"]), ("feat/x", self.commit, 0))
+        self.assertEqual((s["branch"], s["commit"]), ("feat/x", self.commit))
+        self.assertNotIn("open", s)
 
-    def test_a_note_is_a_file_and_in_the_list(self):
-        code, d = self.post({"note": "The title is too big", "path": "/a/"})
-        self.assertEqual(code, 201)
-        saved = json.loads(devserver.read(os.path.join(self.notes, d["id"] + ".json")))
-        self.assertEqual((saved["note"], saved["branch"], saved["path"]), ("The title is too big", "feat/x", "/a/"))
-        os.makedirs(os.path.join(self.notes, "done"))
-        done = dict(saved, id="20260101-000000-abcdef", answer="Smaller now.")
-        with open(os.path.join(self.notes, "done", done["id"] + ".json"), "w") as f:
-            json.dump(done, f)
-        notes = json.loads(self.get("/__review/api/notes")[2])["notes"]
-        self.assertEqual([(n["status"], n["answer"]) for n in notes], [("open", None), ("done", "Smaller now.")])
+    def test_notes_api_is_gone(self):
+        self.assertEqual(self.post("/__review/api/notes", json.dumps({"note": "x"}).encode()), 404)
+        self.assertEqual(self.get("/__review/api/notes")[0], 404)
 
-    def test_a_post_without_the_header_or_json_is_refused(self):
-        self.assertEqual(self.post({"note": "x"}, {"Content-Type": "application/json"})[0], 403)
-        self.assertEqual(self.post({"note": "x"}, {"X-T7d-Review": "1", "Content-Type": "text/plain"})[0], 403)
-        self.assertEqual(self.post({"note": ""})[0], 400)
-        self.assertFalse(os.path.exists(self.notes) and os.listdir(self.notes))
+    def test_the_widget_comes_from_the_server_for_the_chosen_branch(self):
+        self.assertNotIn("papercuts", self.get("/")[2])
+        srv, base = self.serve_with("https://p.example")
+        try:
+            body = urllib.request.urlopen(base + "/").read().decode()
+        finally:
+            srv.shutdown()
+            srv.server_close()
+        self.assertIn('src="https://p.example/papercuts.js" data-repo="Tim-Conrad/Tim-Conrad.github.io" data-branch="feat/x" data-commit="%s"' % self.commit, body)
+
+    def serve_with(self, widget):
+        h = partial(type("H", (devserver.Handler,), {"root": self.root, "widget": widget}), directory=self.root)
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), h)
+        srv.daemon_threads = True
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        return srv, "http://127.0.0.1:%d" % srv.server_port
 
 
 class Branches(unittest.TestCase):
@@ -179,8 +178,7 @@ class Branches(unittest.TestCase):
 
     @classmethod
     def serve(cls, worktrees=None):
-        h = partial(type("H", (devserver.Handler,), {"root": cls.main, "worktrees": worktrees,
-                                                     "notes": os.path.join(cls.main, ".review", "notes")}),
+        h = partial(type("H", (devserver.Handler,), {"root": cls.main, "worktrees": worktrees}),
                     directory=cls.main)
         srv = ThreadingHTTPServer(("127.0.0.1", 0), h)
         srv.daemon_threads = True
@@ -274,7 +272,7 @@ class Branches(unittest.TestCase):
         self.assertEqual(self.get("/__review/api/text?branch=master&rev=%s&path=/" % self.shas[0])[0], 400)
 
     def test_encoded_hidden_folders_are_not_served(self):
-        for p in ("/%2egit/HEAD", "/%2Egit/config", "/%2ereview/notes/n.json", "/%2egit?branch=t/a",
+        for p in ("/%2egit/HEAD", "/%2Egit/config", "/%2ereview/approve/n.json", "/%2egit?branch=t/a",
                   "/%2egit/HEAD?branch=t/a", "/a/%2e%2e/%2egit/HEAD"):
             self.assertEqual(self.get(p)[0], 404, p)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Review server for the site: live reload, the rounds of a branch and notes. Only the review site uses it. GitHub Pages serves t7d.dev.
+"""Review server for the site: live reload and the rounds of a branch. Only the review site uses it. GitHub Pages serves t7d.dev.
 
-    python3 scripts/review/devserver.py [--root .] [--notes .review/notes] [--host 127.0.0.1] [--port 8000]
+    python3 scripts/review/devserver.py [--root .] [--host 127.0.0.1] [--port 8000]
 
 - Serves the repository root with Cache-Control: no-cache. A missing page gets /404.html with status 404.
 - Every HTML page gets /__review/review.css, /__review/textdiff.js and /__review/review.js. The page CSP gets connect-src 'self', so the
@@ -10,12 +10,11 @@
   The page then loads again.
 - The branch comes from ?branch=<name>, else the cookie review_branch, else the branch of the main clone. A page with a
   valid ?branch= sets the cookie. An unknown branch gives the main clone. Pages come from the worktree of that branch.
-- /__review/api/state: the branch and the commit of the chosen worktree, and the number of open notes.
+- /__review/api/state: the branch and the commit of the chosen worktree,.
 - /__review/api/versions?branch=<b>: the branches, the rounds of the branch since master, and if the worktree has changes.
 - /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
-- /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
-  the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
-  <notes>/done/ with an "answer" field.
+- Env PAPERCUTS_URL (the relay of the papercuts widget): each page gets its script tag, and the origin of the URL goes into
+  script-src, connect-src and img-src of the CSP. Without it, the page has no widget.
 - /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by scripts/gen-feeds.py, as the deploy makes them for gh-pages.
 - /.git, /.review, /.reels and /node_modules are not served.
 """
@@ -24,10 +23,10 @@ import importlib.util
 import json
 import os
 import re
-import secrets
 import sys
 import time
 import urllib.parse
+from html import escape as html_escape
 from functools import partial
 from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -41,9 +40,6 @@ COOKIE = "review_branch"
 BASE = "master"
 ASSETS = {"review.js": "text/javascript; charset=utf-8", "textdiff.js": "text/javascript; charset=utf-8",
           "review.css": "text/css; charset=utf-8"}
-MAX_BODY = 32 * 1024
-MAX_NOTE = 4000
-NOTE_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
 GENERATED = {"/llms.txt": "text/plain; charset=utf-8", "/thoughts/feed.xml": "application/rss+xml; charset=utf-8",
              "/blog/feed.xml": "application/rss+xml; charset=utf-8"}
 
@@ -83,55 +79,44 @@ def git_state(path):
     return gitread.head(path)
 
 
-def inject(html):
-    """The page with the review assets, and connect-src 'self' in its CSP."""
+def add_source(policy, directive, origin):
+    """The policy with origin in the directive: appended if the directive exists, else a new one that keeps 'self'."""
+    m = re.search(r"(^|;\s*)%s\s+([^;]*)" % directive, policy)
+    if m:
+        return policy[:m.end()] + " " + origin + policy[m.end():]
+    return policy.rstrip("; ") + "; %s 'self' %s" % (directive, origin)
+
+
+def inject(html, widget=None, branch="", commit=""):
+    """The page with the review assets, and connect-src 'self' in its CSP.
+    With widget (the URL of the papercuts relay), the page also gets the widget tag and the relay in the CSP."""
+    origin = None
+    if widget:
+        u = urllib.parse.urlsplit(widget)
+        origin = "%s://%s" % (u.scheme, u.netloc)
+
     def csp(m):
         policy = m.group(2)
         if "connect-src" not in policy:
             policy = policy.rstrip("; ") + "; connect-src 'self'"
+        if origin:
+            for d in ("script-src", "connect-src", "img-src"):
+                policy = add_source(policy, d, origin)
         return m.group(1) + policy + m.group(3)
     html = CSP.sub(csp, html, count=1)
     link = '<link rel="stylesheet" href="%sreview.css">' % PREFIX
     # textdiff.js first: deferred scripts run in order, and review.js uses window.reviewDiff.
     script = '<script src="%stextdiff.js" defer></script>\n<script src="%sreview.js" defer></script>' % (PREFIX, PREFIX)
+    if widget:
+        script += '\n<script src="%s/papercuts.js" data-repo="Tim-Conrad/Tim-Conrad.github.io" data-branch="%s" data-commit="%s"></script>' % (
+            html_escape(widget.rstrip("/")), html_escape(branch), html_escape(commit))
     html = html.replace("</head>", link + "\n" + script + "\n</head>", 1) if "</head>" in html else link + script + html
     return html
 
 
-def clean_note(d):
-    """The stored note from a POST body, or a ValueError. Only known fields, with limits."""
-    if not isinstance(d, dict):
-        raise ValueError("the body is not a JSON object")
-    note = d.get("note")
-    if not isinstance(note, str) or not note.strip() or len(note) > MAX_NOTE:
-        raise ValueError("note: 1 to %d characters" % MAX_NOTE)
-
-    def text(k, n):
-        v = d.get(k)
-        return v[:n] if isinstance(v, str) else None
-
-    def num(v):
-        return round(float(v), 1) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
-
-    out = {"note": note.strip(), "path": text("path", 500), "title": text("title", 200), "theme": text("theme", 10),
-           "selection": text("selection", 1000), "agent": text("agent", 300)}
-    for k in ("viewport", "scroll"):
-        v = d.get(k)
-        out[k] = {a: num(v.get(a)) for a in ("w", "h", "x", "y", "dpr") if a in v} if isinstance(v, dict) else None
-    t = d.get("target")
-    if isinstance(t, dict):
-        r = t.get("rect") if isinstance(t.get("rect"), dict) else {}
-        out["target"] = {"selector": t["selector"][:500] if isinstance(t.get("selector"), str) else None,
-                         "text": t["text"][:300] if isinstance(t.get("text"), str) else None,
-                         "rect": {a: num(r.get(a)) for a in ("x", "y", "w", "h")}}
-    else:
-        out["target"] = None
-    return out
-
-
 class Handler(SimpleHTTPRequestHandler):
     root = "."
-    notes = ".review/notes"
+    widget = None   # the URL of the papercuts relay, or None for no widget
     worktrees = None   # the folder that holds the site worktrees, or None for any
 
     def end_headers(self):
@@ -200,7 +185,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_page(self, path, code=200):
-        body = inject(read(path)).encode()
+        state = git_state(self.wt)
+        body = inject(read(path), self.widget, state.get("branch") or "", state.get("commit") or "").encode()
         self.send_response(code)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -263,13 +249,11 @@ class Handler(SimpleHTTPRequestHandler):
         if name == "reload":
             return self.reload()
         if name == "api/state":
-            return self.send_json(200, {**git_state(self.wt), "open": len(self.list_notes("open"))})
+            return self.send_json(200, git_state(self.wt))
         if name == "api/versions":
             return self.versions()
         if name == "api/text":
             return self.text()
-        if name == "api/notes":
-            return self.send_json(200, {"notes": self.list_notes("open") + self.list_notes("done")})
         self.send_error(404)
 
     def versions(self):
@@ -317,59 +301,21 @@ class Handler(SimpleHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass   # the page closed
 
-    def list_notes(self, status):
-        d = self.notes if status == "open" else os.path.join(self.notes, "done")
-        out = []
-        try:
-            names = sorted(os.listdir(d), reverse=True)
-        except OSError:
-            return out
-        for f in names:
-            if not (f.endswith(".json") and NOTE_ID.match(f[:-5])):
-                continue
-            try:
-                n = json.loads(read(os.path.join(d, f)))
-            except (OSError, ValueError):
-                continue
-            out.append({"id": f[:-5], "status": status, "time": n.get("time"), "path": n.get("path"),
-                        "note": n.get("note", "")[:200], "answer": n.get("answer") if status == "done" else None})
-        return out
-
     def do_POST(self):
-        if self.path.split("?", 1)[0] != PREFIX + "api/notes":
-            return self.send_error(404)
-        if not self.headers.get("X-T7d-Review") or "application/json" not in (self.headers.get("Content-Type") or ""):
-            return self.send_json(403, {"error": "the review page sends notes"})
-        n = int(self.headers.get("Content-Length") or 0)
-        if n <= 0 or n > MAX_BODY:
-            return self.send_json(413, {"error": "the note is too large"})
-        try:
-            note = clean_note(json.loads(self.rfile.read(n)))
-        except ValueError as e:
-            return self.send_json(400, {"error": str(e)})
-        self.pick()
-        note.update(git_state(self.wt))
-        note["time"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-        nid = time.strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3)
-        os.makedirs(self.notes, exist_ok=True)
-        tmp = os.path.join(self.notes, "." + nid + ".tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump({"id": nid, **note}, f, ensure_ascii=False, indent=1)
-        os.replace(tmp, os.path.join(self.notes, nid + ".json"))
-        self.send_json(201, {"id": nid})
+        self.send_error(404)   # the server has no write API
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=os.path.normpath(os.path.join(HERE, "..", "..")))
-    ap.add_argument("--notes", default=None, help="the notes folder (default: <root>/.review/notes)")
     ap.add_argument("--worktrees", default=os.environ.get("REVIEW_WORKTREES"),
                     help="offer only the worktrees below this folder (default: env REVIEW_WORKTREES, else any)")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args()
     root = os.path.abspath(a.root)
-    handler = partial(type("H", (Handler,), {"root": root, "worktrees": a.worktrees and os.path.abspath(a.worktrees), "notes": os.path.abspath(a.notes or os.path.join(root, ".review", "notes"))}),
+    handler = partial(type("H", (Handler,), {"root": root, "worktrees": a.worktrees and os.path.abspath(a.worktrees),
+                                       "widget": os.environ.get("PAPERCUTS_URL") or None}),
                       directory=root)
     srv = ThreadingHTTPServer((a.host, a.port), handler)
     srv.daemon_threads = True
