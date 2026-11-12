@@ -2,7 +2,7 @@
 import re
 import subprocess
 
-HIDDEN = (".git", ".review", ".reels", "node_modules", "__pycache__")
+HIDDEN = (".git", ".review", ".papercuts", ".reels", "node_modules", "__pycache__")
 
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9._/-]{1,100}$")
 

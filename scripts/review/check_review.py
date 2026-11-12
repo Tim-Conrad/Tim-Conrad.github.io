@@ -8,6 +8,7 @@ opens the pages in Chromium at 1440, 390 and 320 px, in the light and the dark t
 Round 1 changes the heading. Round 2 changes one word, removes one paragraph, adds one and adds the page /new/.
 The worktree t/b has one round and a change that is not committed (Working).
 The Approve button: a route catches its POST, so nothing is written. A fake status file stands in for the host.
+The page clock of Playwright jumps over the 60 s wait for a host that does not take the request.
 """
 import argparse
 import datetime
@@ -37,6 +38,8 @@ SIZES = ((1440, 900), (390, 844), (320, 640))
 WIDE = 960   # from this width the bar is one row with every select; below it the selects open on a tap
 MARKS = "ins.rv-add, del.rv-del, .rv-gone, .rv-newpage"
 PR = "https://github.com/Tim-Conrad/Tim-Conrad.github.io/pull/7"
+GONE = "Branch t/gone is not here any more. It was published or removed."
+NO_HOST = "No host took the request. On the host, run: systemctl --user status t7d-review-approve.path"
 
 
 def page(title, paras):
@@ -213,6 +216,18 @@ def run(base, shots, status_dir, head):
                        tag + ": the approve button is hidden")
                 c.that(pg.locator(".rv-tab, .rv-panel").count() == 0, tag + ": the note tab is gone")
 
+                # a branch that is not here any more (after a publish): the page of the main clone and one line
+                pg.goto(base + "/?branch=t/gone")
+                bar_ready(pg)
+                c.that(pg.text_content(".rv-status") == GONE, tag + ": a gone branch has one line (%r)" % pg.text_content(".rv-status"))
+                c.that(pg.eval_on_selector_all(".rv-branch-pick option", "os => os.map(o => o.value)") == ["master", "t/a", "t/b"]
+                       and not approve_shown(pg), tag + ": a gone branch keeps the branch select and has no approve button")
+                c.that(no_side_scroll(pg), tag + ": no horizontal scroll with the gone line")
+                if shots and w in (1440, 390):
+                    pg.screenshot(path=os.path.join(shots, "gone-%d-%s.png" % (w, scheme)))
+                pg.goto(base + "/?branch=master")
+                bar_ready(pg)
+
                 # the branch select opens t/a, with Round 2 against Round 1
                 with pg.expect_navigation():
                     pick(pg, ".rv-branch-pick", "t/a")
@@ -384,14 +399,44 @@ def run(base, shots, status_dir, head):
                 fake_status(status_dir, state="done", step="published t/a", sha=head, pr=PR, request=asked)
                 wait_for(pg, "document.querySelector('.rv-status a') !== null")
                 c.that(pg.text_content(".rv-status") == "Published t/a. Open the PR"
-                       and pg.get_attribute(".rv-status a", "href") == PR and pg.is_enabled(".rv-approve"),
-                       tag + ": done shows the PR link and the button works again (%r)" % pg.text_content(".rv-status"))
+                       and pg.get_attribute(".rv-status a", "href") == PR,
+                       tag + ": done shows the PR link (%r)" % pg.text_content(".rv-status"))
+                c.that(not approve_shown(pg), tag + ": after done the published round has no approve button")
                 c.that(no_side_scroll(pg) and small_targets(pg) == [],
                        tag + ": with the status: no horizontal scroll, touch targets 40 px or more")
                 if shots and w in (1440, 390):
                     pg.screenshot(path=os.path.join(shots, "approve-done-%d-%s.png" % (w, scheme)))
                 pg.unroute(re.compile(r"/__review/api/approve$"))
                 fake_status(status_dir)
+
+                # no host takes the request: after 60 s the page says so and the button works again
+                pg.clock.install()
+                pg.goto(base + "/?branch=t/a")
+                bar_ready(pg)
+                asked = now()
+
+                def on_approve_no_host(route):
+                    if route.request.method != "POST":
+                        return route.continue_()
+                    body = {"branch": "t/a", "sha": head, "round": 2, "by": "button", "time": asked}
+                    route.fulfill(status=200, content_type="application/json", body=json.dumps(body))
+                pg.route(re.compile(r"/__review/api/approve$"), on_approve_no_host)
+                pg.once("dialog", lambda d: d.accept())
+                approve_shown(pg)
+                pg.click(".rv-approve")
+                wait_for(pg, "document.querySelector('.rv-status').textContent.indexOf('wait for the host') >= 0")
+                pg.clock.fast_forward(59000)
+                pg.wait_for_timeout(300)
+                c.that(pg.text_content(".rv-status") == "Publishing t/a: wait for the host." and pg.is_disabled(".rv-approve"),
+                       tag + ": before 60 s the page still waits for the host (%r)" % pg.text_content(".rv-status"))
+                pg.clock.fast_forward(2000)
+                wait_for(pg, "document.querySelector('.rv-status').textContent.indexOf('No host') >= 0")
+                c.that(pg.text_content(".rv-status") == NO_HOST and pg.is_enabled(".rv-approve"),
+                       tag + ": after 60 s with no status the page says that no host took it (%r)" % pg.text_content(".rv-status"))
+                c.that(no_side_scroll(pg), tag + ": no horizontal scroll with the no-host line")
+                if shots and w in (1440, 390):
+                    pg.screenshot(path=os.path.join(shots, "approve-no-host-%d-%s.png" % (w, scheme)))
+                pg.unroute(re.compile(r"/__review/api/approve$"))
 
                 c.that(errors == [], tag + ": no console error (%r)" % errors)
                 ctx.close()

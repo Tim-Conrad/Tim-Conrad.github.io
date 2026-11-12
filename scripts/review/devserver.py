@@ -6,12 +6,13 @@
 - Serves the repository root with Cache-Control: no-cache. A missing page gets /404.html with status 404.
 - Every HTML page gets /__review/review.css, /__review/textdiff.js and /__review/review.js. The page CSP gets connect-src 'self', so the
   script can reach this server. Nothing else in the CSP changes, so the review site keeps the rules of the real site.
-- /__review/reload: server-sent events. The stamp changes when a file of the site changes, is added or is deleted.
-  The page then loads again.
+- /__review/reload: server-sent events. The stamp changes when a file of the site changes, is added or is deleted,
+  and when the worktree gets a new commit. The page then loads again.
 - The branch comes from ?branch=<name>, else the cookie review_branch, else the branch of the main clone. A page with a
   valid ?branch= sets the cookie. An unknown branch gives the main clone. Pages come from the worktree of that branch.
-- /__review/api/state: the branch and the commit of the chosen worktree,.
+- /__review/api/state: the branch and the commit of the chosen worktree.
 - /__review/api/versions?branch=<b>: the branches, the rounds of the branch since master, and if the worktree has changes.
+  For a branch that is not here (after a publish), the main clone, with the name in "gone". An invalid name gives 400.
 - /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
 - POST /__review/api/approve with the header X-T7d-Review and JSON {branch, sha}: writes the approve request of the newest
   round (approve.py) to --approve, unless the host runs (409). GET /__review/api/approve: the status that the host
@@ -20,7 +21,7 @@
 - Env PAPERCUTS_URL (the relay of the papercuts widget): each page gets its script tag, and the origin of the URL goes into
   script-src, connect-src and img-src of the CSP. Without it, the page has no widget.
 - /llms.txt, /thoughts/feed.xml and /blog/feed.xml are made on each request by scripts/gen-feeds.py, as the deploy makes them for gh-pages.
-- /.git, /.review, /.reels and /node_modules are not served.
+- /.git, /.review, /.papercuts, /.reels and /node_modules are not served.
 """
 import argparse
 import importlib.util
@@ -66,7 +67,8 @@ def read(path):
 
 
 def stamp(root):
-    """The newest change below root, as a string: the mtime of each file and the number of files."""
+    """The newest change below root, as a string: the mtime of each file, the number of files and the commit.
+    A commit changes only the .git folder of the main clone, so the commit of root is part of the stamp."""
     newest, count = 0.0, 0
     for d, dirs, files in os.walk(root):
         dirs[:] = [x for x in dirs if x not in HIDDEN]
@@ -76,7 +78,7 @@ def stamp(root):
                 count += 1
             except OSError:
                 pass   # removed during the walk
-    return "%.3f-%d" % (newest, count)
+    return "%.3f-%d-%s" % (newest, count, gitread.head(root)["commit"])
 
 
 def git_state(path):
@@ -156,20 +158,23 @@ class Handler(SimpleHTTPRequestHandler):
 
     def pick(self):
         """Choose the branch of this request. Sets self.branch, self.wt (its worktree path), self.names,
-        self.cookie_branch (a valid ?branch= to remember) and self.bad_branch (a ?branch= that is invalid or unknown)."""
+        self.cookie_branch (a valid ?branch= to remember), self.bad_branch (True for an invalid ?branch=) and
+        self.gone_branch (a valid ?branch= that is not here, for example after a publish)."""
         main = gitread.head(self.root)["branch"]
         found = {w["branch"]: w["path"] for w in gitread.worktrees(self.root) if self.allowed(w["path"])}
         if main:
             found[main] = self.root
         self.names = ([main] if main else []) + [b for b in found if b != main]
         queried = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("branch")
-        self.cookie_branch, self.bad_branch = None, False
+        self.cookie_branch, self.bad_branch, self.gone_branch = None, False, None
         want = None
         if queried:
-            if gitread.valid_branch(queried[0]) and queried[0] in found:
+            if not gitread.valid_branch(queried[0]):
+                self.bad_branch = True
+            elif queried[0] in found:
                 want = self.cookie_branch = queried[0]
             else:
-                self.bad_branch = True
+                self.gone_branch = queried[0]
         else:
             try:
                 value = SimpleCookie(self.headers.get("Cookie") or "")[COOKIE].value
@@ -270,7 +275,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(400, {"error": "unknown branch"})
         return self.send_json(200, {"branch": self.branch, "branches": self.names, "base": BASE,
                                     "rounds": gitread.rounds(self.root, self.branch, BASE) if self.branch else [],
-                                    "working": gitread.dirty(self.wt)})
+                                    "working": gitread.dirty(self.wt), "gone": self.gone_branch})
 
     def text(self):
         if self.bad_branch:

@@ -126,6 +126,19 @@ class Server(unittest.TestCase):
         for p in ("/.git/HEAD", "/.review/approve/", "/a/../.git/HEAD"):
             self.assertEqual(self.get(p)[0], 404, p)
 
+    def test_a_commit_without_a_file_change_changes_the_stamp(self):
+        before = devserver.stamp(self.root)
+        git(self.root, "commit", "--allow-empty", "-m", "a round with no file change")
+        self.assertNotEqual(devserver.stamp(self.root), before)
+
+    def test_the_papercuts_store_is_hidden(self):
+        before = devserver.stamp(self.root)
+        os.makedirs(os.path.join(self.root, ".papercuts"))
+        with open(os.path.join(self.root, ".papercuts", "papercuts.db"), "w") as f:
+            f.write("db")
+        self.assertEqual(devserver.stamp(self.root), before)
+        self.assertEqual(self.get("/.papercuts/papercuts.db")[0], 404)
+
     def test_state_has_the_branch(self):
         s = json.loads(self.get("/__review/api/state")[2])
         self.assertEqual((s["branch"], s["commit"]), ("feat/x", self.commit))
@@ -247,7 +260,21 @@ class Branches(unittest.TestCase):
             self.assertTrue(json.loads(self.get("/__review/api/versions?branch=t/a")[2])["working"])
         finally:
             git(self.wt, "checkout", "index.html")
-        self.assertEqual(self.get("/__review/api/versions?branch=nope")[0], 400)
+        self.assertEqual(self.get("/__review/api/versions?branch=-x")[0], 400)
+
+    def test_a_gone_branch_falls_back_to_main_and_says_so(self):
+        """After a publish the worktree and the branch are gone, but the page still asks for ?branch=<it>."""
+        code, _, body = self.get("/__review/api/versions?branch=t/gone")
+        self.assertEqual(code, 200)
+        v = json.loads(body)
+        self.assertEqual((v["branch"], v["branches"], v["rounds"], v["gone"]), ("master", ["master", "t/a"], [], "t/gone"))
+        self.assertIsNone(json.loads(self.get("/__review/api/versions?branch=t/a")[2])["gone"])
+        code, _, body = self.get("/__review/api/text?branch=t/gone&rev=master&path=/")
+        self.assertEqual(code, 200)
+        self.assertIn("Master home", json.loads(body)["html"])
+        for bad in ("-x", "a..b", "t/a%00"):
+            self.assertEqual(self.get("/__review/api/versions?branch=" + bad)[0], 400, bad)
+            self.assertEqual(self.get("/__review/api/text?branch=%s&rev=master&path=/" % bad)[0], 400, bad)
 
     def test_text_returns_old_html_and_null_for_a_new_page(self):
         def text(rev, path, branch="t/a"):

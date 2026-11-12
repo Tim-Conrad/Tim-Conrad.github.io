@@ -3,6 +3,8 @@
 (function () {
   'use strict';
   var API = '/__review/api/';
+  /* if no status of the request arrives in this time, no host took it (ms) */
+  var HOST_WAIT = 60000;
   var diff = window.reviewDiff;
   /* the branch of this page: ?branch= of the address, else the server uses the cookie */
   var asked = new URLSearchParams(location.search).get('branch');
@@ -217,17 +219,21 @@
   /* ---- approve: the host checks, merges and publishes the newest round (approve-host.sh) ---- */
   var job = { state: 'idle' };   /* the status of the host, from GET /api/approve */
   var mine = null;               /* the request that this page sent: then only a status of that request counts */
-  var polling = false, diffNote = '', approveNote = '';
+  var sent = 0;                  /* Date.now() when the request of this page was sent, 0 when a status of it arrived */
+  var polling = false, diffNote = '', approveNote = '', goneNote = '';
   function newest() { return v && v.rounds.length ? v.rounds[v.rounds.length - 1] : null; }
   function updateApprove() {
     var last = newest();
-    /* only a commit can ship, not Working. The host refuses a worktree with changes, so then no button either. */
-    approve.hidden = !(last && v.branch !== v.base && choice.to === last.sha && !v.working);
+    /* only a commit can ship, not Working. The host refuses a worktree with changes, so then no button either.
+       A round that is published already has no button. */
+    var published = last && job.state === 'done' && job.branch === v.branch && job.sha === last.sha;
+    approve.hidden = !(last && v.branch !== v.base && choice.to === last.sha && !v.working && !published);
     if (last) approve.textContent = 'Approve round ' + last.n;
     approve.disabled = job.state === 'running';
   }
   function showStatus() {
     var parts = [], fresh = Date.now() - Date.parse(job.time || '') < 3600 * 1000;
+    if (goneNote) parts.push(goneNote);
     if (diffNote) parts.push(diffNote);
     if (approveNote) parts.push(approveNote);
     else if (job.state === 'running') parts.push('Publishing' + (job.branch ? ' ' + job.branch : '') + ': ' + job.step + '.');
@@ -249,10 +255,20 @@
         .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
         .then(function (s) {
           /* the host copies branch, sha and time of the request into each status */
-          if (!mine || (s.branch === mine.branch && s.sha === mine.sha && s.request === mine.time)) job = s;
+          if (!mine || (s.branch === mine.branch && s.sha === mine.sha && s.request === mine.time)) {
+            if (mine) sent = 0;
+            /* after a publish the branch is gone: load the versions again, so the bar shows what is here now */
+            if (job.state === 'running' && s.state === 'done') loadVersions();
+            job = s;
+          }
         })
         .catch(function () { /* the next tick asks again */ })
         .then(function () {
+          if (sent && Date.now() - sent >= HOST_WAIT) {
+            sent = 0;
+            job = { state: 'idle' };
+            approveNote = 'No host took the request. On the host, run: systemctl --user status t7d-review-approve.path';
+          }
           updateApprove(); showStatus();
           if (job.state === 'running') setTimeout(tick, 2000); else polling = false;
         });
@@ -270,6 +286,7 @@
       return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || String(r.status)); return d; });
     }).then(function (req) {
       mine = req;
+      sent = Date.now();
       job = { state: 'running', step: 'wait for the host', branch: v.branch, time: req.time };
       updateApprove(); showStatus(); poll();
     }).catch(function (err) {
@@ -309,12 +326,15 @@
 
   function start(data) {
     v = data;
+    goneNote = v.gone ? 'Branch ' + v.gone + ' is not here any more. It was published or removed.' : '';
+    showStatus();
     fill(branchField.select, v.branches.map(function (b) { return { value: b, label: b }; }), v.branch);
     versions = [{ value: v.base, label: v.base, short: v.base }].concat(v.rounds.map(function (r) {
       return { value: r.sha, label: 'Round ' + r.n + ': ' + r.subject, short: 'Round ' + r.n };
     }));
     if (v.working) versions.push({ value: 'working', label: 'Working', short: 'Working' });
     if (versions.length < 2) {
+      unmark(); showOwn();   /* after a publish the bar loads again: no marks of the old branch stay */
       moreToggle.textContent = v.branch;
       versionParts.forEach(function (n) { n.hidden = true; });
       return Promise.resolve();
@@ -337,16 +357,18 @@
   toField.select.addEventListener('change', function () { choice.to = toField.select.value; remember(); render(); });
   swBox.addEventListener('change', function () { choice.show = swBox.checked; remember(); render(); });
 
+  function loadVersions() {
+    return fetch(API + 'versions?' + q(asked))
+      .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (data) { versionParts.forEach(function (n) { n.hidden = false; }); texts = {}; return start(data); })
+      .catch(function () { diffNote = 'The review server does not answer.'; showStatus(); });
+  }
   function mount() {
     document.body.appendChild(bar);
     document.documentElement.classList.add('rv-has-bar');
     moreToggle.textContent = 'Review';
     versionParts.forEach(function (n) { n.hidden = true; });
-    fetch(API + 'versions?' + q(asked))
-      .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .then(function (data) { versionParts.forEach(function (n) { n.hidden = false; }); return start(data); })
-      .catch(function () { diffNote = 'The review server does not answer.'; showStatus(); })
-      .then(function () { bar.setAttribute('data-ready', ''); poll(); });
+    loadVersions().then(function () { bar.setAttribute('data-ready', ''); poll(); });
   }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();
