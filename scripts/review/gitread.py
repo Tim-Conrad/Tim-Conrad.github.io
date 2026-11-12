@@ -58,6 +58,14 @@ def dirty(path):
     return False
 
 
+def head(path):
+    """{branch, commit} of the checkout at path. A value is None if git cannot tell."""
+    branch = _git(path, "symbolic-ref", "--short", "-q", "HEAD")
+    commit = _git(path, "rev-parse", "--short=7", "HEAD")
+    return {"branch": branch.stdout.strip() or None if branch.returncode == 0 else None,
+            "commit": commit.stdout.strip() or None if commit.returncode == 0 else None}
+
+
 def show(main, rev, path):
     if rev.startswith("-"):
         return None

@@ -8,7 +8,11 @@
   script can reach this server. Nothing else in the CSP changes, so the review site keeps the rules of the real site.
 - /__review/reload: server-sent events. The stamp changes when a file of the site changes, is added or is deleted.
   The page then loads again.
-- /__review/api/state: the branch and the commit of the clone, and the number of open notes.
+- The branch comes from ?branch=<name>, else the cookie review_branch, else the branch of the main clone. A page with a
+  valid ?branch= sets the cookie. An unknown branch gives the main clone. Pages come from the worktree of that branch.
+- /__review/api/state: the branch and the commit of the chosen worktree, and the number of open notes.
+- /__review/api/versions?branch=<b>: the branches, the rounds of the branch since master, and if the worktree has changes.
+- /__review/api/text?branch=<b>&rev=<working|master|sha>&path=<site path>: the HTML of a page at that revision, or null.
 - /__review/api/notes: GET lists the notes, open and done. POST writes one note as <notes>/<id>.json. The POST needs
   the header X-T7d-Review and a JSON body: a plain form from another site cannot send either. A handled note goes to
   <notes>/done/ with an "answer" field. The page shows the answer under "My notes".
@@ -23,13 +27,18 @@ import re
 import secrets
 import sys
 import time
+import urllib.parse
 from functools import partial
+from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import gitread  # noqa: E402
 from gitread import HIDDEN  # noqa: E402
 PREFIX = "/__review/"
+COOKIE = "review_branch"
+BASE = "master"
 ASSETS = {"review.js": "text/javascript; charset=utf-8", "review.css": "text/css; charset=utf-8"}
 MAX_BODY = 32 * 1024
 MAX_NOTE = 4000
@@ -68,27 +77,9 @@ def stamp(root):
     return "%.3f-%d" % (newest, count)
 
 
-def git_state(root):
-    """{branch, commit} of the clone from .git, without the git binary (the container has none)."""
-    g = os.path.join(root, ".git")
-    try:
-        head = read(os.path.join(g, "HEAD")).strip()
-    except OSError:
-        return {"branch": None, "commit": None}
-    if not head.startswith("ref: "):
-        return {"branch": None, "commit": head[:7]}
-    ref = head[5:]
-    commit = None
-    try:
-        commit = read(os.path.join(g, ref)).strip()
-    except OSError:
-        try:
-            for line in read(os.path.join(g, "packed-refs")).splitlines():
-                if line.rstrip().endswith(" " + ref):
-                    commit = line.split()[0]
-        except OSError:
-            pass
-    return {"branch": ref.rsplit("refs/heads/", 1)[-1], "commit": commit[:7] if commit else None}
+def git_state(path):
+    """{branch, commit} of the checkout at path."""
+    return gitread.head(path)
 
 
 def inject(html):
@@ -151,6 +142,35 @@ class Handler(SimpleHTTPRequestHandler):
         parts = self.path.split("?", 1)[0].split("/")
         return any(p in HIDDEN for p in parts)
 
+    def pick(self):
+        """Choose the branch of this request. Sets self.branch, self.wt (its worktree path), self.names,
+        self.cookie_branch (a valid ?branch= to remember) and self.bad_branch (a ?branch= that is invalid or unknown)."""
+        main = gitread.head(self.root)["branch"]
+        found = {w["branch"]: w["path"] for w in gitread.worktrees(self.root)}
+        if main:
+            found[main] = self.root
+        self.names = ([main] if main else []) + [b for b in found if b != main]
+        queried = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("branch")
+        self.cookie_branch, self.bad_branch = None, False
+        want = None
+        if queried:
+            if gitread.valid_branch(queried[0]) and queried[0] in found:
+                want = self.cookie_branch = queried[0]
+            else:
+                self.bad_branch = True
+        else:
+            try:
+                value = SimpleCookie(self.headers.get("Cookie") or "")[COOKIE].value
+            except (KeyError, ValueError):
+                value = None
+            if value and gitread.valid_branch(value) and value in found:
+                want = value
+        self.branch = want or main
+        self.wt = found.get(want) or self.root
+
+    def query(self, name):
+        return urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get(name, [None])[0]
+
     def send_json(self, code, obj):
         body = json.dumps(obj).encode()
         self.send_response(code)
@@ -164,11 +184,15 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        if self.cookie_branch:
+            self.send_header("Set-Cookie", "%s=%s; Path=/; SameSite=Strict" % (COOKIE, self.cookie_branch))
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
         url = self.path.split("?", 1)[0]
+        self.pick()
+        self.directory = self.wt   # SimpleHTTPRequestHandler serves from this folder
         if url.startswith(PREFIX):
             return self.review_get(url[len(PREFIX):])
         if self.hidden():
@@ -190,7 +214,7 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def send_generated(self, url):
-        body = gen_feeds().build(self.root)[url.lstrip("/")].encode()
+        body = gen_feeds().build(self.wt)[url.lstrip("/")].encode()
         self.send_response(200)
         self.send_header("Content-Type", GENERATED[url])
         self.send_header("Content-Length", str(len(body)))
@@ -198,7 +222,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def not_found(self):
-        page = os.path.join(self.root, "404.html")
+        page = os.path.join(self.wt, "404.html")
         if os.path.isfile(page):
             return self.send_page(page, 404)
         self.send_error(404)
@@ -215,10 +239,44 @@ class Handler(SimpleHTTPRequestHandler):
         if name == "reload":
             return self.reload()
         if name == "api/state":
-            return self.send_json(200, {**git_state(self.root), "open": len(self.list_notes("open"))})
+            return self.send_json(200, {**git_state(self.wt), "open": len(self.list_notes("open"))})
+        if name == "api/versions":
+            return self.versions()
+        if name == "api/text":
+            return self.text()
         if name == "api/notes":
             return self.send_json(200, {"notes": self.list_notes("open") + self.list_notes("done")})
         self.send_error(404)
+
+    def versions(self):
+        if self.bad_branch:
+            return self.send_json(400, {"error": "unknown branch"})
+        return self.send_json(200, {"branch": self.branch, "branches": self.names, "base": BASE,
+                                    "rounds": gitread.rounds(self.root, self.branch, BASE) if self.branch else [],
+                                    "working": gitread.dirty(self.wt)})
+
+    def text(self):
+        if self.bad_branch:
+            return self.send_json(400, {"error": "unknown branch"})
+        rev, path = self.query("rev"), self.query("path")
+        shas = [r["sha"] for r in gitread.rounds(self.root, self.branch, BASE)] if self.branch else []
+        if rev not in ("working", BASE, *shas):
+            return self.send_json(400, {"error": "unknown rev"})
+        rel = (path or "").lstrip("/") if (path or "").startswith("/") else None
+        if rel is not None and (rel == "" or rel.endswith("/")):
+            rel += "index.html"
+        if rel is None or not gitread.valid_path(rel):
+            return self.send_json(400, {"error": "bad path"})
+        try:
+            if rev == "working":
+                full = os.path.realpath(os.path.join(self.wt, rel))
+                inside = full.startswith(os.path.realpath(self.wt) + os.sep)
+                html = read(full) if inside and os.path.isfile(full) else None
+            else:
+                html = gitread.show(self.root, rev, rel)
+        except UnicodeDecodeError:
+            html = None   # a binary file
+        return self.send_json(200, {"html": html})
 
     def reload(self):
         self.send_response(200)
@@ -227,7 +285,7 @@ class Handler(SimpleHTTPRequestHandler):
         last, beat = None, 0.0
         try:
             while True:
-                now = stamp(self.root)
+                now = stamp(self.wt)
                 if now != last or time.time() - beat > 15:
                     self.wfile.write(("data: %s\n\n" % now).encode())
                     self.wfile.flush()
@@ -266,7 +324,8 @@ class Handler(SimpleHTTPRequestHandler):
             note = clean_note(json.loads(self.rfile.read(n)))
         except ValueError as e:
             return self.send_json(400, {"error": str(e)})
-        note.update(git_state(self.root))
+        self.pick()
+        note.update(git_state(self.wt))
         note["time"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         nid = time.strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3)
         os.makedirs(self.notes, exist_ok=True)

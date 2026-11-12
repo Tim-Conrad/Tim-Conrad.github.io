@@ -73,6 +73,12 @@ class GitReadTest(unittest.TestCase):
         self.assertTrue(gitread.dirty(self.wt))
         os.remove(new)
 
+    def test_head_gives_branch_and_short_commit(self):
+        h = gitread.head(self.wt)
+        self.assertEqual(h["branch"], "t/a")
+        self.assertEqual(h["commit"], gitread.rounds(self.main, "t/a")[-1]["sha"][:7])
+        self.assertEqual(gitread.head(self.tmp.name), {"branch": None, "commit": None})
+
     def test_show_returns_old_text_and_none_for_missing(self):
         self.assertEqual(gitread.show(self.main, "master", "a.txt"), "old\n")
         self.assertEqual(gitread.show(self.main, "t/a", "a.txt"), "two\n")

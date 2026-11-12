@@ -2,19 +2,23 @@
 # login. GitHub Pages still serves t7d.dev from gh-pages. This stack never touches it.
 #
 #   mkdir -p .review/notes           # first: else Docker makes the folder as root
-#   echo REVIEW_HOST=<host> > .env   # the host name of the review site (.env and .review/ are gitignored)
+#   # .env (gitignored): REVIEW_HOST=<host>, REVIEW_MAIN=<host path of this clone>,
+#   # REVIEW_WORKTREES=<host path of the folder with the site worktrees>
 #   docker-compose -p t7d-review -f docker-compose.dev.yml up -d
 #   docker-compose -p t7d-review -f docker-compose.dev.yml down
 #
-# The clone is read-only in the container. Only .review/notes is writable: one JSON file per note.
-# A checkout of another branch in this folder shows that branch at once, with its name in the note tab.
+# The clone and the worktrees are read-only in the container, at their host paths (git needs the same paths). Only .review/notes is writable: one JSON file per note.
+# The page shows the branch of ?branch=, else of the cookie, else of the clone. The image adds only the package git.
 services:
   t7d-review:
-    image: python:3.12-slim
+    build:
+      context: scripts/review
+      dockerfile: Dockerfile
+    image: t7d-review:local
     container_name: t7d-review
     restart: unless-stopped
     user: "1001:1001"
-    command: [python3, /repo/scripts/review/devserver.py, --root, /repo, --notes, /repo/.review/notes, --host, 0.0.0.0, --port, "8000"]
+    command: [python3, "${REVIEW_MAIN:?set REVIEW_MAIN in .env}/scripts/review/devserver.py", --root, "${REVIEW_MAIN}", --notes, "${REVIEW_MAIN}/.review/notes", --host, 0.0.0.0, --port, "8000"]
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     read_only: true
@@ -25,8 +29,9 @@ services:
       - /tmp:size=8m,mode=1777
     logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
     volumes:
-      - .:/repo:ro
-      - ./.review/notes:/repo/.review/notes:rw
+      - ${REVIEW_MAIN}:${REVIEW_MAIN}:ro
+      - ${REVIEW_WORKTREES:?set REVIEW_WORKTREES in .env}:${REVIEW_WORKTREES}:ro
+      - ${REVIEW_MAIN}/.review/notes:${REVIEW_MAIN}/.review/notes:rw
     networks: [proxy]            # no ports: the lab proxy routes to it
     labels:
       - traefik.enable=true
