@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install the host side of the Approve button and of approve.py as systemd user units.
 # Run it once on the lab host, in the main clone that the review container mounts: scripts/review/approve-install.sh
-# Then: docker-compose -p t7d-review -f docker-compose.dev.yml up -d
+# Then: docker-compose -p t7d-review -f docker-compose.dev.yml up -d --build
 # Remove it: systemctl --user disable --now t7d-review-approve.path && rm ~/.config/systemd/user/t7d-review-approve.*
 set -euo pipefail
 repo=$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)

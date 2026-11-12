@@ -29,6 +29,10 @@ Show a changed page as a Claude artifact, not a local server: `python3 scripts/p
 Use the skill `handling-review-papercuts`. A hook prints the number of open papercuts at the start of a session.
 </important>
 
+<important if="you think a text is ready to publish, or you consider running scripts/review/approve.py">
+Do not run `python3 scripts/review/approve.py <branch>` unless Tim tells you to, in this conversation or in a papercut. The command merges the branch and publishes it to t7d.dev. If you think that a text is ready, tell Tim. He presses Approve on the review site.
+</important>
+
 <important if="you deploy, or the live site does not show a change">
 See "Deploy" in `README.md`. GitHub Pages serves the `gh-pages` branch at https://t7d.dev.
 When Tim asks to ship a PR, run `scripts/ship.sh <pr>` after the checks of the change. Merging publishes to t7d.dev, so do not run it unasked. If it stops, read its last line, fix the cause, and run it again: a merged PR skips the merge.

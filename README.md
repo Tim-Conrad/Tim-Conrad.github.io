@@ -75,12 +75,14 @@ The bar at the bottom of each page shows the branch and two versions: master, a 
 
 Each page also has the papercuts widget. A papercut keeps the page, the branch, the commit and a picture. A relay container writes it to the local store `.papercuts/papercuts.db` of this clone. `.github/papercuts.json` sets `"store": "local"`, so `papercuts list`, `show` and `done` use that store in every worktree, with no env. Git ignores `.papercuts/`.
 
-"Approve round <n>" in the bar publishes the newest round of the branch. It writes a request to `.review/approve/`. On the host, `scripts/review/approve-host.sh` checks the head and the worktree and runs `scripts/check.py`. Then it pushes the branch, opens the PR, runs `scripts/ship.sh <pr> <sha>`, and removes the worktree and the branch. The bar shows each step from `.review/approve-status/`. An agent can do the same with `python3 scripts/review/approve.py <branch>`.
+"Approve round <n>" in the bar publishes the newest round of the branch. It writes a request to `.review/approve/`. On the host, `scripts/review/approve-host.sh` checks the head and the worktree and runs `scripts/check.py`. Then it pushes the branch, opens the PR, runs `scripts/ship.sh <pr> <sha>`, and removes the worktree and the branch. The bar shows each step from `.review/approve-status/`. An agent can do the same with `python3 scripts/review/approve.py <branch>`, also from its worktree. An agent starts Approve only when Tim tells it to, in that conversation or in a papercut.
 
 To run it in a container behind a login proxy:
 
-1. Install the host side of the Approve button once: `scripts/review/approve-install.sh`. It makes `.review/approve/`, `.review/approve-status/` and a systemd user unit that starts `approve-host.sh` for each request.
-2. Make the store folder: `mkdir -p .papercuts`. If the folders of step 1 and 2 do not exist, Docker makes them as root.
+1. Install the host side of the Approve button once: `scripts/review/approve-install.sh`. It needs `gh` on PATH. It makes `.review/approve/`, `.review/approve-status/` and a systemd user unit that starts `approve-host.sh` for each request. To keep the button working after a reboot, run `loginctl enable-linger developer` once.
+2. Make the store folder and the worktrees folder: `mkdir -p .papercuts ~/code/worktrees/t7d`.
+
+   Run steps 1 and 2 before step 4. If the folders do not exist, Docker makes them as root.
 3. Write the settings into `.env`:
    - `REVIEW_HOST`: the host name of the review site.
    - `REVIEW_PAPERCUTS_HOST`: the host name of the relay.
