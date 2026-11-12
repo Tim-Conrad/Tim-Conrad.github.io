@@ -481,8 +481,11 @@ figure .dg-n { display: none; }
 .narr-on .narr-seg { cursor: pointer; }
 .narr-on .prose figure.fig-wide.cur:not(:has(.dg-n)) { overflow-x: visible; }   /* no narrow drawing: fit the wide one while the voice explains it */
 .narr-on .prose figure.fig-wide.cur:not(:has(.dg-n)) .dg { min-width: 0; }
-.narr-on .prose figure.cur .steps__bar, .narr-on .prose figure.cur .steps__hint, .narr-on .prose figure.cur .steps__at { display: none; }
-.narr-playing .prose figure.cur .say:not(:has(.cur)), .narr-playing .prose figure.cur .say .narr-seg:not(.cur) { display: none; }   /* under a figure, only the paragraph that the voice reads now */
+.narr-on li.narr-seg.cur::before { left: -2.2rem; }   /* in a list, the bar sits left of the number */
+/* figures with voice steps: a plain numbered list under the drawing; the voice brings in the parts of each step */
+.prose .fig-steps { margin: .9rem 0 0; padding-left: 1.6rem; font-size: .9688rem; line-height: 1.5; }
+.narr-playing .prose figure.cur .say:not(:has(.cur)), .narr-playing .prose figure.cur .say .narr-seg:not(.cur),
+.narr-playing .prose figure.cur .fig-steps .narr-seg:not(.cur) { display: none; }   /* under a figure, only the paragraph that the voice reads now */
 .narr-playing .prose figure.cur figcaption { display: none; }   /* the voice explains the figure; the caption returns afterwards */
 /* the phrase marker: a grey tint over the phrase that the voice reads */
 .narr-on #main { position: relative; }

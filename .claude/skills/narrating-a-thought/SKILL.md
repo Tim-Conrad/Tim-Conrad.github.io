@@ -29,7 +29,7 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 | Colour blocks | `<span class="mk" data-c="red|green|blue|yellow">term</span>` in the text. It turns on when the voice reaches its first word. Nothing else is needed. |
 | `narration.json` | `title`, `voice`, `audio` (mp3 path or null), `timing` (`{start: [...], end: [...]}` per character of the script, or null for simulated), `chapters` (`[id, title]`, id of an `h2` or a `.say`), `spoken` (id to spoken form, where TTS must hear other words than the page shows), `cues`. |
 | Figure cues | `{"in": "say-fig1", "p": "phrase in the script", "until": "phrase", "sel": ".cue-find", "cls": "hot"}`. `sel` is looked up inside the figure of `in`. `hot` makes that part stand out while the rest of the figure steps back. Without `cls`, the part gets `on`, and `[data-c].on` fills with its colour. Without `until`, the cue stays on. |
-| Step figures | The list items of `figure[data-steps]` are part of the script. The voice sets the step (`narration:step` event in `site.js`). |
+| Step figures | Use `figure[data-voice-steps]`, not `data-steps`: no step box and no Back, Next or Play buttons, because they compete with the voice. Parts of the drawing carry `data-step="n"`. Under the drawing is a plain `<ol class="fig-steps">` with `<li value="n">` (the value keeps the number when the other items hide). `narration.js` brings in the parts of the step that the voice reads. When only reading, the whole drawing and the whole list show. |
 | Switch and pick figures | Not driven by the voice yet (`data-switch`, `data-pick`). Use `hot` cues on their parts, and describe both states of a switch in order. To let the voice flip a switch, add an event to `site.js` like `narration:step`, and ask Tim first. |
 
 ## Decided design
@@ -74,4 +74,5 @@ Use the skill `adding-a-thought` for the text. Then:
 | A walk-through said "on the left" while the phone showed a stacked drawing. | Layout-neutral words. |
 | The sticky site header covered the top of the framed figure. | Subtract the header height when scrolling. |
 | A wide drawing scrolled sideways inside its box, so half of it was out of view. | A narrow drawing. |
+| The manual step viewer (box, Back, Next, Play, "Step 2 of 5") stayed under a narrated figure and broke the immersion. | Voice steps: a plain list, the voice animates. |
 | A python `http.server` cannot seek in an mp3 (no range requests). | Load the audio as a blob. |

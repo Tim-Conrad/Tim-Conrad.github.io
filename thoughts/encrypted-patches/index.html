@@ -203,7 +203,7 @@
       <li><b>Log.</b> Every statement goes into a transparency log. That is a public list that only grows: entries can be added but not changed or removed, and anyone can check that an entry is in it. Certificate Transparency uses such logs for TLS certificates <a href="#s16">[16]</a>. Anyone who watches the log sees a release before T, or a different key for some customers.</li>
       <li><b>Install.</b> The client checks the statement and the log entry, decrypts with the key and installs.</li>
     </ol>
-    <figure class="fig-wide" data-steps>
+    <figure class="fig-wide" data-voice-steps>
       <svg class="dg dg-w" viewBox="0 0 760 420" role="img" aria-labelledby="d2t d2d">
   <title id="d2t">Who signs what</title>
   <desc id="d2d">An offline organisation root key delegates to a targets role and a release role. Days before T the targets role signs a manifest with the hash of the encrypted bundle, and mirrors carry both. At T a release role, two of three officers, signs a key-release statement that is written to a transparency log. The client verifies the manifest, the bundle hash, the statement signature and the log entry, then decrypts and installs.</desc>
@@ -273,15 +273,13 @@
   <text x="200" y="396">5 decrypt, install</text><text x="218" y="412" class="t-s">AES-GCM, key from 4</text></g>
 </svg>
       <div class="say" id="say-fig3"><p><span class="say-k">Spoken</span>Figure three shows who signs what, in three parts: the organisation, the mirrors and the log, and the client. It builds up in five steps, one for each line below the drawing.</p></div>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
-          <li>Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
-          <li>Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
-          <li>At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
-          <li>The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
+      <ol class="fig-steps">
+          <li value="1">The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
+          <li value="2">Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
+          <li value="3">Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
+          <li value="4">At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
+          <li value="5">The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
         </ol>
-      </div>
       <figcaption>Fig. 3 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
     </figure>
     <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
@@ -299,7 +297,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <p>For each round, every member signs the round number with its share when that round's time has come. Enough of these partial signatures together give the full signature, and anyone can check it against one public key that never changes. Cryptographers call this a <span class="mk" data-c="yellow">threshold signature</span>. So nobody can compute the value of a future round, not even a member alone. It takes enough members, and honest members sign a round only at its time.</p>
     <p>The second part is a kind of encryption where the key can be a name. In <span class="mk" data-c="yellow">identity-based encryption</span>, anyone can encrypt to a name, an email address for example, with one public master key. The private key for that name is made later, by whoever holds the master secret. In drand, the name is a round number, the master key is drand's public key, and the signature for a round is the private key for it <a href="#s17">[17]</a>. The master secret is the split key of the League, so the private key for a round appears only when the members sign that round.</p>
     <p>So the vendor picks the round that falls on patch day T and encrypts the patch key to that round. Until T nobody, the vendor included, can decrypt it. At T drand publishes the signature for that round, and the signature opens it. The free tool tlock, from the drand team, does exactly this <a href="#s17">[17]</a>.</p>
-    <figure class="fig-wide" data-steps>
+    <figure class="fig-wide" data-voice-steps>
       <svg class="dg dg-w" viewBox="0 0 760 380" role="img" aria-labelledby="d5t d5d">
   <title id="d5t">How a drand number opens a patch key at patch day</title>
   <desc id="d5d">Independent organisations make a new numbered value every three seconds; the value for a position exists only when enough of them have taken part, at that moment. Days before patch day the vendor locks the patch key to the value at position T, which does not exist yet. At T the organisations make that value, it is published, and anyone can use it to open the lock and install the patch.</desc>
@@ -345,14 +343,12 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="200" y="272" class="t-s">key → install</text><line class="ln" x1="194" y1="154" x2="245.9" y2="191.1"/><polygon class="arr" points="250,194 245.8,187.2 242.2,192.2"/></g>
 </svg>
       <div class="say" id="say-fig4"><p><span class="say-k">Spoken</span>Figure four has three layers. At the top, the organisations of the League of Entropy. In the middle, the row of drand values, one every three seconds, with the value for T marked. At the bottom, the vendor on the left and everyone else on the right. It builds up in four steps.</p></div>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
-          <li>Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
-          <li>At T enough of the organisations together make the value for T. Not every one is needed.</li>
-          <li>The value is public. It opens the lock, and everyone installs the patch.</li>
+      <ol class="fig-steps">
+          <li value="1">drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
+          <li value="2">Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
+          <li value="3">At T enough of the organisations together make the value for T. Not every one is needed.</li>
+          <li value="4">The value is public. It opens the lock, and everyone installs the patch.</li>
         </ol>
-      </div>
       <figcaption>Fig. 4 · The lock points at a value that does not exist yet. Only the organisations together can make it, and only at T.</figcaption>
     </figure>
     <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
@@ -475,7 +471,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li>Release artefacts that are published encrypted and signed, with the key held by the forge.</li>
       <li>One action that, at T, publishes the key, merges the branch and publishes the advisory.</li>
     </ul>
-    <figure class="fig-wide" data-steps>
+    <figure class="fig-wide" data-voice-steps>
       <svg class="dg dg-w" viewBox="0 0 760 420" role="img" aria-labelledby="d6t d6d">
   <title id="d6t">What a forge would need for a private fix in a public repository</title>
   <desc id="d6d">Inside the public repository a private branch holds the fix; only maintainers and a security role see it. Private CI with closed logs tests it. Days before T the forge publishes the encrypted, signed release, and the embargo list gets the key early. At T one action publishes the key and the advisory and merges the branch, and everyone applies the fix.</desc>
@@ -509,14 +505,12 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <line class="ln" x1="291" y1="274" x2="291" y2="311"/><polygon class="arr" points="291,316 287.9,308.6 294.1,308.6"/><rect class="bx" x="236" y="318" width="110" height="46"/><text x="244" y="338">everyone</text><text x="244" y="354" class="t-s">applies at T</text></g>
 </svg>
       <div class="say" id="say-fig7"><p><span class="say-k">Spoken</span>Figure seven shows what this looks like inside one public repository, in four steps.</p></div>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
-          <li>Private CI builds and tests the branch. Its logs stay closed.</li>
-          <li>Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
-          <li>At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
+      <ol class="fig-steps">
+          <li value="1">The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
+          <li value="2">Private CI builds and tests the branch. Its logs stay closed.</li>
+          <li value="3">Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
+          <li value="4">At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
         </ol>
-      </div>
       <figcaption>Fig. 7 · What a forge would need for a private fix in a public repository.</figcaption>
     </figure>
     <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, so the list stays short and the embargo stays short.</p>

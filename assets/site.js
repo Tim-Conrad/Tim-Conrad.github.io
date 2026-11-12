@@ -155,7 +155,6 @@
       show(1); play.textContent = 'Pause'; play.setAttribute('aria-label', 'Pause');
       timer = setInterval(function () { if (at >= n) stop(); else show(at + 1); }, 2800);
     });
-    fig.addEventListener('narration:step', function (e) { stop(); show(e.detail); });   // narration.js: the voice sets the step
     show(0);
   });
 

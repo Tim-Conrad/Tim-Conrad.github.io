@@ -24,7 +24,7 @@
     var stop = $('#sources', art), segs = [];
     var walker = document.createTreeWalker(art, NodeFilter.SHOW_ELEMENT, { acceptNode: function (n) {
       if (stop && (n === stop || (stop.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING))) return NodeFilter.FILTER_REJECT;
-      if (n.matches('svg, figcaption, .code, .steps__bar, .refs')) return NodeFilter.FILTER_REJECT;
+      if (n.matches('svg, figcaption, .code, .refs')) return NodeFilter.FILTER_REJECT;
       return n.matches('h2, p, li') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     } });
     while (walker.nextNode()) {
@@ -130,7 +130,7 @@
     }
     function playing() { return clock.on; }
 
-    var started = false, follow = true, lastC = -2, curK = -1, shownKey = null, boxY = [], autoAt = 0, pausedAt = 0, raf = 0, stepFig = null;
+    var started = false, follow = true, lastC = -2, curK = -1, shownKey = null, boxY = [], autoAt = 0, pausedAt = 0, raf = 0;
     function play() {
       if (!started) { started = true; document.body.classList.add('narr-on'); again.hidden = false; var r = store.get(); if (r && r.c > 0 && r.c < T.length - 30) seekChar(r.c); }
       else if (pausedAt && Date.now() - pausedAt > 30000) seekChar(sentenceStart(charAt(clock.now())));   // back in after a break: start of the sentence
@@ -159,12 +159,16 @@
         var first = segs.findIndex(function (x) { return x.say === box; });
         box.classList.toggle('open', all || (started && k >= first));
       });
-      // a figure with steps follows the voice: its intro shows the whole picture, each list item one step
-      var fig = s.el.closest('figure[data-steps]'), step = 0;
-      if (fig && s.el.matches('.steps__list li')) step = $$('.steps__list li', fig).indexOf(s.el) + 1;
-      if (stepFig && stepFig !== fig) stepFig.dispatchEvent(new CustomEvent('narration:step', { detail: 0 }));
-      if (fig && started) fig.dispatchEvent(new CustomEvent('narration:step', { detail: step }));
-      stepFig = started ? fig : null;
+      // a figure with voice steps: its intro shows the whole drawing, each list item brings in the parts of its step
+      $$('figure[data-voice-steps]', art).forEach(function (f) {
+        var k = 0;
+        if (started && f.contains(s.el) && s.el.matches('.fig-steps li')) k = $$('.fig-steps li', f).indexOf(s.el) + 1;
+        $$('[data-step]', f).forEach(function (part) {
+          var n = +part.getAttribute('data-step');
+          part.classList.toggle('is-later', k > 0 && n > k);
+          part.classList.toggle('is-past', k > 0 && n < k);
+        });
+      });
       // read words, colour blocks, figure cues: all derived from the position, so seeking back undoes them
       words.forEach(function (w) { w.el.classList.toggle('rd', started && w.k === k && w.s <= t + 0.03); });
       marks.forEach(function (x) { x.el.classList.toggle('on', started && t >= x.s); });
