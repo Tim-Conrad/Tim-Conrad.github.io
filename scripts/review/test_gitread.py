@@ -88,6 +88,29 @@ class GitReadTest(unittest.TestCase):
             self.assertFalse(gitread.valid_path(bad), bad)
         self.assertTrue(gitread.valid_path("posts/index.html"))
 
+    def test_show_refuses_option_like_rev(self):
+        out = os.path.join(self.main, "x")
+        self.assertIsNone(gitread.show(self.main, "--output=" + out, "a"))
+        self.assertFalse(os.path.exists(out))
+
+    def test_rounds_refuses_option_like_base_or_branch(self):
+        out = os.path.join(self.main, "x")
+        self.assertEqual(gitread.rounds(self.main, "t/a", base="--output=" + out), [])
+        self.assertEqual(gitread.rounds(self.main, "--output=" + out), [])
+        self.assertFalse(os.path.exists(out))
+
+    def test_dirty_is_true_when_git_fails(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(gitread.dirty(d))
+        self.assertTrue(gitread.dirty("/nonexistent-folder-xyz"))
+
+    def test_valid_path_refuses_control_characters_and_empty(self):
+        for bad in ["a\x00b", "", "a\nb", "a\x7fb", "a\x1fb"]:
+            self.assertFalse(gitread.valid_path(bad), repr(bad))
+
+    def test_show_of_bad_path_returns_none(self):
+        self.assertIsNone(gitread.show(self.main, "master", "a\x00b"))
+
 
 if __name__ == "__main__":
     unittest.main()

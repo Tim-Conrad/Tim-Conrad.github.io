@@ -9,10 +9,13 @@ _BRANCH_RE = re.compile(r"^[A-Za-z0-9._/-]{1,100}$")
 
 def _git(cwd, *args):
     # safe.directory: the container user differs from the mount owner in some setups.
-    return subprocess.run(
-        ["git", "-c", "safe.directory=*", *args],
-        cwd=cwd, capture_output=True, text=True, timeout=5,
-    )
+    try:
+        return subprocess.run(
+            ["git", "-c", "safe.directory=*", *args],
+            cwd=cwd, capture_output=True, text=True, timeout=5,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+        return subprocess.CompletedProcess(args, 1, "", "")
 
 
 def worktrees(main):
@@ -31,7 +34,9 @@ def worktrees(main):
 
 
 def rounds(main, branch, base="master"):
-    res = _git(main, "log", "--reverse", "--format=%H%x00%s", base + ".." + branch, "--")
+    if base.startswith("-") or branch.startswith("-"):
+        return []
+    res = _git(main, "log", "--reverse", "--format=%H%x00%s", "--end-of-options", base + ".." + branch, "--")
     if res.returncode != 0:
         return []
     result = []
@@ -42,8 +47,10 @@ def rounds(main, branch, base="master"):
 
 
 def dirty(path):
-    out = _git(path, "status", "--porcelain").stdout
-    for line in out.splitlines():
+    res = _git(path, "status", "--porcelain")
+    if res.returncode != 0:
+        return True  # fail closed: an unknown state counts as dirty
+    for line in res.stdout.splitlines():
         name = line[3:].split(" -> ")[-1].strip('"')
         if line.startswith("??") and name.split("/")[0] in HIDDEN:
             continue
@@ -52,7 +59,9 @@ def dirty(path):
 
 
 def show(main, rev, path):
-    res = _git(main, "show", rev + ":" + path)
+    if rev.startswith("-"):
+        return None
+    res = _git(main, "show", "--end-of-options", rev + ":" + path)
     return res.stdout if res.returncode == 0 else None
 
 
@@ -64,6 +73,8 @@ def valid_branch(name):
 
 def valid_path(path):
     if not path or path.startswith("/"):
+        return False
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in path):
         return False
     parts = path.split("/")
     return not any(p == ".." or p in HIDDEN for p in parts)
