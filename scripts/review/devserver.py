@@ -21,14 +21,16 @@ import json
 import os
 import re
 import secrets
+import sys
 import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from gitread import HIDDEN  # noqa: E402
 PREFIX = "/__review/"
 ASSETS = {"review.js": "text/javascript; charset=utf-8", "review.css": "text/css; charset=utf-8"}
-HIDDEN = (".git", ".review", ".reels", "node_modules", "__pycache__")
 MAX_BODY = 32 * 1024
 MAX_NOTE = 4000
 NOTE_ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{6}$")
