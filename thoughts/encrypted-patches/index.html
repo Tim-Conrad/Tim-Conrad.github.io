@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Encrypted patches, unlocked on patch day · Tim Conrad</title>
-<meta name="description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.">
+<meta name="description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. A design on TUF, a release without a key server through drand, open source in private, and the air-gapped case. Narrated.">
 <link rel="canonical" href="https://t7d.dev/thoughts/encrypted-patches/">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Encrypted patches, unlocked on patch day">
-<meta property="og:description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.">
+<meta property="og:description" content="Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. A design on TUF, a release without a key server through drand, open source in private, and the air-gapped case. Narrated.">
 <meta property="og:url" content="https://t7d.dev/thoughts/encrypted-patches/">
 <meta property="og:image" content="https://t7d.dev/assets/og.png">
 <meta property="article:published_time" content="2026-11-10">
@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/assets/site.css">
 <script src="/assets/theme.js"></script>
 <script src="/assets/site.js" defer></script>
+<script src="/assets/narration.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -48,7 +49,7 @@
   <dl class="tmeta">
     <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
     <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
-    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
   </dl>
 </header>
 
@@ -57,70 +58,90 @@
     <p class="label">On this page</p>
     <ol>
       <li><a href="#problem">The problem</a></li>
-      <li><a href="#games">What games do</a></li>
+      <li><a href="#idea">The idea</a></li>
       <li><a href="#design">A design</a></li>
       <li><a href="#beacon">Without a key server</a></li>
       <li><a href="#airgap">Air-gapped sites</a></li>
       <li><a href="#oss">Open source in private</a></li>
       <li><a href="#limits">What it does not fix</a></li>
-      <li><a href="#prior">Prior art and patents</a></li>
+      <li><a href="#prior">Prior art</a></li>
+      <li><a href="#take">What I take from it</a></li>
       <li><a href="#sources">Sources</a></li>
       <li><a href="#revisions">Revisions</a></li>
       <li><a href="#feedback">Feedback</a></li>
     </ol>
   </nav>
 
-  <article class="prose">
+  <article class="prose" data-narration="/thoughts/encrypted-patches/narration.json">
+    <div class="say" id="say-intro"><p><span class="say-k">Spoken</span>Encrypted patches, unlocked on patch day. A thought by Tim Conrad, read aloud. It takes about twenty minutes, in ten short chapters. Three words carry the idea. Patch day, the moment a fix becomes public, written as T. The encrypted bundle, which arrives early. And the key, which arrives at T. When a figure comes up, the narration describes it, so you can listen without the screen.</p></div>
     <h2 id="problem">The problem</h2>
-    <p>A security fix tells an attacker where the bug was. That was always true. What changed in the last year is the price of turning a fix into an exploit.</p>
-    <p>Keycloak is a good example. Between November 2025 and November 2026 the project tagged 47 releases, about one every eight days, across four supported lines, and fixed at least 50 CVEs <a href="#s1">[1]</a>. In August 2026 one of them, CVE-2026-18963, let an unauthenticated attacker take over accounts through the password-reset flow <a href="#s2">[2]</a>. The fixed builds carry tag dates a week before the CVE was published <a href="#s1">[1]</a>, and the public fix is a small change of 57 added lines <a href="#s3">[3]</a>. A public proof of concept credits Claude for "research and PoC development assistance" and ships "the annotated patch diff" <a href="#s4">[4]</a>. A team that runs Keycloak has to patch every week, and every patch is a map for someone else.</p>
-    <p>The numbers behind that feeling are from 2026:</p>
+    <p>A security fix tells an attacker where the bug was. That was always true: compare the old and the new version, a step called <span class="mk" data-c="yellow">patch diffing</span>, and the change points at the bug. What changed in the last year is the price of turning a fix into an exploit.</p>
+    <p>Keycloak is a good example. Between November 2025 and November 2026 the project tagged 47 releases, about one every eight days, across four supported lines, and fixed at least 50 CVEs <a href="#s1">[1]</a>. In August 2026 one of them, CVE-2026-18963, let an unauthenticated attacker take over accounts through the password-reset flow <a href="#s2">[2]</a>. The fixed builds carry tag dates a week before the CVE was published <a href="#s1">[1]</a>, and the public fix is a small change of 57 added lines <a href="#s3">[3]</a>. A public proof of concept credits Claude for "research and PoC development assistance" and ships "the annotated patch diff" <a href="#s4">[4]</a>. A team that runs Keycloak has to patch every week, and <span class="mk" data-c="red">every patch is a map for someone else</span>.</p>
+    <p>A bug that is already fixed and public is called an <span class="mk" data-c="yellow">n-day</span>. One that nobody has fixed yet is a zero-day. The numbers for n-days are from 2026:</p>
     <ul>
-      <li>Anthropic gave its Mythos Preview model only public patches. The first working Firefox exploit came less than an hour after the patch; Windows kernel exploits cost about $2,000 each. Its summary: "The binding constraint to N-days is now just a few thousand dollars and API access" <a href="#s5">[5]</a>.</li>
-      <li>Elastic found the bug behind a Windows patch "within minutes" of reading the diff with an LLM; the exploit took hours instead of weeks <a href="#s6">[6]</a>.</li>
-      <li>Google counted 141 exploited vulnerabilities from January to August 2026, more than in all of 2025, and puts the growth in "the rapid weaponization of n-days" <a href="#s7">[7]</a>. Mandiant's estimate for the mean time-to-exploit in 2025 is minus seven days <a href="#s8">[8]</a>, and Rapid7 measured a median of five days from publication to the CISA list of exploited bugs <a href="#s9">[9]</a>.</li>
+      <li>Anthropic gave its Mythos Preview model only public patches. The first working Firefox exploit came less than an hour after the patch. Windows kernel exploits cost about $2,000 each. Its summary: "The binding constraint to N-days is now just a few thousand dollars and API access" <a href="#s5">[5]</a>.</li>
+      <li>Elastic found the bug behind a Windows patch "within minutes" of reading the diff with an LLM. The exploit took hours instead of weeks <a href="#s6">[6]</a>.</li>
+      <li>Google counted 141 exploited vulnerabilities from January to August 2026, more than in all of 2025, and puts the growth in "the rapid weaponization of n-days" <a href="#s7">[7]</a>.</li>
+      <li>Attacks start early. Mandiant estimates that in 2025 exploitation began on average seven days before the fix was public <a href="#s8">[8]</a>. Rapid7 measured a median of five days from publication to the CISA list of exploited bugs <a href="#s9">[9]</a>.</li>
     </ul>
+    <div class="say" id="say-numbers"><p><span class="say-k">Spoken</span>Three numbers to keep from that list: an exploit from a patch in under an hour, for about two thousand dollars, and attacks that begin within days of the fix.</p></div>
     <p>Finding a new bug with AI works, but it is a search, and search costs. XBOW spent about $40,000 on API calls for a six-day campaign that produced a full Chrome exploit chain <a href="#s10">[10]</a>. Anthropic's OpenBSD campaign took about 1,000 runs for under $20,000, and the FFmpeg one about $10,000 <a href="#s11">[11]</a>. A patch removes the search: it says where to look.</p>
     <figure class="fig-wide">
-      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d0t d0d">
+      <svg class="dg dg-w" viewBox="0 0 760 330" role="img" aria-labelledby="d0t d0d">
   <title id="d0t">What it costs: finding new bugs against exploiting patched ones</title>
   <desc id="d0d">Log scale. Finding new bugs, per campaign: XBOW Chrome full chain about 40,000 dollars; Anthropic OpenBSD about 1,000 runs under 20,000 dollars; Anthropic FFmpeg about 10,000 dollars. Exploiting a patched bug, per exploit: Windows kernel exploit about 2,000 dollars; Linux kernel n-day under 1,000 dollars; Windows crash proof of concept about 120 dollars.</desc>
   <line class="ln-s" x1="330.0" y1="56" x2="330.0" y2="300"/><text x="330.0" y="320" text-anchor="middle" class="t-s">$100</text><line class="ln-s" x1="463.3" y1="56" x2="463.3" y2="300"/><text x="463.3" y="320" text-anchor="middle" class="t-s">$1k</text><line class="ln-s" x1="596.7" y1="56" x2="596.7" y2="300"/><text x="596.7" y="320" text-anchor="middle" class="t-s">$10k</text><line class="ln-s" x1="730.0" y1="56" x2="730.0" y2="300"/><text x="730.0" y="320" text-anchor="middle" class="t-s">$100k</text>
-  <text x="20" y="46" class="t-h">Find new bugs · per campaign</text>
-  <text x="20" y="194" class="t-h">Exploit a patched bug · per exploit</text>
+  <g class="cue-scale"><line class="ln-s" x1="330.0" y1="300" x2="730.0" y2="300"/></g>
+  <g class="cue-find"><text x="20" y="46" class="t-h">Find new bugs · per campaign</text>
   <text x="20" y="87">XBOW · Chrome full chain, 6 days</text><rect class="bx-i" x="330" y="72" width="346.9" height="22"/><text x="684.9" y="88" class="t-s">~$40k</text>
   <text x="20" y="119">Anthropic · OpenBSD, ~1,000 runs</text><rect class="bx-i" x="330" y="104" width="306.8" height="22"/><text x="644.8" y="120" class="t-s"><$20k</text>
-  <text x="20" y="151">Anthropic · FFmpeg, some 100 runs</text><rect class="bx-i" x="330" y="136" width="266.7" height="22"/><text x="604.7" y="152" class="t-s">~$10k</text>
-  <text x="20" y="227">Windows kernel exploit, from patch</text><rect class="bx-s" x="330" y="212" width="173.5" height="22"/><text x="511.5" y="228" class="t-s">~$2k</text>
-  <text x="20" y="259">Linux kernel n-day exploit</text><rect class="bx-s" x="330" y="244" width="133.3" height="22"/><text x="471.3" y="260" class="t-s"><$1k</text>
-  <text x="20" y="291">Windows crash PoC, from patch</text><rect class="bx-s" x="330" y="276" width="10.6" height="22"/><text x="348.6" y="292" class="t-s">~$120</text>
-  
+  <text x="20" y="151">Anthropic · FFmpeg, some 100 runs</text><rect class="bx-i" x="330" y="136" width="266.7" height="22"/><text x="604.7" y="152" class="t-s">~$10k</text></g>
+  <g class="cue-exploit"><text x="20" y="194" class="t-h">Exploit a patched bug · per exploit</text>
+  <text x="20" y="227">Windows kernel exploit, from patch</text><rect class="bx-s" x="330" y="212" width="173.5" height="22" data-c="red"/><text x="511.5" y="228" class="t-s">~$2k</text>
+  <text x="20" y="259">Linux kernel n-day exploit</text><rect class="bx-s" x="330" y="244" width="133.3" height="22" data-c="red"/><text x="471.3" y="260" class="t-s"><$1k</text>
+  <text x="20" y="291">Windows crash PoC, from patch</text><rect class="bx-s" x="330" y="276" width="10.6" height="22" data-c="red"/><text x="348.6" y="292" class="t-s">~$120</text></g>
 </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 380" role="img" aria-labelledby="d0nt">
+  <title id="d0nt">What it costs: finding new bugs against exploiting patched ones</title>
+  <g class="cue-scale"><line class="ln-s" x1="20.0" y1="34" x2="20.0" y2="350"/><line class="ln-s" x1="126.7" y1="34" x2="126.7" y2="350"/><line class="ln-s" x1="233.3" y1="34" x2="233.3" y2="350"/><line class="ln-s" x1="340.0" y1="34" x2="340.0" y2="350"/><text x="20" y="370" class="t-s">$100</text><text x="126.7" y="370" text-anchor="middle" class="t-s">$1k</text><text x="233.3" y="370" text-anchor="middle" class="t-s">$10k</text><text x="340" y="370" text-anchor="end" class="t-s">$100k</text></g>
+  <g class="cue-find"><text x="20" y="24" class="t-h">Find new bugs · per campaign</text>
+  <text x="20" y="48">XBOW · Chrome chain</text><rect class="bx-i" x="20" y="56" width="277.6" height="18"/><text x="303.6" y="70" class="t-s">~$40k</text>
+  <text x="20" y="96">Anthropic · OpenBSD</text><rect class="bx-i" x="20" y="104" width="245.4" height="18"/><text x="271.4" y="118" class="t-s">&lt;$20k</text>
+  <text x="20" y="144">Anthropic · FFmpeg</text><rect class="bx-i" x="20" y="152" width="213.3" height="18"/><text x="239.3" y="166" class="t-s">~$10k</text></g>
+  <g class="cue-exploit"><text x="20" y="200" class="t-h">Exploit a patched bug · per exploit</text>
+  <text x="20" y="224">Windows kernel, from patch</text><rect class="bx-s" x="20" y="232" width="138.8" height="18" data-c="red"/><text x="164.8" y="246" class="t-s">~$2k</text>
+  <text x="20" y="272">Linux kernel n-day</text><rect class="bx-s" x="20" y="280" width="106.7" height="18" data-c="red"/><text x="132.7" y="294" class="t-s">&lt;$1k</text>
+  <text x="20" y="320">Windows crash PoC</text><rect class="bx-s" x="20" y="328" width="8.4" height="18" data-c="red"/><text x="34.4" y="342" class="t-s">~$120</text></g>
+</svg>
+      <div class="say" id="say-fig1"><div><p><span class="say-k">Spoken</span>Figure one compares costs on a log scale: each grid line to the right means ten times more money. The top group is finding new bugs, one whole campaign per bar. About forty thousand dollars for a Chrome exploit chain, under twenty thousand for OpenBSD, about ten thousand for FFmpeg.</p><p><span class="say-k">Spoken</span>The bottom group is exploiting a bug that a patch already gave away, one exploit per bar. About two thousand dollars for Windows, under one thousand for Linux, and about a hundred and twenty for a crash proof of concept. The costs in the bottom group are ten to a hundred times lower. That difference is what a patch gives away.</p></div></div>
       <figcaption>Fig. 1 · Cost per result on a log scale, from <a href="#s5">[5]</a>, <a href="#s10">[10]</a> and <a href="#s11">[11]</a>. Discovery is a whole campaign, the n-day rows are one exploit each. Some discovery is cheaper: depthfirst reports 21 FFmpeg bugs for about $1,000 <a href="#s12">[12]</a>.</figcaption>
     </figure>
-    <p>The idea of this post: ship the fix days early, but encrypted. Teams download it, plan the change and stage it. At patch day T, only the key is published, and everyone applies the fix at the same moment. Nobody could diff it before T. The goal is not to win the race against the attackers, but to stop it from being a race.</p>
+    <div class="say" id="say-pause1" data-pause="2.5"><p><span class="say-k">Spoken</span>Pause here for a moment. How many days does your team need from a published fix to production?</p></div>
+
+    <h2 id="idea">The idea</h2>
+    <p>The idea of this post: <span class="mk" data-c="green">ship the fix days early, but encrypted</span>. Teams download it, plan the change and stage it. At patch day T, only the key is published, and everyone applies the fix at the same moment. Nobody could diff it before T. The goal is not to win the race against the attackers, but to stop it from being a race.</p>
     <figure class="fig-wide">
-      <svg class="dg" viewBox="0 0 760 300" role="img" aria-labelledby="d1t d1d">
+      <svg class="dg dg-w" viewBox="0 0 760 300" role="img" aria-labelledby="d1t d1d">
   <title id="d1t">Timeline: today and with an encrypted pre-load</title>
   <desc id="d1d">Today the attacker can diff the patch as soon as the first host downloads it at T, while installs spread over weeks. With a pre-load, the encrypted bundle arrives in the week before T, the key arrives at T, and automatic updates install within minutes, while the attacker also only starts at T.</desc>
   <line class="ln-s" x1="420" y1="34" x2="420" y2="262"/>
   <text x="420" y="24" text-anchor="middle" class="t-h">T · patch day</text>
-  <text x="20" y="68" class="t-h">Today</text>
+  <g class="cue-today"><text x="20" y="68" class="t-h">Today</text>
   <rect class="bx-s" x="420" y="56" width="250" height="26"/>
   <text x="432" y="73">installs spread over weeks</text>
-  <rect class="bx-i" x="426" y="92" width="150" height="26"/>
+  <rect class="bx-i" x="426" y="92" width="150" height="26" data-c="red"/>
   <text x="438" y="109" class="t-inv">diff → exploit</text>
   <text x="588" y="109" class="t-s">from the first download</text>
-  <text x="140" y="73" class="t-s">nothing on the hosts yet</text>
+  <text x="140" y="73" class="t-s">nothing on the hosts yet</text></g>
   <line class="ln" x1="20" y1="140" x2="740" y2="140"/>
-  <text x="20" y="176" class="t-h">Pre-load</text>
+  <g class="cue-preload"><text x="20" y="176" class="t-h">Pre-load</text>
   <rect class="bx-s" x="140" y="164" width="280" height="26"/>
   <text x="152" y="181">encrypted bundle on every host</text>
-  <rect class="bx-i" x="420" y="164" width="22" height="26"/>
+  <rect class="bx-i" x="420" y="164" width="22" height="26" data-c="green"/>
   <text x="452" y="181" class="t-s">installed within minutes</text>
-  <rect class="bx-i" x="426" y="200" width="150" height="26"/>
+  <rect class="bx-i" x="426" y="200" width="150" height="26" data-c="red"/>
   <text x="438" y="217" class="t-inv">diff → exploit</text>
-  <text x="588" y="217" class="t-s">same start line</text>
+  <text x="588" y="217" class="t-s">same start line</text></g>
   <g transform="translate(409,236)"><circle class="bx" cx="6" cy="6" r="5"/><line class="ln" x1="11" y1="6" x2="22" y2="6"/><line class="ln" x1="18" y1="6" x2="18" y2="10"/></g>
   <text x="402" y="246" text-anchor="end" class="t-s">32-byte key published</text>
   <line class="ln" x1="140" y1="274" x2="700" y2="274"/>
@@ -128,13 +149,35 @@
   <line class="ln" x1="420" y1="268" x2="420" y2="280"/><text x="420" y="292" text-anchor="middle" class="t-s">T</text>
   <line class="ln" x1="700" y1="270" x2="700" y2="278"/><text x="700" y="292" text-anchor="middle" class="t-s">+7 days</text>
 </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 330" role="img" aria-labelledby="d1nt">
+  <title id="d1nt">Timeline: today and with an encrypted pre-load</title>
+  <line class="ln-s" x1="200" y1="28" x2="200" y2="292"/>
+  <text x="200" y="20" text-anchor="middle" class="t-h">T · patch day</text>
+  <g class="cue-today"><text x="10" y="50" class="t-h">Today</text>
+  <text x="20" y="76" class="t-s">nothing on hosts</text>
+  <rect class="bx-s" x="200" y="60" width="150" height="24"/><text x="208" y="76">installs: weeks</text>
+  <rect class="bx-i" x="204" y="92" width="128" height="24" data-c="red"/><text x="212" y="108" class="t-inv">diff → exploit</text>
+  <text x="204" y="132" class="t-s">from first download</text></g>
+  <line class="ln" x1="10" y1="146" x2="350" y2="146"/>
+  <g class="cue-preload"><text x="10" y="172" class="t-h">Pre-load</text>
+  <rect class="bx-s" x="40" y="182" width="160" height="24"/><text x="48" y="198">bundle on hosts</text>
+  <rect class="bx-i" x="200" y="182" width="14" height="24" data-c="green"/><text x="222" y="198" class="t-s">in minutes</text>
+  <rect class="bx-i" x="204" y="214" width="128" height="24" data-c="red"/><text x="212" y="230" class="t-inv">diff → exploit</text>
+  <text x="204" y="254" class="t-s">same start line</text></g>
+  <g transform="translate(189,268)"><circle class="bx" cx="6" cy="6" r="5"/><line class="ln" x1="11" y1="6" x2="22" y2="6"/><line class="ln" x1="18" y1="6" x2="18" y2="10"/></g>
+  <text x="182" y="278" text-anchor="end" class="t-s">32-byte key published</text>
+  <line class="ln" x1="40" y1="300" x2="340" y2="300"/>
+  <line class="ln" x1="40" y1="296" x2="40" y2="304"/><text x="40" y="318" text-anchor="middle" class="t-s">−7 days</text>
+  <line class="ln" x1="200" y1="294" x2="200" y2="306"/><text x="200" y="318" text-anchor="middle" class="t-s">T</text>
+  <line class="ln" x1="340" y1="296" x2="340" y2="304"/><text x="350" y="318" text-anchor="end" class="t-s">+7 days</text>
+</svg>
+      <div class="say" id="say-fig2"><div><p><span class="say-k">Spoken</span>Figure two shows two timelines around patch day T, the vertical line in the middle. The top row is today. Nothing is on the hosts before T. At T the patch goes out, installs spread over weeks, and an attacker can diff it from the first download.</p><p><span class="say-k">Spoken</span>The bottom row is the pre-load. The encrypted bundle sits on every host during the week before T. At T only the thirty-two byte key is published. Hosts that update by themselves install within minutes, and the attacker starts at the same moment as everyone else.</p></div></div>
       <figcaption>Fig. 2 · With a pre-load, the attacker and the defenders start at the same moment, and hosts that update by themselves are done within minutes.</figcaption>
     </figure>
-
-    <h2 id="games">What games do</h2>
-    <p>Games have done this for years. A pre-load puts the game on your disk before launch, and it opens only at release. Steam, as SteamDB describes it, encrypts each depot with AES-256 and one key that is the same for every user, so mirrors and caches can serve the same bytes, and only owners can ask for the key <a href="#s13">[13]</a>.</p>
-    <p>GTA Online shows the other side. Rockstar ships the content of later updates early inside earlier ones and switches it on from its servers. The files are encrypted, but the keys are in the game, so dataminers read upcoming cars and missions long before they go live. A server switch decides <em>when</em> something is available. It does not keep it <em>secret</em> while the key sits on the device.</p>
-    <p>For patches, four rules follow:</p>
+    <div class="say" id="say-games"><p><span class="say-k">Spoken</span>Has anyone shipped something locked before? Games do it all the time.</p></div>
+    <p>Games already ship this way, and at a scale that no patch reaches. A pre-load puts a new game on your disk days before launch, and it opens only at release. <span class="mk" data-c="blue">Steam</span>, as SteamDB describes it, encrypts each depot with AES-256 and one key that is the same for every user, so mirrors and caches can serve the same bytes, and only owners can ask for the key <a href="#s13">[13]</a>. That is the half I want: millions of copies in place before the moment, and one small key at the moment.</p>
+    <p>GTA Online shows what goes wrong. Rockstar ships the content of later updates early inside earlier ones and switches it on from its servers. The files are encrypted, but <span class="mk" data-c="red">the keys are in the game</span>, so dataminers read upcoming cars and missions long before they go live. For a patch, that would undo everything: with the key on the device, anyone can diff the fix before T.</p>
+    <p>So the lesson from games is four rules for patches:</p>
     <ul>
       <li>The key is not on the device before T.</li>
       <li>The device clock never opens anything. Only the published key does.</li>
@@ -142,16 +185,26 @@
       <li>Decryption at T is cheap. One key, one pass.</li>
     </ul>
 
+    <div class="say" id="say-design"><p><span class="say-k">Spoken</span>Those four rules are easy to write down. The next question is how to build them on update systems that already exist.</p></div>
     <h2 id="design">A design</h2>
-    <p>The update frameworks TUF and Uptane already solve most of this: an offline root key, roles with narrow rights, thresholds of signatures, and protection against rollback and freeze attacks <a href="#s14">[14]</a><a href="#s15">[15]</a>. Uptane even names patch diffing as an attacker goal and can carry wrapped keys for encrypted images. What they lack is a key that is published later. The design adds one role for that.</p>
+    <p>A signature on the patch alone is not enough. If the one signing key leaks, the thief can sign malware. A mirror can also cheat without any key. It can serve an older version with a known bug, a <span class="mk" data-c="yellow">rollback attack</span>. Or it can keep serving yesterday's list of updates, so the client never learns that a fix exists, a <span class="mk" data-c="yellow">freeze attack</span>.</p>
+    <p><span class="mk" data-c="blue">The Update Framework, TUF</span>, was designed against exactly these attacks <a href="#s14">[14]</a>. It splits trust into roles, and each role has its own keys:</p>
+    <ul>
+      <li><b>Root</b> names the keys of all other roles. Its keys stay offline and are needed only to change those keys.</li>
+      <li><b>Targets</b> signs the list of files, with the hash and size of each.</li>
+      <li><b>Snapshot</b> signs which version of each list is current, so a mirror cannot mix old and new lists.</li>
+      <li><b>Timestamp</b> signs a short note that says what is newest. The note expires quickly, so a freeze shows.</li>
+    </ul>
+    <p>A role can also require a threshold: k of its n keys must sign, so one stolen key is not enough. Uptane is TUF adapted for cars <a href="#s15">[15]</a>. It adds a second repository, the director, which tells each vehicle which images to install, and the director can encrypt images for each control unit. The Uptane standard even names patch diffing as an attacker goal.</p>
+    <p>What neither has is a key that is published later. The design adds one role for that, <span class="mk" data-c="green">the release role</span>, next to targets:</p>
     <ol>
       <li><b>Pre-load.</b> Days before T, the vendor publishes the encrypted bundle as an ordinary target. The manifest with its hash, size and release time is signed by the targets role under the organisation's root key. Clients download it and check the hash.</li>
-      <li><b>Release.</b> At T a separate release role signs a short statement: patch id, hash of the ciphertext, the 32-byte content key. A threshold, say two of three officers, keeps one person from releasing early.</li>
-      <li><b>Log.</b> Every statement goes into an append-only transparency log, so a release before T, or a different key for some customers, can be seen <a href="#s16">[16]</a>.</li>
+      <li><b>Release.</b> At T the release role signs a short statement: patch id, hash of the ciphertext, the 32-byte content key. A threshold keeps one person from releasing early: say three officers each hold a key, and any two of them must sign.</li>
+      <li><b>Log.</b> Every statement goes into a transparency log. That is a public list that only grows: entries can be added but not changed or removed, and anyone can check that an entry is in it. Certificate Transparency uses such logs for TLS certificates <a href="#s16">[16]</a>. Anyone who watches the log sees a release before T, or a different key for some customers.</li>
       <li><b>Install.</b> The client checks the statement and the log entry, decrypts with the key and installs.</li>
     </ol>
-    <figure class="fig-wide" data-steps>
-      <svg class="dg" viewBox="0 0 760 420" role="img" aria-labelledby="d2t d2d">
+    <figure class="fig-wide" data-voice-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 420" role="img" aria-labelledby="d2t d2d">
   <title id="d2t">Who signs what</title>
   <desc id="d2d">An offline organisation root key delegates to a targets role and a release role. Days before T the targets role signs a manifest with the hash of the encrypted bundle, and mirrors carry both. At T a release role, two of three officers, signs a key-release statement that is written to a transparency log. The client verifies the manifest, the bundle hash, the statement signature and the log entry, then decrypts and installs.</desc>
   <text x="20" y="28" class="t-h">Organisation</text>
@@ -197,15 +250,36 @@
   <g data-step="5"><text x="576" y="326">5 decrypt, install</text></g>
   <g data-step="5"><text x="590" y="342" class="t-s">AES-GCM, key from 4</text></g>
 </svg>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
-          <li>Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
-          <li>Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
-          <li>At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
-          <li>The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
+      <svg class="dg dg-n" viewBox="0 0 360 484" role="img" aria-labelledby="d2nt">
+  <title id="d2nt">Who signs what</title>
+  <text x="10" y="18" class="t-h">Organisation</text>
+  <g data-step="1"><rect class="bx-i" x="10" y="28" width="340" height="40"/><text x="22" y="46" class="t-inv">org root key</text><text x="22" y="61" class="t-inv t-s">offline · delegates roles</text>
+  <line class="ln" x1="90" y1="68" x2="90" y2="85"/><polygon class="arr" points="90,90 86.9,82.6 93.1,82.6"/><line class="ln" x1="270" y1="68" x2="270" y2="85"/><polygon class="arr" points="270,90 266.9,82.6 273.1,82.6"/>
+  <rect class="bx" x="10" y="92" width="160" height="44"/><text x="20" y="110">targets role</text><text x="20" y="127" class="t-s">signs the manifest</text>
+  <rect class="bx" x="190" y="92" width="160" height="44"/><text x="200" y="110">release role</text><text x="200" y="127" class="t-s">2 of 3 officers</text></g>
+  <g data-step="2"><line class="ln" x1="90" y1="136" x2="90" y2="171"/><polygon class="arr" points="90,176 86.9,168.6 93.1,168.6"/><text x="98" y="160" class="t-s">−7 days</text>
+  <rect class="bx-s" x="10" y="178" width="160" height="50"/><text x="20" y="198">manifest + bundle</text><text x="20" y="216" class="t-s">hash, size, id, T</text>
+  <line class="ln" x1="90" y1="228" x2="90" y2="323"/><polygon class="arr" points="90,328 86.9,320.6 93.1,320.6"/></g>
+  <g data-step="4"><line class="ln" x1="270" y1="136" x2="270" y2="171"/><polygon class="arr" points="270,176 266.9,168.6 273.1,168.6"/><text x="278" y="160" class="t-s">at T</text>
+  <rect class="bx-i" x="190" y="178" width="160" height="50"/><text x="200" y="198" class="t-inv">key release</text><text x="200" y="216" class="t-inv t-s">id, hash, key · 104 B</text>
+  <line class="ln" x1="270" y1="228" x2="270" y2="243"/><polygon class="arr" points="270,248 266.9,240.6 273.1,240.6"/><rect class="bx-d" x="190" y="250" width="160" height="40"/><text x="200" y="268">transparency log</text><text x="200" y="283" class="t-s">append only, public</text>
+  <line class="ln" x1="270" y1="290" x2="270" y2="323"/><polygon class="arr" points="270,328 266.9,320.6 273.1,320.6"/></g>
+  <text x="10" y="322" class="t-h">Client</text>
+  <g data-step="3"><rect class="bx" x="10" y="330" width="340" height="144"/>
+  <text x="22" y="354">1 check manifest</text><text x="40" y="370" class="t-s">against org key</text>
+  <text x="22" y="396">2 check bundle</text><text x="40" y="412" class="t-s">hash from manifest</text>
+  <text x="22" y="438">3 wait for T</text><text x="40" y="454" class="t-s">the key opens, not the clock</text></g>
+  <g data-step="5"><text x="200" y="354">4 check statement</text><text x="210" y="370" class="t-s">signature, log proof</text>
+  <text x="200" y="396">5 decrypt, install</text><text x="218" y="412" class="t-s">AES-GCM, key from 4</text></g>
+</svg>
+      <div class="say" id="say-fig3"><p><span class="say-k">Spoken</span>Figure three shows who signs what, in three parts: the organisation, the mirrors and the log, and the client. It builds up in five steps, one for each line below the drawing.</p></div>
+      <ol class="fig-steps">
+          <li value="1">The organisation’s root key stays offline. It gives two roles their rights: one signs the manifest, the other releases keys.</li>
+          <li value="2">Days before T the targets role signs the manifest, and mirrors carry it together with the encrypted bundle.</li>
+          <li value="3">Every client checks the manifest against the organisation key and the bundle against the manifest. Then it waits; its clock opens nothing.</li>
+          <li value="4">At T two of three release officers sign the key-release statement, and it goes into the public log.</li>
+          <li value="5">The client checks the statement and its log entry, decrypts the bundle with the key and installs.</li>
         </ol>
-      </div>
       <figcaption>Fig. 3 · Two roles under one offline root. The release role can only publish keys for ciphertext that is already pinned, so a stolen release key cannot push code.</figcaption>
     </figure>
     <p>The statement is small and public, so any mirror, CDN or even DNS can carry it. That makes the release hard to block.</p>
@@ -219,10 +293,12 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
 
     <h2 id="beacon">Without a key server</h2>
     <p>The key server is the weak spot. It can go down at the wrong moment, someone can force it to wait, or someone can leak the key early. There is a way to release a key on time without any server of the vendor.</p>
-    <p>A public service called drand publishes a new signed number every three seconds, and each number has a sequence position. A group of independent organisations runs it together, the League of Entropy. No single member can make the number for a position alone: it takes enough of them together, and they make it only when that moment has come <a href="#s17">[17]</a>.</p>
-    <p>The trick: you can lock data to a number that does not exist yet. The vendor picks the position that falls on patch day T and locks the patch key to it. Until T nobody, the vendor included, can open the lock. At T drand publishes the number, and that number opens it. The free tool tlock does exactly this <a href="#s17">[17]</a>.</p>
-    <figure class="fig-wide" data-steps>
-      <svg class="dg" viewBox="0 0 760 380" role="img" aria-labelledby="d5t d5d">
+    <p><span class="mk" data-c="blue">drand</span> is a public randomness beacon <a href="#s17">[17]</a>. Every three seconds it publishes a new round: a round number and a value. The value is a signature over the round number, made with a key that nobody holds as a whole. When the network was set up, its members, a group of independent organisations called the League of Entropy, split that key into shares, and each member keeps one share.</p>
+    <p>For each round, every member signs the round number with its share when that round's time has come. Enough of these partial signatures together give the full signature, and anyone can check it against one public key that never changes. Cryptographers call this a <span class="mk" data-c="yellow">threshold signature</span>. So nobody can compute the value of a future round, not even a member alone. It takes enough members, and honest members sign a round only at its time.</p>
+    <p>The second part is a kind of encryption where the key can be a name. In <span class="mk" data-c="yellow">identity-based encryption</span>, anyone can encrypt to a name, an email address for example, with one public master key. The private key for that name is made later, by whoever holds the master secret. In drand, the name is a round number, the master key is drand's public key, and the signature for a round is the private key for it <a href="#s17">[17]</a>. The master secret is the split key of the League, so the private key for a round appears only when the members sign that round.</p>
+    <p>So the vendor picks the round that falls on patch day T and encrypts the patch key to that round. Until T nobody, the vendor included, can decrypt it. At T drand publishes the signature for that round, and the signature opens it. The free tool tlock, from the drand team, does exactly this <a href="#s17">[17]</a>.</p>
+    <figure class="fig-wide" data-voice-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 380" role="img" aria-labelledby="d5t d5d">
   <title id="d5t">How a drand number opens a patch key at patch day</title>
   <desc id="d5d">Independent organisations make a new numbered value every three seconds; the value for a position exists only when enough of them have taken part, at that moment. Days before patch day the vendor locks the patch key to the value at position T, which does not exist yet. At T the organisations make that value, it is published, and anyone can use it to open the lock and install the patch.</desc>
   <g data-step="3"><text x="20" y="34" class="t-h">League of Entropy</text></g>
@@ -253,14 +329,26 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <g data-step="4"><text x="536" y="340" class="t-s">patch key → install</text></g>
   <g data-step="4"><line class="ln" x1="458" y1="212" x2="535.8" y2="263.3"/><polygon class="arr" points="540,266 532.1,264.5 535.6,259.3"/></g>
 </svg>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
-          <li>Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
-          <li>At T enough of the organisations together make the value for T. Not every one is needed.</li>
-          <li>The value is public. It opens the lock, and everyone installs the patch.</li>
+      <svg class="dg dg-n" viewBox="0 0 360 292" role="img" aria-labelledby="d5nt">
+  <title id="d5nt">How a drand number opens a patch key at patch day</title>
+  <g data-step="3"><text x="10" y="20" class="t-h">League of Entropy</text><rect class="bx" x="10" y="30" width="56" height="28"/><text x="38" y="49" text-anchor="middle" class="t-s">org A</text><rect class="bx" x="74" y="30" width="56" height="28"/><text x="102" y="49" text-anchor="middle" class="t-s">org B</text><rect class="bx" x="138" y="30" width="56" height="28"/><text x="166" y="49" text-anchor="middle" class="t-s">org C</text><rect class="bx" x="202" y="30" width="56" height="28"/><text x="230" y="49" text-anchor="middle" class="t-s">org D</text><rect class="bx" x="266" y="30" width="56" height="28"/><text x="294" y="49" text-anchor="middle" class="t-s">org E</text><line class="ln" x1="38" y1="58" x2="177.4" y2="114.1"/><polygon class="arr" points="182,116 176.3,110.4 174.0,116.1"/><line class="ln" x1="166" y1="58" x2="180.7" y2="111.2"/><polygon class="arr" points="182,116 183.0,108.0 177.0,109.7"/><line class="ln" x1="230" y1="58" x2="185.2" y2="112.1"/><polygon class="arr" points="182,116 189.1,112.3 184.3,108.3"/><line class="ln" x1="294" y1="58" x2="186.4" y2="113.7"/><polygon class="arr" points="182,116 190.0,115.3 187.1,109.8"/><line class="ln-s" x1="102" y1="58" x2="180" y2="118"/>
+  <rect class="bx-i" x="166" y="118" width="32" height="36"/><text x="182" y="141" text-anchor="middle" class="t-inv">T</text></g>
+  <g data-step="1"><text x="10" y="112" class="t-h">drand values</text><text x="350" y="112" text-anchor="end" class="t-s">one every 3 seconds</text>
+  <rect class="bx-s" x="10" y="124" width="24" height="24"/><rect class="bx-s" x="40" y="124" width="24" height="24"/><rect class="bx-s" x="70" y="124" width="24" height="24"/><rect class="bx-s" x="100" y="124" width="24" height="24"/><rect class="bx-s" x="130" y="124" width="24" height="24"/><rect class="bx-d" x="210" y="124" width="24" height="24"/><rect class="bx-d" x="240" y="124" width="24" height="24"/><rect class="bx-d" x="270" y="124" width="24" height="24"/><rect class="bx-d" x="300" y="124" width="24" height="24"/><rect class="bx-d" x="330" y="124" width="24" height="24"/><text x="10" y="168" class="t-s">published</text><text x="350" y="168" text-anchor="end" class="t-s">not made yet</text></g>
+  <g data-step="2"><rect class="bx" x="10" y="196" width="160" height="84"/><text x="20" y="218" class="t-h">Vendor · before T</text>
+  <path class="ln" d="M24 244 V240 a5 5 0 0 1 10 0 V244"/><rect class="bx" x="20" y="244" width="18" height="13"/><text x="46" y="254">key, locked</text>
+  <text x="20" y="272" class="t-s">to the value at T</text><line class="ln-s" x1="150" y1="196" x2="174" y2="156"/></g>
+  <g data-step="4"><rect class="bx" x="190" y="196" width="160" height="84"/><text x="200" y="218" class="t-h">Everyone · at T</text>
+  <path class="ln" d="M204 244 V234 a5 5 0 0 1 10 0 V236"/><rect class="bx-i" x="200" y="244" width="18" height="13"/><text x="226" y="254">T opens it</text>
+  <text x="200" y="272" class="t-s">key → install</text><line class="ln" x1="194" y1="154" x2="245.9" y2="191.1"/><polygon class="arr" points="250,194 245.8,187.2 242.2,192.2"/></g>
+</svg>
+      <div class="say" id="say-fig4"><p><span class="say-k">Spoken</span>Figure four has three layers. At the top, the organisations of the League of Entropy. In the middle, the row of drand values, one every three seconds, with the value for T marked. At the bottom, the vendor on the left and everyone else on the right. It builds up in four steps.</p></div>
+      <ol class="fig-steps">
+          <li value="1">drand makes a new value every three seconds. Values for later moments do not exist yet.</li>
+          <li value="2">Days before T the vendor locks the patch key to the value at T. Nobody can open it now, the vendor included.</li>
+          <li value="3">At T enough of the organisations together make the value for T. Not every one is needed.</li>
+          <li value="4">The value is public. It opens the lock, and everyone installs the patch.</li>
         </ol>
-      </div>
       <figcaption>Fig. 4 · The lock points at a value that does not exist yet. Only the organisations together can make it, and only at T.</figcaption>
     </figure>
     <p>The vendor can use both ways at once: its own key server and the drand lock. Then the patch opens at T even if the vendor's server is down. Two limits remain:</p>
@@ -273,7 +361,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
     <h2 id="airgap">Air-gapped sites</h2>
     <p>Offline networks already carry updates in on removable media. With a pre-load, the large part crosses days before T and can be checked against the organisation's key. At T only the key has to cross: the signed statement, or the 48-byte drand number for T, which the site checks against drand's public key, stored there in advance <a href="#s17">[17]</a>. Either fits in one QR code, which holds up to 2,953 bytes <a href="#s18">[18]</a>, or can be typed in as hex.</p>
     <figure class="fig-wide">
-      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d3t d3d">
+      <svg class="dg dg-w" viewBox="0 0 760 330" role="img" aria-labelledby="d3t d3d">
   <title id="d3t">Updates for an air-gapped site</title>
   <desc id="d3d">Days before T, the encrypted bundle and its signed manifest cross the air gap on removable media, gigabytes in size. At T only a key-release statement of about 104 bytes, or a 48-byte drand number, crosses, small enough for one QR code. The offline site checks both against pinned keys, then decrypts and installs.</desc>
   <defs><pattern id="d3h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatch-p" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
@@ -308,15 +396,30 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <text x="376" y="264" class="t-s">48 B drand no.</text>
   <line class="ln" x1="210" y1="232" x2="255.0" y2="232.0"/><polygon class="arr" points="260,232 252.6,235.1 252.6,228.9"/><line class="ln" x1="498" y1="232" x2="543.0" y2="232.0"/><polygon class="arr" points="548,232 540.6,235.1 540.6,228.9"/>
 </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 350" role="img" aria-labelledby="d3nt">
+  <title id="d3nt">Updates for an air-gapped site</title>
+  <text x="10" y="20" class="t-h">Connected</text>
+  <rect class="bx" x="10" y="28" width="340" height="50"/><text x="22" y="48">vendor mirror</text><text x="22" y="66" class="t-s">bundle, manifest, key release</text>
+  <line class="ln" x1="90" y1="78" x2="90" y2="99"/><polygon class="arr" points="90,104 86.9,96.6 93.1,96.6"/><line class="ln" x1="270" y1="78" x2="270" y2="99"/><polygon class="arr" points="270,104 266.9,96.6 273.1,96.6"/>
+  <rect class="bx-s" x="10" y="106" width="160" height="70"/><text x="20" y="124" class="t-s">days before T</text><text x="20" y="144">USB or disc</text><text x="20" y="162" class="t-s">bundle · gigabytes</text>
+  <rect class="bx" x="190" y="106" width="160" height="112"/><text x="200" y="124" class="t-s">at T</text>
+  <g transform="translate(200,132)"><rect class="bx-i" x="0" y="0" width="12" height="12"/><rect class="bx-i" x="24" y="0" width="12" height="12"/><rect class="bx-i" x="0" y="24" width="12" height="12"/><rect class="dot" x="16" y="4" width="4" height="4"/><rect class="dot" x="16" y="16" width="4" height="4"/><rect class="dot" x="24" y="20" width="4" height="4"/><rect class="dot" x="28" y="28" width="4" height="4"/><rect class="dot" x="16" y="28" width="4" height="4"/></g>
+  <text x="246" y="148">QR code</text><text x="246" y="166" class="t-s">104 B statement</text><text x="200" y="196" class="t-s">or 48 B drand no.</text>
+  <rect class="bx-d" x="10" y="222" width="340" height="16"/><line class="hatch-p" x1="14" y1="236" x2="26" y2="224"/><line class="hatch-p" x1="28" y1="236" x2="40" y2="224"/><line class="hatch-p" x1="42" y1="236" x2="54" y2="224"/><line class="hatch-p" x1="56" y1="236" x2="68" y2="224"/><line class="hatch-p" x1="70" y1="236" x2="82" y2="224"/><line class="hatch-p" x1="84" y1="236" x2="96" y2="224"/><line class="hatch-p" x1="98" y1="236" x2="110" y2="224"/><line class="hatch-p" x1="112" y1="236" x2="124" y2="224"/><line class="hatch-p" x1="126" y1="236" x2="138" y2="224"/><line class="hatch-p" x1="140" y1="236" x2="152" y2="224"/><line class="hatch-p" x1="154" y1="236" x2="166" y2="224"/><line class="hatch-p" x1="168" y1="236" x2="180" y2="224"/><line class="hatch-p" x1="182" y1="236" x2="194" y2="224"/><line class="hatch-p" x1="196" y1="236" x2="208" y2="224"/><line class="hatch-p" x1="210" y1="236" x2="222" y2="224"/><line class="hatch-p" x1="224" y1="236" x2="236" y2="224"/><line class="hatch-p" x1="238" y1="236" x2="250" y2="224"/><line class="hatch-p" x1="252" y1="236" x2="264" y2="224"/><line class="hatch-p" x1="266" y1="236" x2="278" y2="224"/><line class="hatch-p" x1="280" y1="236" x2="292" y2="224"/><line class="hatch-p" x1="294" y1="236" x2="306" y2="224"/><line class="hatch-p" x1="308" y1="236" x2="320" y2="224"/><line class="hatch-p" x1="322" y1="236" x2="334" y2="224"/><line class="hatch-p" x1="336" y1="236" x2="348" y2="224"/><text x="350" y="254" text-anchor="end" class="t-s">air gap</text>
+  <line class="ln" x1="90" y1="176" x2="90" y2="257"/><polygon class="arr" points="90,262 86.9,254.6 93.1,254.6"/><line class="ln" x1="270" y1="218" x2="270" y2="257"/><polygon class="arr" points="270,262 266.9,254.6 273.1,254.6"/>
+  <rect class="bx" x="10" y="264" width="340" height="76"/><text x="22" y="284" class="t-h">Offline site</text>
+  <text x="22" y="304" class="t-s">stored early: org key, drand public key</text><text x="22" y="324" class="t-s">at T: verify offline, decrypt, install</text>
+</svg>
+      <div class="say" id="say-fig5"><p><span class="say-k">Spoken</span>Figure five has three zones: the connected network, the air gap, and the offline site. Days before T, the encrypted bundle crosses on a USB stick or a disc, gigabytes in size. At T only a QR code crosses: a signed statement of about a hundred bytes, or the forty-eight byte drand value. The site checks it against keys that it stored earlier, then decrypts and installs.</p></div>
       <figcaption>Fig. 5 · The gigabytes cross early. At T only a few bytes cross, and they are public, so the channel needs to reach the site, not to be secret.</figcaption>
     </figure>
     <p>A checked drand number also proves that its moment has passed. A site without a reliable clock learns that it is at least that late.</p>
 
     <h2 id="oss">Open source in private</h2>
     <p>For an open-source project the hard part comes earlier: the fix has to be written and tested without showing it. Today it often shows. In the Keycloak case the fixed builds were tagged a week before the CVE, the port to the main branch was a public pull request whose title does not mention security, and the proof of concept was written from that diff <a href="#s3">[3]</a><a href="#s4">[4]</a>.</p>
-    <p>The tools for private work are thin. On GitHub, maintainers can open a temporary private fork from a security advisory. Only invited collaborators see it, but no CI runs there, branch protection does not apply, and merging and publishing are manual steps <a href="#s19">[19]</a>. On GitLab a merge request in a public project is public; private work needs a separate private fork <a href="#s20">[20]</a>. Distributions coordinate by mail: the linux-distros list allows an embargo of at most 14 days <a href="#s21">[21]</a>, and the kernel security team holds a fix back for at most 7 days, 14 in exceptional cases <a href="#s22">[22]</a>. The Git project comes closest to the idea of this post: it prepares signed tags in a private repository, sends a bundle to the distributions less than a week ahead, and pushes in public on release day <a href="#s23">[23]</a>. That bundle is plaintext and goes to a few.</p>
+    <p>The tools for private work are thin. On GitHub, maintainers can open a temporary private fork from a security advisory. Only invited collaborators see it, but no CI runs there, branch protection does not apply, and merging and publishing are manual steps <a href="#s19">[19]</a>. On GitLab a merge request in a public project is public; private work needs a separate private fork <a href="#s20">[20]</a>. Distributions coordinate by mail, under an embargo: a fixed time in which everyone who knows about the bug keeps quiet. The linux-distros list allows an embargo of at most 14 days <a href="#s21">[21]</a>, and the kernel security team holds a fix back for at most 7 days, 14 in exceptional cases <a href="#s22">[22]</a>. The Git project comes closest to the idea of this post: it prepares signed tags in a private repository, sends a bundle to the distributions less than a week ahead, and pushes in public on release day <a href="#s23">[23]</a>. That bundle is plaintext and goes to a few.</p>
     <figure class="fig-wide">
-      <svg class="dg" viewBox="0 0 760 330" role="img" aria-labelledby="d4t d4d">
+      <svg class="dg dg-w" viewBox="0 0 760 330" role="img" aria-labelledby="d4t d4d">
   <title id="d4t">A security fix in an open-source project, from private work to release</title>
   <desc id="d4d">The maintainers write and test the fix on a private branch with private CI. Days before T the project publishes the encrypted, signed build. The embargo list of distributions gets the key early to test. Everyone else stages the ciphertext. At T the key is published, everyone applies the fix, and the public repository gets the merge and the advisory.</desc>
   <line class="ln-s" x1="505" y1="38" x2="505" y2="290"/>
@@ -342,7 +445,24 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <line class="ln" x1="505" y1="298" x2="505" y2="310"/><text x="505" y="322" text-anchor="middle" class="t-s">T</text>
   <line class="ln" x1="709" y1="300" x2="709" y2="308"/><text x="709" y="322" text-anchor="middle" class="t-s">+6 days</text>
 </svg>
-      <figcaption>Fig. 6 · Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
+      <svg class="dg dg-n" viewBox="0 0 360 330" role="img" aria-labelledby="d4nt">
+  <title id="d4nt">A security fix in an open-source project, from private work to release</title>
+  <line class="ln-s" x1="220" y1="26" x2="220" y2="292"/><text x="220" y="18" text-anchor="middle" class="t-h">T · release</text>
+  <text x="10" y="44" class="t-h">Maintainers</text><rect class="bx-s" x="20" y="50" width="140" height="24"/><text x="28" y="66">private work, CI</text>
+  <line class="ln" x1="110" y1="74" x2="110" y2="93"/><polygon class="arr" points="110,98 106.9,90.6 113.1,90.6"/>
+  <text x="10" y="94" class="t-h">Release</text><rect class="bx-s" x="90.0" y="100" width="130" height="24"/><text x="96" y="116" class="t-s">encrypted, signed</text>
+  <rect class="bx-i" x="220" y="100" width="12" height="24"/><text x="240" y="116" class="t-s">key published</text>
+  <text x="10" y="146" class="t-h">Embargo list</text><rect class="bx-i" x="120" y="152" width="100" height="24"/><text x="128" y="168" class="t-inv">early key</text>
+  <text x="10" y="198" class="t-h">Everyone</text><rect class="bx-s" x="120" y="204" width="100" height="24"/><text x="128" y="220">staged</text>
+  <rect class="bx-i" x="220" y="204" width="12" height="24"/><text x="240" y="220" class="t-s">apply at T</text>
+  <text x="10" y="250" class="t-h">Public repo</text><rect class="bx-i" x="220" y="256" width="116" height="24"/><text x="226" y="272" class="t-inv t-s">merge + advisory</text>
+  <line class="ln" x1="20" y1="302" x2="340" y2="302"/>
+  <line class="ln" x1="20" y1="298" x2="20" y2="306"/><text x="20" y="320" class="t-s">−10 days</text>
+  <line class="ln" x1="220" y1="296" x2="220" y2="308"/><text x="220" y="320" text-anchor="middle" class="t-s">T</text>
+  <line class="ln" x1="340" y1="298" x2="340" y2="306"/><text x="340" y="320" text-anchor="end" class="t-s">+6 days</text>
+</svg>
+      <div class="say" id="say-fig6"><p><span class="say-k">Spoken</span>Figure six is a timeline with five rows, from ten days before T to six days after. The maintainers work on a private branch with private CI. Then the encrypted, signed build is published. The embargo list gets the key early to test, and everyone else stages the ciphertext. At T the key is published, everyone applies the fix, and the public repository gets the merge and the advisory.</p></div>
+      <figcaption>Fig. 6 ·Work in private, publish the ciphertext early, open it for everyone at T. The embargo list keeps what it has today: early access to test.</figcaption>
     </figure>
     <p>To make this normal, a forge such as GitHub or GitLab would need (Fig. 7):</p>
     <ul>
@@ -351,8 +471,8 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li>Release artefacts that are published encrypted and signed, with the key held by the forge.</li>
       <li>One action that, at T, publishes the key, merges the branch and publishes the advisory.</li>
     </ul>
-    <figure class="fig-wide" data-steps>
-      <svg class="dg" viewBox="0 0 760 420" role="img" aria-labelledby="d6t d6d">
+    <figure class="fig-wide" data-voice-steps>
+      <svg class="dg dg-w" viewBox="0 0 760 420" role="img" aria-labelledby="d6t d6d">
   <title id="d6t">What a forge would need for a private fix in a public repository</title>
   <desc id="d6d">Inside the public repository a private branch holds the fix; only maintainers and a security role see it. Private CI with closed logs tests it. Days before T the forge publishes the encrypted, signed release, and the embargo list gets the key early. At T one action publishes the key and the advisory and merges the branch, and everyone applies the fix.</desc>
   <rect class="bx" x="20" y="44" width="720" height="262"/>
@@ -368,18 +488,34 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
   <g data-step="3"><rect class="bx-s" x="330" y="254" width="250" height="38"/><text x="344" y="278">encrypted release, signed</text><line class="ln" x1="455" y1="292" x2="455.0" y2="329.0"/><polygon class="arr" points="455,334 451.9,326.6 458.1,326.6"/><rect class="bx" x="330" y="336" width="250" height="54"/><text x="344" y="358">embargo list</text><text x="344" y="377" class="t-s">early key: test</text></g>
   <g data-step="4"><path class="ln" d="M520 176 L600 104"/><circle class="dot" cx="600" cy="104" r="7"/><text x="610" y="128" class="t-s">merge</text><rect class="bx-i" x="600" y="254" width="130" height="38"/><text x="612" y="278" class="t-inv">key + advisory</text><line class="ln" x1="665" y1="292" x2="665.0" y2="329.0"/><polygon class="arr" points="665,334 661.9,326.6 668.1,326.6"/><rect class="bx" x="600" y="336" width="140" height="54"/><text x="612" y="358">everyone</text><text x="612" y="377" class="t-s">applies at T</text></g>
 </svg>
-      <div class="steps__panel">
-        <ol class="steps__list">
-          <li>The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
-          <li>Private CI builds and tests the branch. Its logs stay closed.</li>
-          <li>Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
-          <li>At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
+      <svg class="dg dg-n" viewBox="0 0 360 376" role="img" aria-labelledby="d6nt">
+  <title id="d6nt">What a forge would need for a private fix in a public repository</title>
+  <rect class="bx" x="10" y="30" width="340" height="270"/><text x="22" y="50" class="t-h">Public repository</text>
+  <line class="ln-s" x1="290" y1="20" x2="290" y2="368"/><text x="290" y="14" text-anchor="middle" class="t-h">T</text>
+  <text x="22" y="72" class="t-s">main · public</text><line class="ln-t" x1="22" y1="84" x2="340" y2="84"/>
+  <circle class="dot" cx="50" cy="84" r="5"/><circle class="dot" cx="110" cy="84" r="5"/><circle class="dot" cx="170" cy="84" r="5"/><circle class="dot" cx="230" cy="84" r="5"/>
+  <g data-step="1"><rect class="bx-d" x="22" y="100" width="250" height="110"/><text x="34" y="118" class="t-s">private branch</text><text x="34" y="134" class="t-s">maintainers + security role</text>
+  <path class="ln" d="M70 84 V160 H250"/><circle class="dot" cx="120" cy="160" r="5"/><circle class="dot" cx="170" cy="160" r="5"/><circle class="dot" cx="220" cy="160" r="5"/></g>
+  <g data-step="2"><rect class="bx-s" x="110" y="172" width="150" height="30"/><text x="120" y="192">CI, closed logs</text></g>
+  <text x="22" y="232" class="t-s">releases</text>
+  <g data-step="3"><rect class="bx-s" x="22" y="240" width="200" height="34"/><text x="32" y="262">encrypted release</text>
+  <line class="ln" x1="122" y1="274" x2="122" y2="311"/><polygon class="arr" points="122,316 118.9,308.6 125.1,308.6"/><rect class="bx" x="22" y="318" width="200" height="46"/><text x="32" y="338">embargo list</text><text x="32" y="354" class="t-s">early key: test</text></g>
+  <g data-step="4"><path class="ln" d="M250 160 L290 84"/><circle class="dot" cx="290" cy="84" r="7"/><text x="298" y="104" class="t-s">merge</text>
+  <rect class="bx-i" x="236" y="240" width="110" height="34"/><text x="242" y="262" class="t-inv t-s">key + advisory</text>
+  <line class="ln" x1="291" y1="274" x2="291" y2="311"/><polygon class="arr" points="291,316 287.9,308.6 294.1,308.6"/><rect class="bx" x="236" y="318" width="110" height="46"/><text x="244" y="338">everyone</text><text x="244" y="354" class="t-s">applies at T</text></g>
+</svg>
+      <div class="say" id="say-fig7"><p><span class="say-k">Spoken</span>Figure seven shows what this looks like inside one public repository, in four steps.</p></div>
+      <ol class="fig-steps">
+          <li value="1">The fix is written on a private branch inside the public repository. Only the maintainers and a security role can see it.</li>
+          <li value="2">Private CI builds and tests the branch. Its logs stay closed.</li>
+          <li value="3">Days before T the forge publishes the encrypted, signed release. The embargo list gets the key early and tests.</li>
+          <li value="4">At T one action publishes the key and the advisory and merges the branch. Everyone applies the fix.</li>
         </ol>
-      </div>
       <figcaption>Fig. 7 · What a forge would need for a private fix in a public repository.</figcaption>
     </figure>
     <p>The embargo lists fit into this as they are: their members get the key early and test, everyone else gets the ciphertext early. Each early key is a chance to leak, so the list stays short and the embargo stays short.</p>
 
+    <div class="say" id="say-limits"><p><span class="say-k">Spoken</span>That is the design. Here is what it does not solve.</p></div>
     <h2 id="limits">What it does not fix</h2>
     <ul>
       <li><b>Diffing after T.</b> At T the patch is public. The scheme moves the start line; it does not stop the race. It helps the hosts that install at once.</li>
@@ -389,16 +525,14 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li><b>Insiders.</b> The key exists before T. Create it late, keep it in an HSM, split it between people.</li>
       <li><b>Testing.</b> Companies test patches before they roll them out. Most can stage before T but test only after it. Early keys for a few, as embargo lists do today, bring back the risk of leaks.</li>
     </ul>
+    <div class="say" id="say-pause2" data-pause="2.5"><p><span class="say-k">Spoken</span>Which of these limits matters most for your systems?</p></div>
 
-    <h2 id="prior">Prior art and patents</h2>
-    <p>The idea is not new, and the patents below show it. I found no vendor that does it for security patches today.</p>
-    <p>Microsoft has patents on it. They are old, but they matter now. This is my reading, not legal advice, and I could not open the claims or the fee records:</p>
-    <ul>
-      <li><b>US 7,876,902</b>, "Distribution of encrypted software update to reduce attack window", priority date 31 August 2006, granted 2011 <a href="#s24">[24]</a>. A US patent runs 20 years from filing, so it ends around 31 August 2026, later only if the patent office added term for its own delays, and earlier if a maintenance fee was not paid. Its description releases the key once enough machines have the update or after testing, not at a fixed time.</li>
-      <li><b>US 8,171,560</b>, "Secure content pre-distribution to designated systems", granted 2012 <a href="#s25">[25]</a>. It is closer to this post: content goes out encrypted and the key follows at a set moment. Filed around 2008, it may run to about 2028.</li>
-    </ul>
-    <p>So the design can be built from public parts, and a fixed release time, a transparency log and a public beacon in place of a vendor key server differ from the first patent's description. Whether that is enough depends on the claims. Anyone who wants to ship this as a product in the US before about 2028 should have a patent attorney read both patents first.</p>
-    <p>My conclusion: the tool is cheap for an update system that already signs its metadata. It does not stop patch diffing, and with LLMs diffing is now cheap. It lets every team have the fix ready when it becomes public, and that turns patch day from a race into a date.</p>
+    <h2 id="prior">Prior art</h2>
+    <p>The idea is not new. <span class="mk" data-c="blue">Microsoft</span> patented an encrypted update with a key that follows later, first in 2006 <a href="#s24">[24]</a> and in a version with a set release moment around 2008 <a href="#s25">[25]</a>. I found no vendor that does it for security patches today. By my reading, which is not legal advice, the first patent ends around August 2026 and the second may run to about 2028. Anyone who wants to ship this as a product in the US before then should have a patent attorney read both.</p>
+
+    <h2 id="take">What I take from it</h2>
+    <p>The tool is cheap for an update system that already signs its metadata. It does not stop patch diffing, and with LLMs diffing is now cheap. It lets every team have the fix ready when it becomes public, and that <span class="mk" data-c="green">turns patch day from a race into a date</span>.</p>
+    <div class="say" id="say-outro"><p><span class="say-k">Spoken</span>To sum up. Patches are now cheap to turn into exploits. Ship the fix early but encrypted, publish only the key at T, and every team gets the same start line. The parts exist: TUF or Uptane for the signatures, a transparency log for the release, and drand with tlock for a release without a key server. The sources are on the page.</p></div>
 
     <h2 id="sources">Sources</h2>
     <ol class="refs">
@@ -418,7 +552,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
       <li id="s14"><a href="https://github.com/theupdateframework/specification/blob/master/tuf-spec.md" rel="noopener">The Update Framework specification</a>.</li>
       <li id="s15"><a href="https://github.com/uptane/uptane-standard/blob/master/uptane-standard.md" rel="noopener">Uptane Standard</a>.</li>
       <li id="s16"><a href="https://datatracker.ietf.org/doc/html/rfc9162" rel="noopener">RFC 9162: Certificate Transparency 2.0</a>; <a href="https://docs.sigstore.dev/logging/overview/" rel="noopener">Sigstore Rekor</a>.</li>
-      <li id="s17">drand: <a href="https://github.com/drand/tlock" rel="noopener">tlock</a>.</li>
+      <li id="s17">drand: <a href="https://github.com/drand/tlock" rel="noopener">tlock</a>; <a href="https://docs.drand.love/blog/2023/10/16/quicknet-is-live" rel="noopener">quicknet is live</a>, Oct 2023 (a round every 3 seconds); Gailly, Melissaris and Romailler: <a href="https://eprint.iacr.org/2023/189" rel="noopener">tlock: Practical Timelock Encryption from Threshold BLS</a>, IACR ePrint 2023/189.</li>
       <li id="s18">ISO/IEC 18004 capacity table, summarised by <a href="https://www.keyence.com/ss/products/auto_id/barcode_lecture/basic_2d/qr/" rel="noopener">Keyence</a>.</li>
       <li id="s19">GitHub Docs: <a href="https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork" rel="noopener">Collaborating in a temporary private fork</a>.</li>
       <li id="s20">GitLab Docs: <a href="https://docs.gitlab.com/user/project/merge_requests/confidential/" rel="noopener">Confidential merge requests</a>.</li>
@@ -431,6 +565,7 @@ sig     64 B   Ed25519 over patch id, ciphertext hash and key</code></pre>
 
     <h2 id="revisions">Revisions</h2>
     <ul class="dates">
+      <li><time datetime="2026-11-12">12 Nov 2026</time><span>Rewrote it to be read aloud and for readers who do not know every term: explained patch diffing, n-days, TUF, Uptane, transparency logs, drand and timelock encryption; folded the games section into "The idea" and cut the patents to one paragraph; added a narration with spoken parts.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version, as a blog post.</span></li>
     </ul>
 

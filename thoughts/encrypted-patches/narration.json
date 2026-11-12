@@ -1,0 +1,30 @@
+{
+  "title": "Encrypted patches, unlocked on patch day",
+  "voice": "Jonathan Livingston",
+  "audio": null,
+  "timing": null,
+  "chapters": [
+    ["say-intro", "Introduction"],
+    ["problem", "The problem"],
+    ["idea", "The idea"],
+    ["say-design", "A design"],
+    ["beacon", "Without a key server"],
+    ["airgap", "Air-gapped sites"],
+    ["oss", "Open source in private"],
+    ["say-limits", "What it does not fix"],
+    ["prior", "Prior art"],
+    ["take", "What I take from it"]
+  ],
+  "spoken": {},
+  "cues": [
+    {"in": "say-fig1", "p": "log scale", "until": "The top group", "sel": ".cue-scale", "cls": "hot"},
+    {"in": "say-fig1", "p": "The top group", "until": "The bottom group", "sel": ".cue-find", "cls": "hot"},
+    {"in": "say-fig1", "p": "The bottom group", "until": "That difference", "sel": ".cue-exploit", "cls": "hot"},
+    {"in": "say-fig1", "p": "The costs in the bottom group", "sel": ".cue-exploit [data-c]"},
+    {"in": "say-fig2", "p": "The top row is today", "until": "The bottom row", "sel": ".cue-today", "cls": "hot"},
+    {"in": "say-fig2", "p": "an attacker can diff", "sel": ".cue-today [data-c]"},
+    {"in": "say-fig2", "p": "The bottom row", "until": "Has anyone shipped", "sel": ".cue-preload", "cls": "hot"},
+    {"in": "say-fig2", "p": "install within minutes", "sel": ".cue-preload [data-c=green]"},
+    {"in": "say-fig2", "p": "the attacker starts", "sel": ".cue-preload [data-c=red]"}
+  ]
+}

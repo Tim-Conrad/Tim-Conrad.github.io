@@ -12,7 +12,7 @@
       <link>https://t7d.dev/thoughts/encrypted-patches/</link>
       <guid isPermaLink="true">https://t7d.dev/thoughts/encrypted-patches/</guid>
       <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
-      <description>Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. What games already do, a design with signed keys, open source in private, the air-gapped case and the patents.</description>
+      <description>Ship a security fix early as ciphertext and publish the key at release time, so teams can stage it and apply it together instead of racing attackers. A design on TUF, a release without a key server through drand, open source in private, and the air-gapped case. Narrated.</description>
     </item>
     <item>
       <title>A humans.md for working with models</title>

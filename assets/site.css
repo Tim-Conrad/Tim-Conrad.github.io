@@ -1,5 +1,5 @@
 /* Layout: the page is one drawing sheet. Black ink on white paper, a thin frame, a small label per section.
-   The only colour on the site is in the pictures and videos. */
+   The only colour on the site is in the pictures and videos, and in the markers of a narration while it plays. */
 
 @font-face {
   font-family: "Barlow Condensed";
@@ -45,6 +45,16 @@
   --code-line: #3a3a3a;
   --video-bg: #111111;   /* controls on top of a video: the same in both themes */
   --video-fg: #ffffff;
+  /* narration markers: the four colours, only while a thought is read aloud (DESIGN.md "Narration") */
+  --red: #d33a2c;
+  --green: #1d8a4a;
+  --blue: #2558d4;
+  --yellow: #e2a900;
+  --blk-red: #c62f22;   /* colour blocks behind words: white text on them is >= 4.5:1 in both themes */
+  --blk-green: #16803e;
+  --blk-blue: #2554d0;
+  --blk-yellow: #9a6700;
+  --on-blk: #ffffff;
 
   --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --body: "Karla", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -67,6 +77,10 @@
     --soft: #2c2c2c;
     --surface: #1a1a1a;
     --code-bg: #1a1a1a;
+    --red: #ff6b5d;
+    --green: #4fcf86;
+    --blue: #7aa5ff;
+    --yellow: #f3c64a;
   }
 }
 :root[data-theme="dark"] {
@@ -77,6 +91,10 @@
   --soft: #2c2c2c;
   --surface: #1a1a1a;
   --code-bg: #1a1a1a;
+  --red: #ff6b5d;
+  --green: #4fcf86;
+  --blue: #7aa5ff;
+  --yellow: #f3c64a;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -409,8 +427,8 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .pick__hint { margin: 0; font-size: .9688rem; color: var(--muted); }
 .pick__hint[hidden] { display: none; }
 /* a figure can hold a wide drawing (.dg-w) and a narrow one for phones (.dg-n) */
-.anim .dg-n { display: none; }
-@media (max-width: 600px) { .anim .dg-w { display: none; } .anim .dg-n { display: block; } .fig-wide.anim { overflow-x: visible; } .fig-wide .dg-n { min-width: 0; } }
+figure .dg-n { display: none; }
+@media (max-width: 600px) { figure:has(.dg-n) .dg-w { display: none; } figure .dg-n { display: block; } .fig-wide:has(.dg-n) { overflow-x: visible; } .fig-wide .dg-n { min-width: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .anim .draw, .anim .grow, .anim .grow-l, .anim .pop, .anim .w-a, .anim .w-b, .anim .fade, .anim .lvl { transition: none; }
 }
@@ -434,5 +452,98 @@ blockquote { margin: 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid va
 .sealed__msg { min-height: 1.5em; margin: 0; font: 500 var(--step--1)/1.5 var(--mono); letter-spacing: .04em; color: var(--muted); overflow-wrap: anywhere; }
 .sealed__msg.bad { color: var(--ink); font-weight: 700; }
 
+/* ---- Narration (narration.js): the page follows a voice. Nothing here shows until the reader presses Listen. ---- */
+[data-c=red] { --c: var(--red); --b: var(--blk-red); }
+[data-c=green] { --c: var(--green); --b: var(--blk-green); }
+[data-c=blue] { --c: var(--blue); --b: var(--blk-blue); }
+[data-c=yellow] { --c: var(--yellow); --b: var(--blk-yellow); }
+/* spoken parts: text that only the voice says, folded until the voice reaches it */
+.say { display: none; }
+.narr-on .say, .narr-all .say { display: grid; grid-template-rows: 0fr; opacity: 0; margin-block: -.55rem; transition: grid-template-rows .55s cubic-bezier(.3,.7,.2,1), opacity .45s ease, margin .55s; }
+.say > * { overflow: hidden; min-height: 0; }
+.say.open { grid-template-rows: 1fr; opacity: 1; margin-block: 0; }
+.say p { color: var(--muted); font-size: .9688rem; }
+.say p + p { margin-top: .6rem; }   /* a spoken part with several paragraphs keeps them in one wrapper, so it folds as one row */
+.say .w.rd { color: var(--ink); }
+.say-k { font: 500 var(--step--1) var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: .5rem; white-space: nowrap; }
+.say-k::before { content: ""; display: inline-block; width: 6px; height: 6px; background: currentColor; border-radius: 50%; margin-right: .4rem; vertical-align: 1px; }
+.prose figure .say { margin-block: 0; }
+.prose figure .say:not(.open) { display: none; }   /* in the figure grid even an empty row adds a gap */
+.prose figure .say.open { margin-top: .3rem; }
+/* the block that the voice reads: a bar on the left; the other blocks dim by text colour, never by opacity,
+   so a colour block keeps its contrast */
+.narr-seg { position: relative; transition: color .45s ease; }
+.narr-on .narr-seg.cur::before { content: ""; position: absolute; left: -.9rem; top: .25em; bottom: .25em; width: 2px; background: var(--ink); }
+.narr-playing .narr-seg:not(.cur) { color: color-mix(in srgb, var(--ink) 36%, var(--bg)); }
+.narr-playing .say .narr-seg:not(.cur) { color: color-mix(in srgb, var(--ink) 30%, var(--bg)); }
+.narr-playing .prose figure:not(.cur) svg, .narr-playing .prose figure:not(.cur) figcaption { opacity: .34; transition: opacity .45s; }
+.narr-on .narr-seg.cur .w:not(.rd) { opacity: .5; }
+.narr-on .say .w:not(.rd) { opacity: 1; }
+.w { position: relative; z-index: 1; transition: opacity .25s ease; }
+.narr-on .prose .narr-seg code { background: transparent; border: 0; padding: 0; }
+.narr-on .narr-seg { cursor: pointer; }
+.narr-on .prose figure.fig-wide.cur:not(:has(.dg-n)) { overflow-x: visible; }   /* no narrow drawing: fit the wide one while the voice explains it */
+.narr-on .prose figure.fig-wide.cur:not(:has(.dg-n)) .dg { min-width: 0; }
+.narr-on li.narr-seg.cur::before { left: -2.2rem; }   /* in a list, the bar sits left of the number */
+/* figures with voice steps: a plain numbered list under the drawing; the voice brings in the parts of each step */
+.prose .fig-steps { margin: .9rem 0 0; padding-left: 1.6rem; font-size: .9688rem; line-height: 1.5; }
+.narr-playing .prose figure.cur .say:not(:has(.cur)), .narr-playing .prose figure.cur .say .narr-seg:not(.cur),
+.narr-playing .prose figure.cur .fig-steps .narr-seg:not(.cur) { display: none; }   /* under a figure, only the paragraph that the voice reads now */
+.narr-playing .prose figure.cur figcaption { display: none; }   /* the voice explains the figure; the caption returns afterwards */
+/* the phrase marker: a grey tint over the phrase that the voice reads */
+.narr-on #main { position: relative; }
+.narr-hl { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; opacity: 0; background: color-mix(in srgb, var(--ink) 16%, transparent);
+  transition: transform .32s cubic-bezier(.25,.8,.25,1), width .32s cubic-bezier(.25,.8,.25,1), height .2s, opacity .35s ease; }
+.narr-hl.show { opacity: 1; }
+.narr-hl.jump { transition: opacity .35s ease; }
+/* marked terms: a colour block with white text once the voice says them; plain text otherwise */
+.mk { transition: background-color .4s ease, color .4s ease; }
+.mk.on { background: var(--b); color: var(--on-blk); padding: 0 .12em; margin: 0 -.12em; }
+.mk.on .w { color: var(--on-blk); opacity: 1; }
+.mk.on code { color: inherit; }
+/* figure cues: the part that the voice describes stands out, the rest of the figure steps back */
+.dg [class^="cue-"] { transition: opacity .35s ease; }
+.dg:has(.hot) [class^="cue-"]:not(.hot) { opacity: .3; }
+.dg .hot .t-s { fill: var(--ink); }
+.dg [data-c] { transition: fill .5s ease, stroke .5s ease; }
+.dg [data-c].on { fill: var(--c); stroke: var(--c); }
+/* the listen row and the player strip */
+.narr-listen { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding-block: .75rem; border-block: 1px solid var(--soft); }
+.narr-go { display: inline-flex; align-items: center; gap: .55rem; }
+.narr-go svg, .narr-play svg { width: 1.25rem; height: 1.25rem; fill: currentColor; }
+.i-pause { display: none; } .narr-playing .i-play { display: none; } .narr-playing .i-pause { display: block; }
+.narr-note { margin: 0; flex: 1 1 16rem; color: var(--muted); font-size: .9375rem; line-height: 1.4; }
+.narr-again[hidden] { display: none; }   /* .btn sets display, which would win over [hidden] */
+.narr-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--bg); border-top: var(--rule) solid var(--ink); padding-bottom: env(safe-area-inset-bottom, 0px); display: none; }
+.narr-on .narr-bar { display: block; }
+.narr-on { padding-bottom: 4.5rem; }
+.narr-scrub { position: relative; height: 16px; margin-top: -9px; cursor: pointer; touch-action: none; }
+.narr-rail, .narr-fill { position: absolute; left: 0; top: 7px; height: 2px; }
+.narr-rail { right: 0; background: var(--soft); }
+.narr-fill { width: 0; background: var(--ink); }
+.narr-tick { position: absolute; top: 5px; width: 1.5px; height: 6px; background: var(--muted); }
+.narr-knob { position: absolute; top: 3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--ink); opacity: 0; transition: opacity .2s; }
+.narr-scrub:hover .narr-knob, .narr-scrub.drag .narr-knob { opacity: 1; }
+.narr-row { display: flex; align-items: center; gap: .25rem; max-width: 82rem; margin: 0 auto; padding: 0 var(--pad) .35rem; }
+.narr-row button { border: 0; background: none; color: var(--ink); cursor: pointer; min-width: 44px; min-height: 44px; display: grid; place-items: center; font: inherit; }
+.narr-row .narr-play { background: var(--ink); color: var(--bg); }
+.narr-skip { position: relative; }
+.narr-skip svg { width: 1.6rem; height: 1.6rem; }
+.narr-skip span { position: absolute; inset: 0; display: grid; place-items: center; padding-top: 2px; font: 500 .66rem var(--mono); }
+.narr-row .narr-chap { flex: 1; min-width: 0; display: grid; justify-items: start; text-align: left; padding-inline: .5rem; }
+.narr-chap span { font-weight: 700; font-size: .9375rem; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.narr-chap small { font: 400 .75rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.narr-row .narr-speed { font: 500 .8rem var(--mono); border: 1px solid var(--soft); min-width: 3.2rem; }
+.narr-sheet { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(4.1rem + env(safe-area-inset-bottom, 0px)); z-index: 40; width: min(26rem, calc(100% - 2rem)); background: var(--bg); border: var(--rule) solid var(--ink); padding: .7rem 1rem; display: none; }
+.narr-sheet.open { display: block; }
+.narr-sheet ol { list-style: none; margin: .4rem 0 .6rem; padding: 0; display: grid; }
+.narr-sheet button { width: 100%; display: flex; justify-content: space-between; gap: 1rem; border: 0; border-top: 1px solid var(--soft); background: none; color: var(--ink); padding: .55rem .1rem; cursor: pointer; text-align: left; font: inherit; font-size: .9375rem; }
+.narr-sheet .is-now button { font-weight: 700; }
+.narr-t { font: 400 .75rem var(--mono); color: var(--muted); }
+.narr-opt { display: flex; gap: .5rem; align-items: center; font-size: .875rem; color: var(--muted); }
+.narr-follow { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px)); z-index: 31; display: none; border: 0; background: var(--ink); color: var(--bg); padding: .5rem .9rem; font: 500 var(--step--1) var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.narr-playing.narr-lost .narr-follow { display: block; }
+@media (prefers-reduced-motion: reduce) { .say, .narr-hl, .narr-seg, .mk, .w { transition: none !important; } }
+
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-@media print { .nav, .toc, .copy, .toggle, .demo { display: none !important; } body { border: 0; } }
+@media print { .nav, .toc, .copy, .toggle, .demo, .narr-bar, .narr-listen { display: none !important; } body { border: 0; } }
