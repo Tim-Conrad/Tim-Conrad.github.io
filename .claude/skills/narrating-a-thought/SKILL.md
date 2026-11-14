@@ -14,7 +14,7 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 - Generate ElevenLabs audio only when Tim says that the text of the thought is final and must be narrated. Approval of a cost estimate is not that instruction.
 - Do not make voice samples. The voice is chosen (see the table).
 - Until then, the page runs on simulated timing (about 160 words a minute). Tim reads along and judges the text, the spoken parts and the figures without audio.
-- Do not read, print or commit the key. It is in `~/.config/wortzauber/elevenlabs.key`. Send it only as the `xi-api-key` header.
+- There is no ElevenLabs key in the dev VM. Call `$ELEVENLABS_BASE_URL` (`https://elevenlabs.gate`, the gate VM) instead of `https://api.elevenlabs.io`, with the same paths. The gate adds the key; send any placeholder as `xi-api-key`.
 - Before a generation, tell Tim the character count. After it, tell him what it used.
 
 ## How it is built
