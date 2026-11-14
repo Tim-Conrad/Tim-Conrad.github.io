@@ -53,13 +53,14 @@ services:
     volumes:
       - ${WT_MAIN}/.papercuts:/data:rw
     networks: [default, proxy]
+    # List form: compose substitutes variables only in values, not in mapping keys.
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: "proxy"
-      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.rule: "Host(`pc-${PREVIEW_HOST}`)"
-      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.entrypoints: "websecure"
-      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.tls: "true"
-      traefik.http.services.${COMPOSE_PROJECT_NAME}-pc.loadbalancer.server.port: "8000"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.${WT_PROJECT}-pc.rule=Host(`pc-${PREVIEW_HOST}`)"
+      - "traefik.http.routers.${WT_PROJECT}-pc.entrypoints=websecure"
+      - "traefik.http.routers.${WT_PROJECT}-pc.tls=true"
+      - "traefik.http.services.${WT_PROJECT}-pc.loadbalancer.server.port=8000"
 
 networks:
   proxy:
