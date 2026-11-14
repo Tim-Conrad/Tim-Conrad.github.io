@@ -77,19 +77,18 @@ Each page also has the papercuts widget. A papercut keeps the page, the branch, 
 
 "Approve round <n>" in the bar publishes the newest round of the branch. It writes a request to `.review/approve/`. On the host, `scripts/review/approve-host.sh` checks the head and the worktree and runs `scripts/check.py`. Then it pushes the branch, opens the PR, runs `scripts/ship.sh <pr> <sha>`, and removes the worktree and the branch. The bar shows each step from `.review/approve-status/`. An agent can do the same with `python3 scripts/review/approve.py <branch>`, also from its worktree. An agent starts Approve only when Tim tells it to, in that conversation or in a papercut.
 
-To run it in a container behind a login proxy:
+Run it in the dev VM:
 
-1. Install the host side of the Approve button once: `scripts/review/approve-install.sh`. It needs `gh` on PATH. It makes `.review/approve/`, `.review/approve-status/` and a systemd user unit that starts `approve-host.sh` for each request. To keep the button working after a reboot, run `loginctl enable-linger developer` once.
-2. Make the store folder and the worktrees folder: `mkdir -p .papercuts ~/code/worktrees/t7d`.
+1. `direnv allow` (or `nix develop`) gives Python with Playwright and markdown, Node 22, gh and uv from `flake.nix`.
+2. Install the host side of the Approve button once, in the main checkout: `scripts/review/approve-install.sh`. The dev VM keeps user units running after a reboot.
+3. Start the preview of a checkout or worktree with `wt up`. It is defined in `compose.preview.yml`:
+   - `https://<branch>--t7d.review.t7d.dev`: the review site of that worktree.
+   - `https://pc-<branch>--t7d.review.t7d.dev`: its papercuts relay (store: `.papercuts/` of the main checkout).
+   - `https://t7d.review.t7d.dev`: the current worktree. `wt switch <branch>` moves it.
+   - `https://review.t7d.dev`: every running preview.
+4. A new change: `wt new <branch>`, then `wt up` in the new worktree. `wt ls` lists them all.
 
-   Run steps 1 and 2 before step 4. If the folders do not exist, Docker makes them as root.
-3. Write the settings into `.env`:
-   - `REVIEW_HOST`: the host name of the review site.
-   - `REVIEW_PAPERCUTS_HOST`: the host name of the relay.
-   - `REVIEW_MAIN`: the host path of this clone.
-   - `REVIEW_WORKTREES`: the host path of the folder with the site worktrees (`~/code/worktrees/t7d`, as a full path).
-   - `PAPERCUTS_SRC`: the folder of the relay source with its Dockerfile.
-4. Start the stack: `docker-compose -p t7d-review -f docker-compose.dev.yml up -d --build`.
+`docker-compose.dev.yml` and its `.env` are the older way and will be removed later.
 
 Tests: `python3 -m unittest discover -s scripts/review -p 'test_*.py'` and `node --test 'scripts/review/test_*.mjs'`.
 

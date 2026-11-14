@@ -1,0 +1,66 @@
+# Preview of this worktree: `wt up` -> https://<branch>--t7d.review.t7d.dev
+# (https://t7d.review.t7d.dev for the current one, see `wt switch`).
+# Two services: the review site (live reload, rounds, Approve) and the papercuts relay at
+# https://pc-<branch>--t7d.review.t7d.dev. wt sets PREVIEW_HOST, WT_MAIN and WT_GIT_COMMON.
+# Approve: the request goes to .review/approve/ of the main checkout; the host side
+# (scripts/review/approve-install.sh, run once in the dev VM) publishes it.
+x-preview:
+  name: t7d
+  port: 8000
+  service: preview
+
+services:
+  preview:
+    build:
+      context: scripts/review
+      dockerfile: Dockerfile
+    image: t7d-review:local
+    restart: unless-stopped
+    command: [python3, /repo/scripts/review/devserver.py, --root, /repo,
+              --approve, /approve, --approve-status, /approve-status,
+              --host, 0.0.0.0, --port, "8000"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PAPERCUTS_URL: https://pc-${PREVIEW_HOST}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 96m
+    tmpfs:
+      - /tmp:size=8m,mode=1777
+    volumes:
+      - .:/repo:ro
+      - ${WT_GIT_COMMON}:${WT_GIT_COMMON}:ro
+      - ${WT_MAIN}/.review/approve:/approve:rw
+      - ${WT_MAIN}/.review/approve-status:/approve-status:ro
+
+  papercuts:
+    build: ${HOME}/code/papercuts
+    restart: unless-stopped
+    environment:
+      PAPERCUTS_STORE: local
+      PAPERCUTS_DB: /data/papercuts.db
+      PAPERCUTS_HOST: 0.0.0.0
+      PAPERCUTS_ORIGINS: https://${PREVIEW_HOST}
+      PAPERCUTS_REPOS: Tim-Conrad/Tim-Conrad.github.io
+      PAPERCUTS_PUBLIC_URL: https://pc-${PREVIEW_HOST}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    tmpfs:
+      - /tmp
+    volumes:
+      - ${WT_MAIN}/.papercuts:/data:rw
+    networks: [default, proxy]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.rule: "Host(`pc-${PREVIEW_HOST}`)"
+      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.entrypoints: "websecure"
+      traefik.http.routers.${COMPOSE_PROJECT_NAME}-pc.tls: "true"
+      traefik.http.services.${COMPOSE_PROJECT_NAME}-pc.loadbalancer.server.port: "8000"
+
+networks:
+  proxy:
+    external: true
