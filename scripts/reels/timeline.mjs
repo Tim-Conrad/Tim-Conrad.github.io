@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { WORK } from './pw.mjs';
+import { WORK, CHROMIUM_PATH } from './pw.mjs';
 import { STAGES, FPS, VIEW } from './timeline-kleinbahn.mjs';
 
 const argv = process.argv.slice(2);
@@ -76,9 +76,21 @@ for (const s of STAGES) {
   if (fs.existsSync(wt)) git('worktree', 'remove', '--force', wt);
   git('worktree', 'add', '--detach', wt, s.ref);
   fs.symlinkSync(path.join(repo, 'node_modules'), path.join(wt, 'node_modules'));
+  // An old tools/page.mjs launches Playwright's own Chromium: point it at CHROMIUM_PATH (pw.mjs). Only the worktree's
+  // copy of the harness changes, never the game.
+  const pm = path.join(wt, 'tools', 'page.mjs'), pmSrc = fs.readFileSync(pm, 'utf8');
+  if (CHROMIUM_PATH && !pmSrc.includes('KB_CHROMIUM')) fs.writeFileSync(pm, pmSrc.replace('chromium.launch({', 'chromium.launch({ executablePath: process.env.KB_CHROMIUM, '));
   const { openGame } = await import(path.join(wt, 'tools', 'page.mjs'));
   const { browser, page: p, errs } = await openGame({ test: true, viewport: VIEW });
   try {
+    // scale: the page at 1/scale of VIEW in CSS px and scale device pixels, so the controls are scale times larger in
+    // the clip, at the same picture size
+    if (s.scale) {
+      const cdp = await p.context().newCDPSession(p);
+      await cdp.send('Emulation.setDeviceMetricsOverride', { width: Math.round(VIEW.width / s.scale), height: Math.round(VIEW.height / s.scale), deviceScaleFactor: s.scale, mobile: false });
+      await p.evaluate(sc => { window.__G('renderer').setPixelRatio(sc); dispatchEvent(new Event('resize')); }, s.scale);
+      await p.screenshot();   // the first screenshot after the override is stale (empty sky): take it here
+    }
     if (!s.ui) await p.addStyleTag({ content: '.dock,.fab,.info-btn,.followbar,.toast,#toast{display:none!important}' });
     await p.evaluate(() => { window.__G('env.running=false'); __KB.step(60, 0.05); });
     if (s.net) await p.evaluate(NET, s.net);

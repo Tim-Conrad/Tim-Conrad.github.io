@@ -6,6 +6,7 @@
 //   cam: an expression of u, e, G, T, wx, wz giving the camera, or null to leave it to the game (follow)
 //   net: 'host' (the game hosts a scripted guest, window.__peer) or 'guest' (the game joins a scripted host)
 //   ui: true films the page with its controls and toasts (a screenshot per frame), else only the canvas
+//   scale: the page at 1/scale of VIEW in CSS px with scale device pixels: the controls are larger in the clip (ui stages)
 // The text of each stage (title, what the clip shows, the rest of the PR) lives in projects/kleinbahn/index.html.
 export const FPS = 24;
 export const VIEW = { width: 960, height: 540 };
@@ -13,9 +14,9 @@ export const VIEW = { width: 960, height: 540 };
 const volc = `G('volcs')[0]`;
 
 export const STAGES = [
-  { id: 'start', ref: 'd3ff177', frames: 96,
-    setup: `G('env').time=0.78; G('erupt')(${volc});`, until: `G('vs')(${volc}).phase==='erupt'`, pre: 30,
-    cam: `({x:wx(${volc}.x)-1, z:wz(${volc}.z)-1, dist:17-2*e, pitch:0.5, yaw:0.9+0.35*u})` },
+  { id: 'start', ref: 'd3ff177',
+    setup: `G('env').time=0.78; G('erupt')(${volc});`, until: `G('vs')(${volc}).phase==='erupt'`, pre: 20, frames: 120,
+    cam: `({x:wx(${volc}.x), z:wz(${volc}.z), y:2, dist:11.5-1.5*e, pitch:0.3, yaw:0.9+0.3*u})` },
 
   // #1: the game hosts; the scripted guest plants trees one after the other, and they appear on the host's island
   { id: 'pr1', ref: '9ae75bf', net: 'host', frames: 96,
@@ -25,35 +26,38 @@ export const STAGES = [
     cam: `({x:T.c.x, z:T.c.z, dist:9-1*e, pitch:0.7, yaw:0.6+0.3*u})` },
 
   // #2: the game is a guest; the host starts an eruption and sends the random numbers of its peak
-  { id: 'pr2', ref: 'a3e426b', net: 'guest', frames: 96,
+  { id: 'pr2', ref: 'a3e426b', net: 'guest', frames: 120,
     setup: `__peer.world.env.time=0.8; G('env').time=0.8; const v=${volc}, k=G('vkey')(v), tape=Array.from({length:600},(_,i)=>(i*0.6180339)%1);
-      __peer.sync.event('volc',k,'start'); __peer.sync.event('volc',k,'peak',{tape}); __peer.pump();`, pre: 30,
-    cam: `({x:wx(${volc}.x)-1, z:wz(${volc}.z)-1, dist:16-2*e, pitch:0.45, yaw:2.2+0.35*u})` },
+      __peer.sync.event('volc',k,'start'); __peer.sync.event('volc',k,'peak',{tape}); __peer.pump();`, pre: 20,
+    cam: `({x:wx(${volc}.x), z:wz(${volc}.z), y:2, dist:11.5-1.5*e, pitch:0.3, yaw:2.2+0.3*u})` },
 
   // #3: the game hosts; a pin in the guest's colour stands where the guest looks, and glides as the guest looks around
-  { id: 'pr3', ref: 'd8f5d41', net: 'host', frames: 96,
+  { id: 'pr3', ref: 'd8f5d41', net: 'host', frames: 120,
     setup: `G('env').time=0.5;`,
-    each: `__peer.sync.presence({x:-4+6*e, z:-2+4*e, d:14, yaw:0.5, pitch:0.7});`,
-    cam: `({x:-4.2+5.6*e, z:-2.1+3.7*e, dist:6, pitch:0.7, yaw:0.5+0.1*u})` },
+    each: `__peer.sync.presence({x:-3.5+4*e, z:-1.5+2.5*e, d:14, yaw:0.5, pitch:0.7});`,
+    cam: `({x:-1.5+0.4*e, z:-0.25+0.6*e, dist:7, pitch:0.75, yaw:0.5+0.08*u})` },
 
   // #7: the game hosts and follows the guest, who has a name: the follow bar shows it
-  { id: 'pr7', ref: '38ce447', net: 'host', ui: true, frames: 72,
-    setup: `G('env').time=0.5; __peer.sync.presence({x:-6, z:-3, d:12, yaw:0.4, pitch:0.65, n:'Mia'}); T.step(10,0.05);`,
-    after: `G('netFollowStart')(G('NET_PRES')[0].g);`,
-    each: `__peer.sync.presence({x:-6+10*e, z:-3+5*e, d:12, yaw:0.4+0.8*e, pitch:0.65, n:'Mia'});`,
+  { id: 'pr7', ref: '38ce447', net: 'host', ui: true, scale: 1.5, frames: 120,
+    setup: `G('env').time=0.5; __peer.sync.presence({x:-5, z:-2.5, d:8, yaw:0.4, pitch:0.65, n:'Mia'}); T.step(10,0.05);`,
+    after: `G('netFollowStart')(G('NET_PRES')[0].g);`, pre: 30,
+    each: `__peer.sync.presence({x:-5+5*e, z:-2.5+2.5*e, d:8, yaw:0.4+0.5*e, pitch:0.65, n:'Mia'});`,
     cam: null },
 
   // #8: the game is a guest; the host stops the room, and the guest goes home to its own island (with its trees)
-  { id: 'pr8', ref: '9e097da', net: 'guest', ui: true, frames: 72,
-    setup: `__peer.world.env.time=0.5;`,
-    each: `if(f===24){ __peer.sync.leave(); __peer.pump(); }`,
-    cam: `({x:2, z:2, dist:22, pitch:0.75, yaw:0.5+0.15*u})` },
+  { id: 'pr8', ref: '9e097da', net: 'guest', ui: true, scale: 1.5, frames: 96,
+    setup: `__peer.world.env.time=0.5; const S=G('S'), W=G('W'), H=G('H'), own=G('netOwn') || G('serialize()'), tree=G('P_TREE');
+      const pr=Uint8Array.from(atob(own.prop), c => c.charCodeAt(0)); let best=0, bi=0;
+      for(let z=4;z<H-4;z++) for(let x=4;x<W-4;x++){ let n=0; for(let dz=-3;dz<=3;dz++) for(let dx=-3;dx<=3;dx++) if(pr[(z+dz)*W+x+dx]===tree) n++; if(n>best){ best=n; bi=z*W+x; } }
+      T.c={x:G('wx')(bi%W), z:G('wz')((bi/W)|0)};`,
+    each: `if(f===30){ __peer.sync.leave(); __peer.pump(); }`,
+    cam: `({x:T.c.x, z:T.c.z, dist:12, pitch:0.7, yaw:0.5+0.15*u})` },
 
   // #9: the new HUD icons: the build dial opens over the island
-  { id: 'pr9', ref: '1176369', ui: true, frames: 48,
+  { id: 'pr9', ref: '1176369', ui: true, scale: 1.5, frames: 96,
     setup: `G('env').time=0.5;`,
-    each: `if(f===12) document.getElementById('fabBuild').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));`,
-    cam: `({x:0, z:0, dist:28, pitch:0.8, yaw:0.5+0.1*u})` },
+    each: `if(f===24) document.getElementById('fabBuild').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));`,
+    cam: `({x:0, z:0, dist:24, pitch:0.8, yaw:0.5+0.08*u})` },
 
   // #11: the game is a guest; the host's fire breaks out at the same house, and the fire brigade comes
   { id: 'pr11', ref: '48be439', net: 'guest', frames: 120,
@@ -69,13 +73,13 @@ export const STAGES = [
   { id: 'pr13', ref: 'dac9bb5', frames: 108,
     setup: `G('env').time=0.5; const st=[...G('astate').values()][0], p=st.planes.find(p => p.spec.loops>0); T.ap=[st,p]; G('aStartFlight')(st,p);`,
     until: `T.ap[1].lu>=0`, after: `const p=T.ap[1]; T.L={x:p.lx0+Math.sin(p.yaw)*p.lR*0.6, z:p.lz0+Math.cos(p.yaw)*p.lR*0.6, y:p.ly0-G('TOP')+p.lR, r:p.lR, yaw:p.yaw};`, pre: 1,
-    cam: `({x:T.L.x, z:T.L.z, y:T.L.y, dist:T.L.r*4.2+1*e, pitch:0.16, yaw:T.L.yaw+Math.PI/2+0.3*u})` },
+    cam: `({x:T.L.x, z:T.L.z, y:T.L.y, dist:T.L.r*6+1*e, pitch:0.16, yaw:T.L.yaw+Math.PI/2+0.3*u})` },
 
   // #14: the game hosts; the scripted guest Mia claims a plane, the host's crew bring it up, and Mia steers it:
   // the host's game draws the plane from her pose. The host follows her, and her chip says what she does.
-  { id: 'pr14', ref: '52eb17f', net: 'host', ui: true, frames: 120,
+  { id: 'pr14', ref: '52eb17f', net: 'host', ui: true, scale: 1.5, frames: 120,
     setup: `G('env').time=0.5; T.st=[...G('astate').values()][0]; T.p=T.st.planes[0]; T.id=G('akey')(T.st.v)+':'+T.p.k;
-      T.pres=c => __peer.sync.presence({x:c.x, z:c.z, d:10, yaw:0.5, pitch:0.6, n:'Mia', c});
+      T.pres=c => __peer.sync.presence({x:c.x, z:c.z, d:3.5, yaw:0.5, pitch:0.35, n:'Mia', c});
       T.pres({k:'plane', id:T.id, sh:true, x:T.p.px, y:T.p.py, z:T.p.pz, yaw:T.p.yaw, p:0, r:0, s:0, f:0});`,
     until: `T.p.phase==='pilot'`,
     after: `T.c={x:T.p.px, y:T.p.py, z:T.p.pz, yaw:T.p.yaw}; G('netFollowStart')(G('NET_PRES')[0].g);`, pre: 1,

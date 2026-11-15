@@ -9,6 +9,7 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { chromium, WORK } from './pw.mjs';
 import { STAGES } from './timeline-wortzauber.mjs';
+import { FINGER, traceWord } from './wz-helpers.mjs';
 
 const argv = process.argv.slice(2);
 const dry = argv.includes('--dry');
@@ -41,6 +42,10 @@ for (const s of STAGES) {
     rec = Date.now();
     const page = await ctx.newPage();
     page.on('pageerror', e => errs.push(e.message));
+    // for an act: a finger dot, and the real pointer (the game reads pointer events, not a script call)
+    await page.addInitScript(FINGER);
+    await page.exposeFunction('__trace', () => traceWord(page, { stepMs: 12 }));
+    await page.exposeFunction('__tap', async (x, y) => { await page.mouse.move(x, y, { steps: 10 }); await page.waitForTimeout(150); await page.mouse.click(x, y); });
     await page.goto(`http://127.0.0.1:${P}/?dev=1&fresh=1`, { waitUntil: 'load' });
     await page.addStyleTag({ content: HIDE });
     await page.waitForFunction(() => window.WZ && window.Sprites, null, { timeout: 30000 });
