@@ -17,6 +17,8 @@ The product page of a game has a section "How it changed": one entry per merged 
 - **One clip per PR, the coolest change.** Pick the change a player sees and enjoys most: something that moves on the island beats a panel, a panel beats a fix. List the rest of the PR in one short line each.
 - **Only PRs that change play get an entry.** Test, build, deploy and docs PRs are named in one line at the end of the section ("Not shown: ...").
 - **Film the real game at that PR's state.** Never film a later state for an older entry, and never draw or fake a picture. A shared-play clip uses the scripted second player of the timeline script (the same set-up as the game's `tools/netcheck.mjs`); the entry says so.
+- **Film the action, not the end state.** The feature happens inside the clip, starting in its first second: the throw, the walk, the writing, the answer. A layout-check scene of Wortzauber ends after its action, so a stage with only `scene` films a still picture: give it an `act`, or write a `setup` that stops before the action. A Kleinbahn subject fills a good part of the picture (`dist` 6 to 12 for a vehicle), and the clip runs 4 to 5 s.
+- **UI stages are larger.** A Kleinbahn stage with `ui: true` sets `scale: 1.5`: the controls are 1.5 times larger at the same picture size, so the text reads at 640 px.
 - **Wording** follows `DESIGN.md`: plain, names what the clip shows, no slogans. Claim only what the commit message, the PR or the code says.
 
 ## Token-efficient workflow
@@ -27,7 +29,7 @@ Do not read the code of every PR. Work from the git log.
 3. Read each new PR's commit messages only: `git -C ../tiny-train log --format='%B' <merge>^1..<merge>^2`. They name every change. Decide: entry or "Not shown", and which change to film.
 4. Find the names a shot needs with one `git grep` at that ref (`git -C ../tiny-train grep -n 'function aStartFlight' <ref> -- src/game`), not by reading files.
 5. Add one stage per new entry to the stages file (fields: see the comment at its top). Copy the closest existing stage: an event (`setup` + `until` + `cam: null` to follow), a camera move (`cam`), a UI moment (`ui: true` and an `each` that presses a button), shared play (`net: 'host'` or `'guest'`).
-6. Test only the new stages, three frames each: `node scripts/reels/timeline.mjs ../tiny-train --test --only pr14`. Join the frames into one sheet and read it (`ffmpeg -i <work>/tl/kb-test/pr14/%04d.jpg -vf tile=3x1 sheet.jpg`).
+6. Test only the new stages, three frames each (Wortzauber: record them and read a sheet of 6 frames per clip; `--dry` gives only the end still): `node scripts/reels/timeline.mjs ../tiny-train --test --only pr14`. Join the frames into one sheet and read it (`ffmpeg -i <work>/tl/kb-test/pr14/%04d.jpg -vf tile=3x1 sheet.jpg`).
 7. Film them: `node scripts/reels/timeline.mjs ../tiny-train --only pr14` (about 1 to 3 s a frame; a stage of 96 frames takes 2 to 5 min).
 8. Cut: `python3 scripts/reels/build.py timeline` writes the clips and posters of every filmed stage into `assets/projects/timeline/` (640x360, about 100 to 400 KB each).
 9. Add the entry to `projects/kleinbahn/index.html`: copy the first `<li>` of `.tl` and put the new one above it (newest first). Date, PR number, title, the sentence on the clip, the list of the other changes.
@@ -47,6 +49,9 @@ Do not read the code of every PR. Work from the git log.
 - The cheapest stage uses a layout-check scene of the game at that ref (`scene: 'castle'`): a feature PR often added its own scene, see `.claude/skills/checking-device-layouts/scenes/` in the game and `git log --diff-filter=A` on it. Else a short `setup` with `WZ.jump(...)` (from PR #31 on), `WZ.useWord(...)`, `Wall`, `Castle`, `Together.testLink()`; an `act` films the action itself.
 - The clips are silent. A PR that only adds sound goes into the "Not shown" line, and so does a change that opens only deep in a level.
 - The game is filmed in German. Do not generate voice, music or images, and do not read the ElevenLabs key.
+- An `act` taps with the real pointer and a finger dot (`await __tap(x, y)`) and traces the word on the trace page (`await __trace()`). Typing, answers on the digit pad and free writing are in the shared pieces at the top of `timeline-wortzauber.mjs` (`tapEl`, `answer`, `write`, `together`, `castleAt`).
+- In the castle, the closed gate stands at x 600: a walk that starts in front of it stops there.
+- On the NixOS dev VM: run the scripts in the dev shell of tiny-train (`nix develop ../tiny-train -c ...`). It sets `KB_CHROMIUM`, and `pw.mjs` and `timeline.mjs` launch that Chromium (Playwright's own download does not start on NixOS). Run `build.py` with `env -u LD_LIBRARY_PATH`, because the host's library path breaks the Nix ffmpeg.
 - Outside the cloud container: Playwright is not global. Link the `node_modules` of `../tiny-train` into this repo and add `/node_modules` to `.git/info/exclude`. If `ffmpeg` is not installed, put a wrapper on `PATH` that runs `ffmpeg` and `ffprobe` from the `linuxserver/ffmpeg` image, with the repo mounted at the same path.
 
 ## Common mistakes
