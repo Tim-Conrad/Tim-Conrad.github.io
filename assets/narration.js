@@ -17,7 +17,9 @@
     set: function (v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }
   };
 
-  fetch(art.getAttribute('data-narration')).then(function (r) { return r.json(); }).then(init).catch(function () {});
+  // ?narration=/drafts/... loads a local test narration (scripts/narration/narrate-local.py). drafts/ is never published.
+  var test = /[?&]narration=(\/drafts\/[^&#]+\.json)/.exec(location.search);
+  fetch(test ? decodeURIComponent(test[1]) : art.getAttribute('data-narration')).then(function (r) { return r.json(); }).then(init).catch(function () {});
 
   function init(N) {
     /* ---- the script: blocks of the page in reading order ---- */
