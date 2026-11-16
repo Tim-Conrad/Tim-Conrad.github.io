@@ -251,6 +251,13 @@ code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 .tl__text p { margin: 0; max-width: 52ch; }
 .tl__also { margin: .2rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .95rem; line-height: 1.45; }
 @media (max-width: 760px) { .tl > li { grid-template-columns: minmax(0, 1fr); } }
+/* a day on the timeline: its date and how many changes it brought, on a short bar across the line */
+.tl > li.tl__day { display: block; padding: 0 0 1.1rem calc(var(--tl-x) * 2 + 1.25rem); font: 500 var(--step--1)/1.5 var(--mono); letter-spacing: .04em; color: var(--muted); }
+.tl > li.tl__day::before { top: .62rem; width: 1rem; height: var(--rule); margin-left: -.5rem; border: 0; border-radius: 0; background: var(--ink); }
+.tl > li.tl__day:first-child + li::before { background: var(--ink); }
+/* only the newest entries open; with the script, Show more opens five more at a time (without it, all of them show) */
+.js .tl > li[data-more] { display: none; }
+.tl__more { margin: 0 0 1.75rem 2.35rem; }   /* lines up with the entries: twice .tl --tl-x, plus 1.25rem */
 
 /* ---------- live demo in a phone ---------- */
 .demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; justify-items: center; }
