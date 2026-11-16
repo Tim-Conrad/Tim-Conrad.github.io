@@ -114,6 +114,30 @@
     } else if (wanted) play();
   });
 
+  /* ---- timelines: only the newest entries open. Show more opens the next five, with the day marker above them, and
+     gives their videos their posters (kept back until then, so a page load fetches only the pictures of the open entries). ---- */
+  $$('.tl__more').forEach(function (btn) {
+    var tl = btn.previousElementSibling, STEP = 5;
+    if (!tl || !tl.classList.contains('tl')) return;
+    function left() { return $$('li[data-more]:not(.tl__day)', tl).length; }
+    function label() { var n = Math.min(STEP, left()); btn.textContent = 'Show ' + n + ' more'; }
+    btn.hidden = false; label();
+    btn.addEventListener('click', function () {
+      var shown = 0, day = null, first = null;
+      $$('li[data-more]', tl).some(function (li) {
+        if (li.classList.contains('tl__day')) { day = li; return false; }
+        if (shown === STEP) return true;
+        if (day) { day.removeAttribute('data-more'); day = null; }
+        li.removeAttribute('data-more');
+        $$('video[data-poster]', li).forEach(function (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); });
+        if (!first) first = $('h3', li);
+        shown++; return false;
+      });
+      if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+      if (left()) label(); else btn.remove();
+    });
+  });
+
   /* ---- diagrams with steps: Back, Next and Play walk through the parts of an SVG (data-step="n").
      Without the script the whole diagram and the numbered list show. Nothing moves until the reader asks. ---- */
   $$('figure[data-steps]').forEach(function (fig) {
