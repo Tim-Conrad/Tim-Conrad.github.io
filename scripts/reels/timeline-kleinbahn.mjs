@@ -111,4 +111,15 @@ export const STAGES = [
     setup: `G('env').time=0.74; T.v=${volc}; G('setVolcType')(T.v,0);`,
     each: `if(f<90 && f%18===0) G('setVolcType')(T.v,f/18); if(f===90) G('setVolcType')(T.v,2); if(f===96) G('erupt')(T.v);`,
     cam: `({x:wx(${volc}.x), z:wz(${volc}.z), y:1.2, dist:9-1.5*e, pitch:0.32, yaw:0.9+0.5*u})` },
+
+  // #27: the player flies a plane: boost, a barrel roll and a loop in red smoke, then a turn-back in rainbow smoke.
+  // The game's own pilot camera follows (it swings to the side for the loop); the controls show the new move buttons.
+  { id: 'pr27', ref: '002762e', ui: true, scale: 1.5, frames: 216,
+    setup: `G('env').time=0.5; T.st=[...G('astate').values()][0]; T.p=T.st.planes[0]; G('pilotStart')('plane', G('akey')(T.st.v)+':'+T.p.k);`,
+    until: `T.p.phase==='pilot'`,
+    after: `const p=T.p; p.px=-6; p.pz=-5; p.py=G('TOP')+2.6; p.yaw=0.7; p.pitch=0; p.roll=0; p.spd=p.spec.vc; G('flyInit')(p);
+      document.getElementById('pilotColor').click();`, pre: 12,
+    each: `const S=G('flyS'); S.boost = f>=4 && f<40; const col=c => { S.col=c; G('flySyncColor')(); };
+      if(f===46) G('flyAct')('roll',1); if(f===78) col(5); if(f===80) G('flyAct')('loop'); if(f===150) col(8); if(f===152) G('flyAct')('turn');`,
+    cam: null },
 ];
