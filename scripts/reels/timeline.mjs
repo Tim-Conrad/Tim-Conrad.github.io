@@ -79,7 +79,11 @@ for (const s of STAGES) {
   // An old tools/page.mjs launches Playwright's own Chromium: point it at CHROMIUM_PATH (pw.mjs). Only the worktree's
   // copy of the harness changes, never the game.
   const pm = path.join(wt, 'tools', 'page.mjs'), pmSrc = fs.readFileSync(pm, 'utf8');
-  if (CHROMIUM_PATH && !pmSrc.includes('KB_CHROMIUM')) fs.writeFileSync(pm, pmSrc.replace('chromium.launch({', 'chromium.launch({ executablePath: process.env.KB_CHROMIUM, '));
+  let pmNew = pmSrc;
+  if (CHROMIUM_PATH && !pmSrc.includes('KB_CHROMIUM')) pmNew = pmNew.replace('chromium.launch({', 'chromium.launch({ executablePath: process.env.KB_CHROMIUM, ');
+  // An old tools/page.mjs reads every file but a PNG as text, which breaks a JPEG (the loading cover): read pictures as bytes
+  pmNew = pmNew.replace("ext === '.png' ? null : 'utf8'", "['.png', '.jpg', '.webp'].includes(ext) ? null : 'utf8'");
+  if (pmNew !== pmSrc) fs.writeFileSync(pm, pmNew);
   const { openGame } = await import(path.join(wt, 'tools', 'page.mjs'));
   const { browser, page: p, errs } = await openGame({ test: true, viewport: VIEW });
   try {
