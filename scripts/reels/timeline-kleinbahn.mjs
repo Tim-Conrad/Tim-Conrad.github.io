@@ -86,4 +86,10 @@ export const STAGES = [
     each: `const c=T.c, s=1.6, dt=1/24; c.yaw+=0.35*dt; c.x+=Math.sin(c.yaw)*s*dt; c.z+=Math.cos(c.yaw)*s*dt; c.y=Math.min(c.y+0.3*dt, G('TOP')+4);
       T.pres({k:'plane', id:T.id, sh:true, x:c.x, y:c.y, z:c.z, yaw:c.yaw, p:0.12, r:-0.3, s, f:4});`,
     cam: null },
+
+  // #25: one volcano shows the five kinds in turn (strato, shield, cinder cone, lava dome, caldera), then erupts as a cinder cone
+  { id: 'pr25', ref: '7d4a2bc', frames: 168,
+    setup: `G('env').time=0.74; T.v=${volc}; G('setVolcType')(T.v,0);`,
+    each: `if(f<90 && f%18===0) G('setVolcType')(T.v,f/18); if(f===90) G('setVolcType')(T.v,2); if(f===96) G('erupt')(T.v);`,
+    cam: `({x:wx(${volc}.x), z:wz(${volc}.z), y:1.2, dist:9-1.5*e, pitch:0.32, yaw:0.9+0.5*u})` },
 ];
