@@ -92,3 +92,4 @@ Use the skill `adding-a-thought` for the text. Then:
 | The manual step viewer (box, Back, Next, Play, "Step 2 of 5") stayed under a narrated figure and broke the immersion. | Voice steps: a plain list, the voice animates. |
 | Empty space under a figure: a second paragraph in a spoken part kept its height, and a folded part in the figure grid still added one gap. | One wrapper per spoken part. Folded parts in a figure use `display: none`. Measure the space from the drawing to the next element before and after Listen. |
 | A python `http.server` cannot seek in an mp3 (no range requests). | Load the audio as a blob. |
+| The words ran seconds ahead of or behind the local test voice after a seek, resume or chapter jump. Chrome seeks a long VBR mp3 inexactly. | Write the mp3 with a constant bitrate (ElevenLabs `mp3_44100_96` already is). |
