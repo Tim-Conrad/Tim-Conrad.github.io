@@ -30,7 +30,7 @@ nix develop ./scripts/narration -c uv run scripts/narration/narrate-local.py tho
 - Each block is cached by its text in `~/.cache/t7d-narration`, so after an edit only the changed blocks are made again.
 - Word timings come from Qwen3-ForcedAligner (`scripts/narration/align.py`). The script text comes from the page through `assets/narration.js` in headless Chromium (`scripts/narration/script.mjs`), so the timing fits the characters that the page times.
 - Listen: `python3 scripts/preview-artifact.py thoughts/<slug> --narration drafts/narration/<slug>` and publish it as an artifact, or serve the site and open `/thoughts/<slug>/?narration=/drafts/narration/<slug>/narration.json`. The player says "Narrated by Qwen3-TTS ... (local test, not the final voice)".
-- The voices are Ryan (default) and Aiden. They are not the decided voice: judge the pacing, the marker, the cues and the spoken parts with them, not the sound.
+- The voices are Aiden (default; Tim prefers him, Ryan draws words out) and Ryan. They are not the decided voice: judge the pacing, the marker, the cues and the spoken parts with them, not the sound.
 
 ## How it is built
 

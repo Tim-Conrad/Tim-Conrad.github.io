@@ -38,7 +38,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("page", help="the folder of the thought, e.g. thoughts/encrypted-patches")
     ap.add_argument("--model", choices=MODELS, default="0.6B", help="0.6B (default, about 2.3 s per second of audio) or 1.7B")
-    ap.add_argument("--speaker", default="Ryan", help="a voice of the model: Ryan (default) or Aiden for English")
+    ap.add_argument("--speaker", default="Aiden", help="a voice of the model: Aiden (default) or Ryan for English")
     ap.add_argument("--instruct", default="", help="a style instruction, only for --model 1.7B, e.g. 'Calm, unhurried.'")
     ap.add_argument("--first", type=int, default=0, help="only the first N blocks, for a quick test")
     ap.add_argument("--cache", default=os.environ.get("NARRATION_CACHE", os.path.expanduser("~/.cache/t7d-narration")))
