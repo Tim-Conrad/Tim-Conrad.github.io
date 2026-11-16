@@ -87,6 +87,25 @@ export const STAGES = [
       T.pres({k:'plane', id:T.id, sh:true, x:c.x, y:c.y, z:c.z, yaw:c.yaw, p:0.12, r:-0.3, s, f:4});`,
     cam: null },
 
+  // #15: the loading screen, put back over the game from the game's own index.html: the logo train runs off the rail
+  // and comes back, then the screen fades. Its CSS animations follow the frame clock (1.5 times their speed).
+  { id: 'pr15', ref: '12400eb', ui: true, frames: 160,
+    setup: `G('env').time=0.6; const x=new XMLHttpRequest(); x.open('GET','/index.html',false); x.send();
+      const L=new DOMParser().parseFromString(x.responseText,'text/html').getElementById('loader'); document.body.appendChild(document.adoptNode(L));`,
+    each: `const L=document.getElementById('loader'); if(f===144) L.classList.add('done');
+      for(const a of document.getAnimations()){ a.pause(); a.currentTime = a instanceof CSSTransition ? (f-144)*1000/24 : f*1500/24; }`,
+    cam: `({x:0, z:0, dist:30, pitch:0.75, yaw:0.5+0.05*u})` },
+
+  // #16: a chase camera rides behind a car through town, close enough for the fine models of cars, bicycles and people.
+  // The camera sits behind the car (its heading from the last frames, smoothed), where the road is open.
+  { id: 'pr16', ref: '894f337', frames: 144,
+    setup: `G('env').time=0.45; T.step(200,0.05); const P=G('people').filter(p => p.vis), V=G('vehicles');
+      const near=v => P.filter(p => Math.hypot(p.x-v.px, p.z-v.pz)<1.8).length + V.filter(w => w!==v && Math.hypot(w.px-v.px, w.pz-v.pz)<1.8).length;
+      T.v=V.filter(v => v.type==='car' && !v.parked && v.model!=='truck').sort((a,b) => near(b)-near(a))[0];
+      T.p={x:T.v.px, z:T.v.pz}; T.step(4,1/24); const dx=T.v.px-T.p.x, dz=T.v.pz-T.p.z; T.yaw=Math.atan2(-dx,-dz); T.p={x:T.v.px, z:T.v.pz};`, pre: 1,
+    each: `const dx=T.v.px-T.p.x, dz=T.v.pz-T.p.z; if(Math.hypot(dx,dz)>0.004){ const y=Math.atan2(-dx,-dz), d=Math.atan2(Math.sin(y-T.yaw), Math.cos(y-T.yaw)); T.yaw+=d*0.08; } T.p={x:T.v.px, z:T.v.pz};`,
+    cam: `({x:T.v.px, z:T.v.pz, y:G('TOP')+0.08, dist:1.5, pitch:0.42, yaw:T.yaw})` },
+
   // #25: one volcano shows the five kinds in turn (strato, shield, cinder cone, lava dome, caldera), then erupts as a cinder cone
   { id: 'pr25', ref: '7d4a2bc', frames: 168,
     setup: `G('env').time=0.74; T.v=${volc}; G('setVolcType')(T.v,0);`,
