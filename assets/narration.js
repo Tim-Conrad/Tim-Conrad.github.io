@@ -23,10 +23,10 @@
 
   function init(N) {
     /* ---- the script: blocks of the page in reading order ---- */
-    var stop = $('#sources', art), segs = [];
+    var stop = $('#' + (N.stop || 'sources'), art), segs = [];   // "stop": the id of the first heading that is not read
     var walker = document.createTreeWalker(art, NodeFilter.SHOW_ELEMENT, { acceptNode: function (n) {
       if (stop && (n === stop || (stop.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING))) return NodeFilter.FILTER_REJECT;
-      if (n.matches('svg, figcaption, .code, .refs')) return NodeFilter.FILTER_REJECT;
+      if (n.matches('svg, figcaption, .code, .refs, .pick__hint')) return NodeFilter.FILTER_REJECT;
       return n.matches('h2, p, li') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     } });
     while (walker.nextNode()) {
