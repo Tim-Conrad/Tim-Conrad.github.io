@@ -13,13 +13,13 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 
 - Generate ElevenLabs audio only when Tim says that the text of the thought is final and must be narrated. Approval of a cost estimate is not that instruction.
 - Do not make voice samples. The voice is chosen (see the table).
-- Until then, the page runs on simulated timing (about 160 words a minute). Tim reads along and judges the text, the spoken parts and the figures without audio.
+- Until then, Tim judges the text, the spoken parts and the figures with the free local test voice (next section). Without it, the page runs on simulated timing (about 160 words a minute).
 - There is no ElevenLabs key in the dev VM. Call `$ELEVENLABS_BASE_URL` (`https://elevenlabs.gate`, the gate VM) instead of `https://api.elevenlabs.io`, with the same paths. The gate adds the key; send any placeholder as `xi-api-key`.
 - Before a generation, tell Tim the character count. After it, tell him what it used.
 
 ## Free local test voice (Qwen3-TTS)
 
-To hear a thought before the ElevenLabs audio exists, make a local test narration in the dev VM. It costs no credits, but it is not the decided voice: never commit its audio or timing, and never put it on t7d.dev.
+Before a narrated thought is published, Tim always reviews it with a local test narration: it is a standard step of the review (skill `adding-a-thought`, step 6). Make it in the dev VM. It costs no credits, but it is not the decided voice: never commit its audio or timing, and never put it on t7d.dev.
 
 ```
 nix develop ./scripts/narration -c uv run scripts/narration/narrate-local.py thoughts/<slug>

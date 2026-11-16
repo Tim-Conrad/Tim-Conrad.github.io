@@ -71,6 +71,8 @@ Follow CLAUDE.md: serve the site (`python3 -m http.server 8000`), look at 1440, 
 
 Tim reviews a thought as a Claude artifact before it is published: run `python3 scripts/preview-artifact.py thoughts/<slug> <scratchpad>/preview-<slug>` and publish its `index.html` with the Artifact tool, with every other printed file in `files`. After a change, build again and publish the same `file_path`, so the link stays the same. Comments on the artifact reach the session: answer them and change the page in the repository, never only in the bundle. `scripts/ship.sh <pr>` merges and checks the live site when Tim asks for it.
 
+A narrated thought gets a local test narration before it is published, as a standard step: make it with the free Qwen3-TTS voice (skill `narrating-a-thought`, "Free local test voice"), build the preview with `--narration drafts/narration/<slug>`, and tell Tim the link. After a text change, run it again: only the changed blocks are spoken again. It is for the review only; the published page keeps its own `narration.json`.
+
 ## Revising a thought
 
 - Change the text, set "Last revised", and add one line at the top of Revisions: the date and what changed, and why ("Changed the third rule after feedback on LinkedIn").
