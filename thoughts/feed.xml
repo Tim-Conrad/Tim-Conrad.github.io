@@ -6,7 +6,14 @@
     <atom:link href="https://t7d.dev/thoughts/feed.xml" rel="self" type="application/rss+xml"/>
     <description>Thoughts by Tim Conrad: ideas he is working through and comes back to.</description>
     <language>en</language>
-    <lastBuildDate>Tue, 10 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 12 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>Agents without long-lived secrets, approved from my phone</title>
+      <link>https://t7d.dev/thoughts/no-long-lived-secrets/</link>
+      <guid isPermaLink="true">https://t7d.dev/thoughts/no-long-lived-secrets/</guid>
+      <pubDate>Thu, 12 Nov 2026 00:00:00 +0000</pubDate>
+      <description>My agents can read API keys, deploy keys and tokens that never expire. A design where they hold none: tokens bound to a key with DPoP, a broker that checks which program asks, a phone that shows what the agent wants to do and signs a short grant, and a gateway that keeps the last keys. Narrated.</description>
+    </item>
     <item>
       <title>Encrypted patches, unlocked on patch day</title>
       <link>https://t7d.dev/thoughts/encrypted-patches/</link>
