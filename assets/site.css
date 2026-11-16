@@ -490,6 +490,12 @@ figure .dg-n { display: none; }
 .narr-playing .prose figure.cur .say:not(:has(.cur)), .narr-playing .prose figure.cur .say .narr-seg:not(.cur),
 .narr-playing .prose figure.cur .fig-steps .narr-seg:not(.cur) { display: none; }   /* under a figure, only the paragraph that the voice reads now */
 .narr-playing .prose figure.cur figcaption { display: none; }   /* the voice explains the figure; the caption returns afterwards */
+/* a tall drawing shrinks in proportion, so the drawing and about seven lines of its paragraph fit between header and player */
+.narr-playing .prose figure.cur svg.dg { width: auto; height: auto; max-width: 100%; max-height: calc(100svh - 7.5rem - 11rem); margin-inline: auto; }
+/* switch, pick and loop figures give way to the voice: no buttons, no box; the voice sets the state and lights the parts */
+.narr-on .prose figure .anim__bar, .narr-on .prose figure .pick__hint { display: none; }
+.narr-on .prose figure .pick__panel { border: 0; background: none; padding: 0; margin-top: 0; }
+.narr-on .prose figure .pick__list b { font: inherit; font-weight: 700; }
 /* the phrase marker: a grey tint over the phrase that the voice reads */
 .narr-on #main { position: relative; }
 .narr-hl { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; opacity: 0; background: color-mix(in srgb, var(--ink) 16%, transparent);

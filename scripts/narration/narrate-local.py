@@ -123,7 +123,9 @@ def main():
 
     out = os.path.join(ROOT, "drafts", "narration", slug)
     os.makedirs(out, exist_ok=True)
-    sf.write(os.path.join(out, "narration.mp3"), np.concatenate(parts), sr, format="MP3")
+    # constant bitrate, 56 kbit/s (fits 39 min into an artifact, 16 MB per file): in a long VBR mp3, Chrome lands seconds off after a seek, and the words drift
+    sf.write(os.path.join(out, "narration.mp3"), np.concatenate(parts), sr, format="MP3", bitrate_mode="CONSTANT",
+             compression_level=0.7)
     base.update({
         "voice": f"Qwen3-TTS {a.model} {a.speaker} (local test, not the final voice)",
         "audio": f"/drafts/narration/{slug}/narration.mp3",
