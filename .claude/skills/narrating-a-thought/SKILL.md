@@ -17,11 +17,26 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 - There is no ElevenLabs key in the dev VM. Call `$ELEVENLABS_BASE_URL` (`https://elevenlabs.gate`, the gate VM) instead of `https://api.elevenlabs.io`, with the same paths. The gate adds the key; send any placeholder as `xi-api-key`.
 - Before a generation, tell Tim the character count. After it, tell him what it used.
 
+## Free local test voice (Qwen3-TTS)
+
+To hear a thought before the ElevenLabs audio exists, make a local test narration in the dev VM. It costs no credits, but it is not the decided voice: never commit its audio or timing, and never put it on t7d.dev.
+
+```
+nix develop ./scripts/narration -c uv run scripts/narration/narrate-local.py thoughts/<slug>
+```
+
+- It writes `drafts/narration/<slug>/narration.json` and `narration.mp3`. Git ignores `drafts/`. The page's own `narration.json` does not change.
+- Speed on the dev VM's CPU: the default model (0.6B) takes about 2.5 s per second of audio, so a 20-minute thought takes about 50 minutes. `--model 1.7B` is slower. `--first 4` makes only the first blocks, for a quick check. Run long jobs with `nohup` and a log in `drafts/narration/`.
+- Each block is cached by its text in `~/.cache/t7d-narration`, so after an edit only the changed blocks are made again.
+- Word timings come from Qwen3-ForcedAligner (`scripts/narration/align.py`). The script text comes from the page through `assets/narration.js` in headless Chromium (`scripts/narration/script.mjs`), so the timing fits the characters that the page times.
+- Listen: `python3 scripts/preview-artifact.py thoughts/<slug> --narration drafts/narration/<slug>` and publish it as an artifact, or serve the site and open `/thoughts/<slug>/?narration=/drafts/narration/<slug>/narration.json`. The player says "Narrated by Qwen3-TTS ... (local test, not the final voice)".
+- The voices are Aiden (default; Tim prefers him, Ryan draws words out) and Ryan. They are not the decided voice: judge the pacing, the marker, the cues and the spoken parts with them, not the sound.
+
 ## How it is built
 
 | Part | Where |
 | --- | --- |
-| Player, marker, cues, scrolling | `assets/narration.js` (no inline script, the CSP stays strict). The page loads it with `<script src="/assets/narration.js" defer>` and needs `connect-src 'self'` in its CSP for the JSON. |
+| Player, marker, cues, scrolling | `assets/narration.js` (no inline script, the CSP stays strict). The page loads it with `<script src="/assets/narration.js" defer>` and needs `connect-src 'self'` (the JSON) and `media-src 'self' blob:` (the audio is played from a blob) in its CSP. |
 | Styles and the colour tokens | "Narration" in `assets/site.css`. DESIGN.md has the rules. |
 | Opt-in | `<article class="prose" data-narration="/thoughts/<slug>/narration.json">` |
 | The script | The page itself: every `h2`, `p` and `li` of the article up to `#sources`, in order, without source marks, plus the `.say` blocks. Figures, captions and code blocks are not read. |
@@ -62,7 +77,7 @@ Use the skill `adding-a-thought` for the text. Then:
 - Serve the site. At 412 x 780 in light and dark, click into every figure paragraph and every step: the figure must sit between the header and the player. Measure it with a script.
 - No sideways scroll at 1440, 390 and 320 px. No console errors.
 - No label of a narrow drawing leaves its box or the frame. Check it with `getBBox()`.
-- Show it as an artifact with `scripts/preview-artifact.py`. Say that the timing is simulated, or that you cannot judge the sound.
+- Show it as an artifact with `scripts/preview-artifact.py`. Say that the timing is simulated or from the local test voice, or that you cannot judge the sound.
 
 ## Mistakes that happened
 

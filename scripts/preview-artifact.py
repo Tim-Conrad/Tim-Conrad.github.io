@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds a preview of one page of the site as a Claude artifact bundle, so Tim can review it before it is published.
 
-  python3 scripts/preview-artifact.py thoughts/humans-md [<out dir>]
+  python3 scripts/preview-artifact.py thoughts/humans-md [<out dir>] [--narration drafts/narration/humans-md]
 
 The out dir defaults to .preview/<page> (git ignores it). It holds index.html and the files it needs, at the paths the
 page uses:
@@ -14,6 +14,9 @@ page uses:
 
 Publish it with the Artifact tool: file_path <out>/index.html, files { "<path>": "<out>/<path>", ... } for every other
 file in the out dir (the script prints them). The same file_path updates the same artifact. Standard library only.
+
+--narration <dir> puts a local test narration (scripts/narration/narrate-local.py) in place of the page's
+narration.json, with its narration.mp3, so the preview plays that voice.
 """
 import json, os, re, shutil, sys
 
@@ -21,7 +24,15 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 SITE = 'https://t7d.dev'
 
 
-def build(page, out):
+def add_narration(out, src):
+    """The test narration of src (narration.json and narration.mp3) in place of the page's own narration.json."""
+    n = json.load(open(os.path.join(src, 'narration.json'), encoding='utf-8'))
+    shutil.copy(os.path.join(src, 'narration.mp3'), os.path.join(out, 'narration.mp3'))
+    n['audio'] = 'narration.mp3'
+    json.dump(n, open(os.path.join(out, 'narration.json'), 'w', encoding='utf-8'))
+
+
+def build(page, out, narration=None):
     page = page.strip('/')
     src_dir = os.path.join(ROOT, page)
     html = open(os.path.join(src_dir, 'index.html'), encoding='utf-8').read()
@@ -63,6 +74,8 @@ def build(page, out):
     open(css_path, 'w', encoding='utf-8').write(re.sub(r'url\("/assets/', 'url("', css))
 
     open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(doc)
+    if narration:
+        add_narration(out, os.path.join(ROOT, narration))
     files = {}
     for d, _, fs in os.walk(out):
         for f in fs:
@@ -73,9 +86,14 @@ def build(page, out):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    args, narration = sys.argv[1:], None
+    if '--narration' in args:
+        i = args.index('--narration')
+        narration = args[i + 1].strip('/')
+        del args[i:i + 2]
+    if not args:
         sys.exit(__doc__)
-    page = sys.argv[1]
-    out = os.path.abspath(sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, '.preview', page.strip('/').replace('/', '-')))
-    files = build(page, out)
+    page = args[0]
+    out = os.path.abspath(args[1] if len(args) > 1 else os.path.join(ROOT, '.preview', page.strip('/').replace('/', '-')))
+    files = build(page, out, narration)
     print(json.dumps({'file_path': os.path.join(out, 'index.html'), 'files': files}, indent=2))
