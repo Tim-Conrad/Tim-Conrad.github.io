@@ -114,18 +114,27 @@
     } else if (wanted) play();
   });
 
-  /* ---- timelines: only the newest entries open. Show more opens the rest and gives their videos their posters
-     (kept back until then, so a page load fetches only the pictures of the open entries). ---- */
+  /* ---- timelines: only the newest entries open. Show more opens the next five, with the day marker above them, and
+     gives their videos their posters (kept back until then, so a page load fetches only the pictures of the open entries). ---- */
   $$('.tl__more').forEach(function (btn) {
-    var tl = btn.previousElementSibling;
+    var tl = btn.previousElementSibling, STEP = 5;
     if (!tl || !tl.classList.contains('tl')) return;
-    btn.hidden = false;
+    function left() { return $$('li[data-more]:not(.tl__day)', tl).length; }
+    function label() { var n = Math.min(STEP, left()); btn.textContent = 'Show ' + n + ' more'; }
+    btn.hidden = false; label();
     btn.addEventListener('click', function () {
-      tl.classList.add('is-open');
-      $$('video[data-poster]', tl).forEach(function (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); });
-      var first = $('li[data-more]:not(.tl__day) h3', tl);
-      btn.remove();
+      var shown = 0, day = null, first = null;
+      $$('li[data-more]', tl).some(function (li) {
+        if (li.classList.contains('tl__day')) { day = li; return false; }
+        if (shown === STEP) return true;
+        if (day) { day.removeAttribute('data-more'); day = null; }
+        li.removeAttribute('data-more');
+        $$('video[data-poster]', li).forEach(function (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); });
+        if (!first) first = $('h3', li);
+        shown++; return false;
+      });
       if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+      if (left()) label(); else btn.remove();
     });
   });
 
