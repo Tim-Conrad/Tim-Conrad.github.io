@@ -122,4 +122,42 @@ export const STAGES = [
     each: `const S=G('flyS'); S.boost = f>=4 && f<40; const col=c => { S.col=c; G('flySyncColor')(); };
       if(f===46) G('flyAct')('roll',1); if(f===78) col(5); if(f===80) G('flyAct')('loop'); if(f===150) col(8); if(f===152) G('flyAct')('turn');`,
     cam: null },
+
+  // #32: the player drives a car across open ground and drifts (skid marks, tyre smoke, the horn), then takes the motor
+  // boat out to sea and paints its wake red and blue. The game's own pilot camera; the controls show the move buttons.
+  { id: 'pr32', ref: '81311c1', ui: true, scale: 1.5, frames: 216,
+    setup: `G('env').time=0.5; const W=G('W'), H=G('H'), I=G('I'), ok=i => G('carOk')(i), sea=i => G('boatWater')(i);
+      let best=-1, bn=0; for(let i=0;i<G('S').land.length;i++){ if(!ok(i)) continue; const x=i%W, z=(i/W)|0; let n=0; for(let dz=-2;dz<=2;dz++) for(let dx=-2;dx<=2;dx++) if(ok(I(x+dx,z+dz))) n++; if(n>bn){ bn=n; best=i; } }
+      T.sea=null; for(let z=6;z<H-6 && !T.sea;z++) for(let x=6;x<W-6 && !T.sea;x++){ let g=true; for(let dz=-4;dz<=4 && g;dz++) for(let dx=-4;dx<=4 && g;dx++) if(!sea(I(x+dx,z+dz))) g=false; if(g) T.sea=[G('wx')(x), G('wz')(z)]; }
+      T.v=G('vehicles').find(v => v.type==='car' && v.model==='car' && !v.remote); T.mb=G('boats').find(b => b.type==='motor' && !b.remote);
+      G('pilotStart')('car', G('craftId')(T.v)); T.step(1, 1/24);
+      const [cx,cz]=G('cellCenter')(best); T.v.px=cx-0.6; T.v.pz=cz-0.6; T.v.yaw=T.v.vh=0.8; T.v.speed=0; G('camGoal').yaw=G('cam').yaw=0.8+Math.PI;`, pre: 1,
+    each: `const k=G('keys'), K=(n,on) => on ? k.add(n) : k.delete(n);
+      if(f<96){ K('arrowup', true); K('arrowleft', f>=30 && f<80); G('gmS').drift = f>=30 && f<80; if(f===18) G('gmHorn')(); }
+      if(f===96){ K('arrowleft', false); G('gmS').drift=false; G('pilotStop')(); const b=T.mb; G('pilotStart')('boat', G('craftId')(b));
+        b.x=T.sea[0]; b.z=T.sea[1]; b.yaw=0.3; b.speed=0.6;
+        const g=G('camGoal'), c=G('cam'), t=G('target'); g.x=t.x=b.x; g.z=t.z=b.z; g.yaw=c.yaw=0.3+Math.PI; }
+      // the colour button after the boat has made its first step (its first step sets up its fields)
+      if(f===98){ G('flyS').col=0; document.getElementById('pilotColor').click(); }
+      if(f>96){ K('arrowup', true); K('arrowleft', (f-96)%80<40); K('arrowright', (f-96)%80>=40); G('flyS').boost = f>150 && f<190; if(f===150){ G('flyS').col=5; G('flySyncColor')(); } }
+      if(f===215){ for(const n of ['arrowup','arrowleft','arrowright']) K(n, false); G('flyS').boost=false; }`,
+    cam: null },
+
+  // #33 and #34: the player drives a steam train: opens the regulator, blows the whistle, and before the next junction
+  // sets it to the branch with the track buttons; the arrow on the track shows the way. (At these commits the first frame
+  // of a driven train left the camera NaN, fixed in #36: the setup gives the camera its heading.)
+  { id: 'pr33', ref: 'ddc70c2', ui: true, scale: 1.5, frames: 192,
+    setup: `G('env').time=0.5; T.t=G('trains').find(t => t.cars[0].type==='loco') || G('trains')[0]; G('craftLook')('train', T.t.id); T.step(2, 1/24);
+      document.getElementById('followSteer').click(); T.step(1, 1/24); G('camGoal').yaw=G('cam').yaw=G('trainCamYaw')(T.t); T.done=false;`, pre: 6,
+    each: `const k=G('keys'); if(f<50) k.add('arrowup'); else k.delete('arrowup'); if(f===24) G('gmHorn')();
+      const j=T.t.jn; if(j && !T.done){ const [cx,cz]=G('cellCenter')(j.i), c=T.t.cars[0].mesh.position;
+        if(Math.hypot(cx-c.x, cz-c.z)<2.2){ const now=G('trainSide')(j, G('trainExit')(j)), s=j.ex.map(d => G('trainSide')(j, d)).find(v => v!==0 && v!==now);
+          if(s!==undefined){ document.getElementById(s>0 ? 'pilotSwL' : 'pilotSwR').click(); T.done=true; } } }`,
+    cam: null },
+
+  // #35: the finer track, close up: a slow turn low over a junction (one gravel bed, turnout timbers, rails with a head)
+  { id: 'pr35', ref: '89fddd8', frames: 144,
+    setup: `G('env').time=0.45; const S=G('S'), W=G('W'), ROAD=G('ROAD'); let i=-1; for(let k=0;k<S.track.length && i<0;k++) if(S.track[k] && S.land[k] && !ROAD[k] && G('dirsOf')(S.track[k]).length===3) i=k;
+      T.c={ x:G('wx')(i%W), z:G('wz')((i/W)|0) };`,
+    cam: `({x:T.c.x, z:T.c.z, y:0, dist:2.8-0.7*e, pitch:0.5-0.14*e, yaw:0.3+1.3*u})` },
 ];
