@@ -59,7 +59,8 @@ def build(page, out, narration=None):
     doc = re.sub(r'"/assets/', '"assets/', doc)
     # every other link to the site: the live page
     doc = re.sub(r'(href|src)="/(?!/)', lambda m: f'{m.group(1)}="{SITE}/', doc)
-    doc = re.sub(r'\s*download(?=[\s>])', '', doc)  # downloads are blocked in the viewer; the file opens instead
+    # downloads are blocked in the viewer; the file opens instead. Only the attribute inside a tag, never the word in the text.
+    doc = re.sub(r'<a\b[^>]*>', lambda m: re.sub(r'\s+download(?:="[^"]*")?(?=[\s>/])', '', m.group(0)), doc)
 
     for rel in sorted(used):
         dst = os.path.join(out, rel)

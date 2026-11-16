@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <title>A humans.md for working with models · Tim Conrad</title>
 <meta name="description" content="My repositories tell the agent how to work with me, but nothing tells me how to work with the agent. Who already uses the name humans.md, how models change under you, why feel is a bad meter, and a first version of the file, with a log for each new model.">
 <link rel="canonical" href="https://t7d.dev/thoughts/humans-md/">
@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/assets/site.css">
 <script src="/assets/theme.js"></script>
 <script src="/assets/site.js" defer></script>
+<script src="/assets/narration.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -48,7 +49,7 @@
   <dl class="tmeta">
     <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
     <div><dt>Started</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
-    <div><dt>Last revised</dt><dd><time datetime="2026-11-10">10 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
   </dl>
 </header>
 
@@ -74,11 +75,12 @@
     </ol>
   </nav>
 
-  <article class="prose">
+  <article class="prose" data-narration="/thoughts/humans-md/narration.json">
+    <div class="say" id="say-intro"><p><span class="say-k">Spoken</span>A humans dot M D for working with models. A thought by Tim Conrad, read aloud. It takes about twenty minutes. Two words carry it. Claude dot M D, the file of rules that my coding agent reads. And humans dot M D, the file of rules for me. When a figure comes up, the narration describes it, so you can listen without the screen.</p></div>
     <h2 id="missing">The missing file</h2>
-    <p>Every repository of mine has a <code>CLAUDE.md</code>. It tells the agent how to build the project, what to leave alone and how I want my commits. When the agent gets something wrong, I add a line.</p>
-    <p>There is no such file for me. When a new model comes out, I switch, try a few tasks and go by feel. Sometimes I start a task without any <code>CLAUDE.md</code>, to see whether the new model does better without my old rules. Mostly I just notice things.</p>
-    <p>That is a strange split. The model gets a written manual and a changelog. The person who drives it gets a hunch. This thought is about the other file: a <code>humans.md</code>, with rules for me, written down and changed when the model changes.</p>
+    <p>Every repository of mine has a <span class="mk" data-c="yellow"><code>CLAUDE.md</code></span>: a plain text file that my coding agent, Claude Code, reads at the start of every session. It tells the agent how to build the project, what to leave alone and how I want my commits. When the agent gets something wrong, I add a line.</p>
+    <p>There is no such file for me. When a new model comes out, I switch, try a few tasks and <span class="mk" data-c="red">go by feel</span>. Sometimes I start a task without any <code>CLAUDE.md</code>, to see whether the new model does better without my old rules. Mostly I just notice things.</p>
+    <p>That is a strange split. The model gets a written manual and a changelog. The person who drives it gets a hunch. This thought is about the other file: <span class="mk" data-c="green">a <code>humans.md</code>, with rules for me</span>, written down and changed when the model changes.</p>
 
     <h2 id="taken">The name is taken</h2>
     <p>I was not the first to think of it. I found three projects that use the name, and they mean three different things.</p>
@@ -126,6 +128,7 @@
         <g data-pick="cmd" class="pop d5"><circle class="dot dot-pick" cx="34" cy="245" r="9"/><text x="50" y="241" class="t-pick">cmdai-hq</text><text x="50" y="258" class="t-s">Oct 2026</text></g>
         <g data-pick="llm" class="pop d4"><circle class="dot dot-pick" cx="24" cy="305" r="9"/><text x="40" y="301" class="t-pick">thellmwhisperer</text><text x="40" y="318" class="t-s">Feb 2026</text></g>
       </svg>
+      <div class="say" id="say-fig1"><p><span class="say-k">Spoken</span>Figure one is a map with two lines that cross. One line shows who reads the file: the agent, or me. The other shows what it is about: how I work, or how the agent treats me. Four files sit on the map. The voice goes through them one by one.</p></div>
       <div class="pick__panel">
         <p class="pick__hint">Tap a point to read about that file.</p>
         <ul class="pick__list">
@@ -140,13 +143,13 @@
     <p>So "humans.md" is not my term, and it is not a standard either. Two of the three are files for the agent, about how it should treat me. Mine is the other way round: a file for me, about how I should work with it.</p>
 
     <h2 id="change">Models change under me</h2>
-    <p>The vendors already write a kind of humans.md for every model. They call it a prompting guide, and the useful part is the section on what changed. Anthropic's guide puts the differences between models first <a href="#s4">[4]</a>. Three of its examples:</p>
+    <p>The vendors already write a kind of humans.md for every model. They call it a <span class="mk" data-c="yellow">prompting guide</span>: a page on how to write instructions for that model. The useful part is the section on what changed. Anthropic's guide puts the differences between models first <a href="#s4">[4]</a>. Three of its examples:</p>
     <ul>
       <li>Newer models listen more closely to the instructions. Capitals like "CRITICAL: You MUST", which once helped a model use a tool at all, now make it use the tool too often. The guide says to soften them.</li>
       <li>Claude Opus 5 checks its own work. Old instructions to verify every step make it check again and again. The guide says to remove them.</li>
       <li>Newer models take the words literally. "Can you suggest some changes?" can get suggestions and no changes.</li>
     </ul>
-    <p>Other vendors say the same. OpenAI's guide for GPT-5.5 says to treat it as a new model family and to start from a fresh baseline, instead of carrying over every instruction from older prompts <a href="#s5">[5]</a>. Google recommends that Gemini 3 keep its default temperature of 1.0, although tuning the temperature was normal with older models <a href="#s6">[6]</a>.</p>
+    <p>Other vendors say the same. OpenAI's guide for GPT-5.5 says to treat it as a new model family and to start from a fresh baseline, a short prompt written new for the model, instead of carrying over every instruction from older prompts <a href="#s5">[5]</a>. Google recommends that Gemini 3 keep its default temperature, the setting for how much chance goes into each answer, at 1.0, although tuning it was normal with older models <a href="#s6">[6]</a>.</p>
     <figure class="fig-wide anim" data-switch="What I meant|What a newer model does">
       <svg class="dg dg-w" viewBox="0 0 680 296" role="img" aria-labelledby="f2t f2d">
         <title id="f2t">The same instruction, read by a newer model</title>
@@ -222,12 +225,13 @@
         <rect class="bx-i lvl s100 b10" x="24" y="518" width="312" height="10"/>
         <text x="24" y="544" class="t-s">how much it changes</text>
       </svg>
+      <div class="say" id="say-fig2"><div><p><span class="say-k">Spoken</span>Figure two shows three instructions written for older models, and two ways to read each of them.</p><p><span class="say-k">Spoken</span>First, what I meant: search when it helps, check once more, and please change the code.</p><p><span class="say-k">Spoken</span>What a newer model does: it searches too often, checks again and again, and only lists ideas.</p></div></div>
       <figcaption>Fig. 2 · Switch between what I meant and what a newer model does with the same words. The examples are from Anthropic's guide <a href="#s4">[4]</a>, shortened. The bars show the direction, not a measurement.</figcaption>
     </figure>
-    <p>A habit that helped with the last model can hurt with this one. And my trick of starting without a <code>CLAUDE.md</code> turns out to be the fresh baseline that OpenAI recommends. I just did it without knowing why.</p>
+    <p><span class="mk" data-c="red">A habit that helped with the last model can hurt with this one</span>. And my trick of starting without a <code>CLAUDE.md</code> turns out to be the fresh baseline that OpenAI recommends. I just did it without knowing why.</p>
 
     <h2 id="feel">Feel is a bad meter</h2>
-    <p>That I go by feel worries me because of one study. In early 2025 METR gave 16 experienced open-source developers real tasks in their own projects, some with AI tools and some without <a href="#s7">[7]</a>.</p>
+    <p>That I go by feel worries me because of one study. In early 2025 <span class="mk" data-c="blue">METR</span>, a research group that measures what AI systems can do, gave 16 experienced open-source developers real tasks in their own projects, some with AI tools and some without <a href="#s7">[7]</a>. Each task was assigned to "AI allowed" or "AI not allowed" at random, so the two kinds of tasks were alike.</p>
     <figure class="fig-wide anim">
       <svg class="dg dg-w" viewBox="0 0 680 250" role="img" aria-labelledby="f3t f3d">
         <title id="f3t">Felt and measured speed in METR's 2025 study</title>
@@ -260,15 +264,19 @@
         <text x="182" y="275" text-anchor="end" class="t-s">← slower</text>
         <text x="198" y="275" class="t-s">faster →</text>
       </svg>
+      <div class="say" id="say-fig3"><p><span class="say-k">Spoken</span>Figure three shows the three numbers as bars: what the developers expected, what they believed afterwards, and what was measured. Two bars point to faster. The measured bar points the other way.</p></div>
       <figcaption>Fig. 3 · METR, early 2025: what 16 developers expected, what they believed afterwards, and what was measured <a href="#s7">[7]</a>.</figcaption>
     </figure>
-    <p>They expected to be 24% faster. Measured, they took 19% longer. Afterwards they still believed they had been 20% faster.</p>
+    <p>They expected to be 24% faster. Measured, they took 19% longer. <span class="mk" data-c="red">Afterwards they still believed they had been 20% faster</span>.</p>
     <p>The number itself has aged. METR now marks the 2025 post as out of date. Its update from February 2026 says developers are likely faster than in early 2025, but calls its own data very weak evidence: many developers no longer wanted to work without AI for the test, and the timing breaks down when one person runs several agents at once <a href="#s8">[8]</a>. Other studies found gains: 21% faster in a randomised trial at Google, with a wide margin of error <a href="#s15">[15]</a>, and 26% more completed tasks in three field experiments with code completion <a href="#s16">[16]</a>.</p>
     <p>What stays is the gap between felt and measured. In November 2026 METR put the speed-up of work at Anthropic at about 2x on well-specified tasks, and treated the staff's own estimate of about 12x as very loose evidence <a href="#s14">[14]</a>. People misjudge their own time in general: they plan too optimistically, and looking at how long past tasks took is what corrects it <a href="#s19">[19]</a>.</p>
+    <div class="say" id="say-studies"><p><span class="say-k">Spoken</span>In short: depending on the study, AI tools made people anywhere from slower to about twice as fast. And people's own estimates were higher than the measurements.</p></div>
+    <div class="say" id="say-pause1" data-pause="2.5"><p><span class="say-k">Spoken</span>Pause for a moment. When did you last check how long a task took you, instead of guessing?</p></div>
+    <div class="say" id="say-measure"><p><span class="say-k">Spoken</span>So I need numbers. The question is where they come from.</p></div>
 
     <h2 id="measure">Measure without extra work</h2>
     <p>I will not log my tasks by hand. I know myself. So the numbers have to come from what is already recorded.</p>
-    <p>Claude Code keeps a transcript of every session on my machine. Besides the conversation, it records the model of each answer, the time of each step, the tokens and their price, and the lines changed <a href="#s18">[18]</a>. Git adds the other half: Claude's commits carry the model's name in a trailer, and a revert or a fix two days later says something about the code that came before it.</p>
+    <p>Claude Code keeps a <span class="mk" data-c="yellow">transcript</span> of every session on my machine. Besides the conversation, it records the model of each answer, the time of each step, the tokens and their price, and the lines changed <a href="#s18">[18]</a>. Git adds the other half: Claude's commits carry the model's name in a trailer, a line at the end of the commit message, and a revert or a fix two days later says something about the code that came before it.</p>
     <figure class="fig-wide anim">
       <svg class="dg dg-w" viewBox="0 0 680 290" role="img" aria-labelledby="f7t f7d">
         <title id="f7t">Two records that already exist, and four questions they answer</title>
@@ -307,6 +315,7 @@
         <g data-pick="budget" class="pop d4"><rect class="bx" x="50" y="270" width="280" height="40"/><text x="66" y="295">How fast does the budget go?</text></g>
         <g data-pick="fail" class="pop d5"><rect class="bx" x="50" y="340" width="280" height="40"/><text x="66" y="365">What keeps failing?</text></g>
       </svg>
+      <div class="say" id="say-fig7"><p><span class="say-k">Spoken</span>Figure seven has two sources, the session transcripts and git, and four questions that they can answer. Lines show which source answers which question. The voice goes through the four questions.</p></div>
       <div class="pick__panel">
         <p class="pick__hint">Tap a question to see what answers it.</p>
         <ul class="pick__list">
@@ -318,11 +327,12 @@
       </div>
       <figcaption>Fig. 7 · What is already recorded, and what it can answer.</figcaption>
     </figure>
-    <p>The last question matters most to me. The sessions where I corrected the model most often are a small, personal eval set. After a month they say more about a model than my impression of it, and after a model switch they show whether my instructions still work.</p>
-    <p>I wrote this down as a skill for my agent, with a script that reads the transcripts and git and prints a report per month and model. The numbers are signs of activity and friction, not of value, and METR treats counts like these as an upper bound for the real gain <a href="#s17">[17]</a>. They are good for one thing: comparing my own months and models with each other. One catch: Claude Code deletes transcripts after 30 days unless I raise that limit <a href="#s18">[18]</a>.</p>
+    <p>The last question matters most to me. The sessions where I corrected the model most often are a small, personal <span class="mk" data-c="green">eval set</span>: a fixed set of tasks to test a model on. After a month they say more about a model than my impression of it, and after a model switch they show whether my instructions still work.</p>
+    <p>I wrote this down as a skill for my agent, a folder of instructions and scripts that Claude Code loads when a task needs it, with a script that reads the transcripts and git and prints a report per month and model. The numbers are signs of activity and friction, not of value, and METR treats counts like these as an upper bound for the real gain <a href="#s17">[17]</a>. They are good for one thing: comparing my own months and models with each other. One catch: Claude Code deletes transcripts after 30 days unless I raise that limit <a href="#s18">[18]</a>.</p>
 
+    <div class="say" id="say-agree"><p><span class="say-k">Spoken</span>Numbers show what happens. Two habits make it go better, with any model. Here is the first.</p></div>
     <h2 id="agree">Agree first, then build</h2>
-    <p>The best habit I picked up this year comes from Matt Pocock's skills for coding agents <a href="#s9">[9]</a>. Before any code, <code>/grill-me</code> makes the model ask me questions, round after round, until every branch of the plan is decided. Then a spec, then tickets, then the build test first, then a review. A small change skips the spec and the tickets.</p>
+    <p>The best habit I picked up this year comes from <span class="mk" data-c="blue">Matt Pocock's skills</span> for coding agents <a href="#s9">[9]</a>. Before any code, <code>/grill-me</code> makes the model ask me questions, round after round, until every branch of the plan is decided. Then a spec, the agreed plan in writing. Then tickets, small pieces of work. Then the build, test first: the failing test before the code. Then a review. A small change skips the spec and the tickets.</p>
     <figure class="fig-wide anim" data-switch="Bigger change|Small change">
       <svg class="dg dg-w" viewBox="0 0 720 230" role="img" aria-labelledby="f4t f4d">
         <title id="f4t">Matt Pocock's flow from idea to merged change</title>
@@ -361,6 +371,7 @@
         <circle class="bx-i w-a" r="7"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#f4n-main"/></animateMotion></circle>
         <circle class="bx-i w-b" r="7"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#f4n-small"/></animateMotion></circle>
       </svg>
+      <div class="say" id="say-fig4"><p><span class="say-k">Spoken</span>Figure four shows the flow as five steps: grill, spec, tickets, build and review. The voice goes through each step.</p></div>
       <div class="pick__panel">
         <p class="pick__hint">Switch between a bigger and a small change, or tap a step.</p>
         <ul class="pick__list">
@@ -371,9 +382,10 @@
           <li data-k="review"><b>Review</b>: a code review closes each change.</li>
         </ul>
       </div>
+      <div class="say" id="say-fig4b"><p><span class="say-k">Spoken</span>For a small change, the flow takes a shortcut: from grill straight to build.</p></div>
       <figcaption>Fig. 4 · The main flow of Matt Pocock's skills <a href="#s9">[9]</a>. The README says they work with any model.</figcaption>
     </figure>
-    <p>What I like about it: it turns the instructions around. I do not tell the model what to do in one long prompt. The model checks whether I know what I want. That works on the one part of the session that I control, and it works with every model.</p>
+    <p>What I like about it: it turns the instructions around. I do not tell the model what to do in one long prompt. <span class="mk" data-c="green">The model checks whether I know what I want</span>. That works on the one part of the session that I control, and it works with every model.</p>
 
     <h2 id="sharp">Stay able to do it</h2>
     <p>The second rule that holds for every model is about me, not the model. In a study by Anthropic, 52 developers, most of them junior, learned a new Python library <a href="#s10">[10]</a>. The group with an AI assistant scored 50% on a quiz afterwards, the group that wrote the code by hand 67%. The AI group was not significantly faster.</p>
@@ -442,11 +454,13 @@
           <text x="102" y="322" data-count="24" data-fmt="{}%">24%</text>
         </g>
       </svg>
+      <div class="say" id="say-fig5"><div><p><span class="say-k">Spoken</span>Figure five shows the quiz scores for six ways of using the assistant, with the number of people in brackets.</p><p><span class="say-k">Spoken</span>First, the people who asked to understand. Those who generated code and then asked why scored eighty-six percent. Those who asked for code with an explanation, sixty-eight. Those who asked only about concepts, sixty-five.</p><p><span class="say-k">Spoken</span>Then the people who handed the work over: thirty-nine, thirty-five, and twenty-four percent for those who let the AI debug. For comparison, the hand coders scored sixty-seven.</p></div></div>
       <figcaption>Fig. 5 · Quiz scores by pattern of use, number of people in brackets <a href="#s10">[10]</a>. The groups are tiny, and the authors say this shows no cause.</figcaption>
     </figure>
     <p>Those who asked why scored like the hand coders. Those who handed the work over scored below 40%. The groups have two to seven people each, so this is a hint, not a result. It matches a survey of 319 knowledge workers by Microsoft Research and Carnegie Mellon: the more people trusted the AI, the less critical thinking they reported, and the more they trusted themselves, the more <a href="#s11">[11]</a>. Their work moved from doing the task to overseeing it.</p>
-    <p>The authors warn that a skill used only in the rare hard case decays. That is an old finding. In 1983 Lisanne Bainbridge called it one of the ironies of automation: the machine takes the routine work, and the human keeps the hard cases without the practice they need <a href="#s12">[12]</a>. Simkute and others found the same ironies in generative AI <a href="#s13">[13]</a>.</p>
+    <p>The authors warn that <span class="mk" data-c="red">a skill used only in the rare hard case decays</span>. That is an old finding. In 1983 Lisanne Bainbridge called it one of the <span class="mk" data-c="blue">ironies of automation</span>: the machine takes the routine work, and the human keeps the hard cases without the practice they need <a href="#s12">[12]</a>. Simkute and others found the same ironies in generative AI <a href="#s13">[13]</a>.</p>
     <p>So: when something breaks, I look first myself, or I ask for the explanation along with the fix. And I keep some small work without a model.</p>
+    <div class="say" id="say-pause2" data-pause="2.5"><p><span class="say-k">Spoken</span>Which part of your work do you still do without a model?</p></div>
 
     <h2 id="loop">When a new model ships</h2>
     <p>Put together, the file has two parts. One part holds for every model. The other is a loop that I run each time a model comes out.</p>
@@ -478,6 +492,7 @@
         <g data-pick="log" class="pop d6"><rect class="bx" x="18" y="134" width="116" height="32"/><text x="76" y="155" text-anchor="middle">Write it down</text></g>
         <circle class="bx-i" r="7"><animateMotion dur="14s" repeatCount="indefinite"><mpath href="#f6n-loop"/></animateMotion></circle>
       </svg>
+      <div class="say" id="say-fig6"><p><span class="say-k">Spoken</span>Figure six is a loop of six steps around the file in the middle, which keeps one log entry per model. The voice goes around the loop once.</p></div>
       <div class="pick__panel">
         <p class="pick__hint">Tap a step.</p>
         <ul class="pick__list">
@@ -493,8 +508,8 @@
     </figure>
 
     <h2 id="review">Reviewing my CLAUDE.md</h2>
-    <p>One open question of the first version was whether a skill could read a new model card and propose the changes to my <code>CLAUDE.md</code> files. I built one. It reads my session transcripts to see which models I actually use, reads the current prompting guides for those models, runs a fresh research round on the last three months, checks every instruction file of a project, and proposes changes with a reason for each. It changes nothing without my OK.</p>
-    <p>I ran it on this site. The research found one consistent message, all of it from Anthropic's own docs and none of it measured: keep the always-loaded file under about 200 lines, leave out what the agent can read from the repository, drop capitals and "IMPORTANT", turn rules that must always hold into hooks or checks, and put the check command first <a href="#s20">[20]</a><a href="#s21">[21]</a>. Claude Code even has a built-in audit for instructions written for older models <a href="#s21">[21]</a>.</p>
+    <p>One open question of the first version was whether a skill could read a new <span class="mk" data-c="yellow">model card</span>, the vendor's description of what a model can and cannot do, and propose the changes to my <code>CLAUDE.md</code> files. I built one. It reads my session transcripts to see which models I actually use, reads the current prompting guides for those models, runs a fresh research round on the last three months, checks every instruction file of a project, and proposes changes with a reason for each. It changes nothing without my OK.</p>
+    <p>I ran it on this site. The research found one consistent message, all of it from Anthropic's own docs and none of it measured: keep the always-loaded file under about 200 lines, leave out what the agent can read from the repository, drop capitals and "IMPORTANT", turn rules that must always hold into hooks, scripts that Claude Code runs at fixed moments, or into checks, and put the check command first <a href="#s20">[20]</a><a href="#s21">[21]</a>. Claude Code even has a built-in audit for instructions written for older models <a href="#s21">[21]</a>.</p>
     <figure class="fig-wide anim">
       <svg class="dg dg-w" viewBox="0 0 680 190" role="img" aria-labelledby="f8t f8d">
         <title id="f8t">Length of this site's CLAUDE.md</title>
@@ -521,14 +536,16 @@
         <rect class="bx-i grow d5" x="10" y="174" width="116" height="22"/>
         <text x="134" y="190" data-count="33" data-fmt="{} lines">33 lines</text>
       </svg>
+      <div class="say" id="say-fig8"><p><span class="say-k">Spoken</span>Figure eight shows the length of the always-loaded instructions of this site. Seventy-six lines before the review, sixty-one after the first review, and thirty-three after the changes from the research.</p></div>
       <figcaption>Fig. 8 · The always-loaded instructions of this site, before and after the review. The rest did not disappear: it moved into skills, a hook, a check script and rules that load only when they apply.</figcaption>
     </figure>
-    <p>What changed: the workflow for my review notes moved into a skill, with a hook that counts the open notes when a session starts. A script now checks the page rules in CI, where four sentences in four files used to ask for them. The rules for new pages load only when the agent works on a page. The file layout went, because the agent reads the repository anyway. And the file now starts with how to check the work.</p>
+    <p>What changed: the workflow for my review notes moved into a skill, with a hook that counts the open notes when a session starts. A script now checks the page rules in CI, the checks that run on every pull request, where four sentences in four files used to ask for them. The rules for new pages load only when the agent works on a page. The file layout went, because the agent reads the repository anyway. And the file now starts with how to check the work.</p>
     <p>Whether the agent works better with it, I do not know yet. That is what the monthly report is for, and the "two weeks later" column of the log.</p>
-    <p>Some trends I wanted to check found no evidence either way in the last three months: formal verification such as TLA+ as the agent's check, dropping hand-written tests, and deleting code comments so they cannot mislead the model. They stay on my list as open questions.</p>
+    <p>Some trends I wanted to check found no evidence either way in the last three months: formal verification as the agent's check, with a language such as TLA+ that describes a design precisely enough for a machine to test it, dropping hand-written tests, and deleting code comments so they cannot mislead the model. They stay on my list as open questions.</p>
 
     <h2 id="file">The file, version 0</h2>
     <p>This is the first version. It is short on purpose: a rule I do not follow is worse than no rule.</p>
+    <div class="say" id="say-file"><p><span class="say-k">Spoken</span>The file itself is on the page, and you can download it. It has three parts: rules that hold for every model, the steps for when a new model ships, and a log with one entry for each model.</p></div>
     <div class="code">
       <div class="code__bar"><span>HUMANS.md</span><button class="copy" type="button" data-copy="humans-file">copy</button></div>
 <pre id="humans-file" class="wrap-lines"><code><span class="l"># HUMANS.md</span><span class="l"> </span><span class="l">How I work with language models. The agent has its CLAUDE.md. This file is for me.</span><span class="l"> </span><span class="l">Version 0.2, 10 Nov 2026. The thinking behind it: https://t7d.dev/thoughts/humans-md/</span><span class="l"> </span><span class="l">## With every model</span><span class="l"> </span><span class="l">1. Agree first. For anything bigger than a small fix, let the model ask me questions until the plan is clear. Keep the words we agreed on.</span><span class="l">2. Say what I want done. &quot;Change it&quot;, not &quot;can you suggest&quot;. Give the reason for a rule instead of capital letters.</span><span class="l">3. Give context as to a new colleague: the goal, the limits, where to look.</span><span class="l">4. Read what I merge. Tests show that it works. Reading shows that I understand it.</span><span class="l">5. When something breaks, look first myself, or ask for the explanation with the fix.</span><span class="l">6. Do some small work without a model, regularly, so I can still do it.</span><span class="l">7. Measure instead of feel, without extra work: once a month and after each model switch, read the report from the session transcripts and git. Look at the sessions that went worst.</span><span class="l"> </span><span class="l">## When a new model ships</span><span class="l"> </span><span class="l">1. Read the model card and the vendor&#x27;s prompting guide. Look for what the model does more, what it does less, and what to remove.</span><span class="l">2. Do one real task without my CLAUDE.md files. Compare.</span><span class="l">3. Remove what the new model no longer needs: capitals, old workarounds, extra checks.</span><span class="l">   Let a review skill and `/doctor prompt-audit` in Claude Code find these, then decide myself.</span><span class="l">4. Write one entry in the log.</span><span class="l">5. Two weeks later, read the entry again. Was it right?</span><span class="l"> </span><span class="l">## Log</span><span class="l"> </span><span class="l">| Date | Model | What the guide says changed | What I change | Two weeks later |</span><span class="l">| --- | --- | --- | --- | --- |</span><span class="l">| 10 Nov 2026 | Claude Opus 5.5 | Newer Claude models follow instructions literally, check their own work, and react strongly to words like CRITICAL | To try: remove capitals and &quot;verify each step&quot; lines from my CLAUDE.md files | |</span><span class="l">| 10 Nov 2026 | Claude Opus 5.5, Fable 5.2 | Claude Code docs: CLAUDE.md under 200 lines, no file layout, no emphasis, hooks for hard rules, the check command first | t7d.dev CLAUDE.md from 76 to 33 lines: notes into a skill and a hook, a page check in CI, page rules on demand | |</span></code></pre>
@@ -543,6 +560,7 @@
       <li>Do formal checks, fewer tests or fewer comments help an agent? I found no evidence yet.</li>
     </ul>
 
+    <div class="say" id="say-outro"><p><span class="say-k">Spoken</span>To sum up. Models change under me, and feel is a bad meter for what they do. So I measure from what is already recorded, agree on the plan before the model builds, keep doing some work myself, and write one entry in the log for each new model. The sources are on the page.</p></div>
     <h2 id="start">Starting points</h2>
     <ul>
       <li>My own question: if the agent gets a <code>CLAUDE.md</code>, what would the human's file say?</li>
@@ -577,6 +595,7 @@
 
     <h2 id="revisions">Revisions</h2>
     <ul class="dates">
+      <li><time datetime="2026-11-12">12 Nov 2026</time><span>Explained the terms that a reader may not know (prompting guide, temperature, METR's trial, trailer, eval set, skill, model card, hooks, CI, TLA+) and added a narration with spoken parts. The figures keep their switches and points for reading; while the narration plays, the voice drives them.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>Added "Reviewing my CLAUDE.md": what a review of this site's instructions against current guidance found and changed. The file got a step for that and a new log entry.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>Measurement: METR's 2025 numbers are out of date; added later studies, the gap between felt and measured, and a section on measuring from what Claude Code and git already record. Rule 7 of the file changed to match.</span></li>
       <li><time datetime="2026-11-10">10 Nov 2026</time><span>First version.</span></li>

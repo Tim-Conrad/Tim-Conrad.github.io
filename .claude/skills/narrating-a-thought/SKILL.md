@@ -19,7 +19,7 @@ The design was tested with Tim on 12 Nov 2026, first in a prototype, then on `th
 
 ## Free local test voice (Qwen3-TTS)
 
-Before a narrated thought is published, Tim always reviews it with a local test narration: it is a standard step of the review (skill `adding-a-thought`, step 6). Make it in the dev VM. It costs no credits. Its audio goes on t7d.dev only when Tim asks for it: on 16 Nov 2026 he had encrypted-patches and no-long-lived-secrets published with the Aiden voice (`"voice": "Qwen3-TTS, voice Aiden"`, `audio` and the mp3 in the thought's folder, made at a constant bitrate). Otherwise never commit its audio or timing.
+Before a narrated thought is published, Tim always reviews it with a local test narration: it is a standard step of the review (skill `adding-a-thought`, step 6). Make it in the dev VM. It costs no credits. Its audio goes on t7d.dev only when Tim asks for it: on 16 Nov 2026 he had encrypted-patches, no-long-lived-secrets and humans-md published with the Aiden voice (`"voice": "Qwen3-TTS, voice Aiden"`, `audio` and the mp3 in the thought's folder, made at a constant bitrate). Otherwise never commit its audio or timing.
 
 ```
 nix develop ./scripts/narration -c uv run scripts/narration/narrate-local.py thoughts/<slug>
