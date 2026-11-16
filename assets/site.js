@@ -114,6 +114,21 @@
     } else if (wanted) play();
   });
 
+  /* ---- timelines: only the newest entries open. Show more opens the rest and gives their videos their posters
+     (kept back until then, so a page load fetches only the pictures of the open entries). ---- */
+  $$('.tl__more').forEach(function (btn) {
+    var tl = btn.previousElementSibling;
+    if (!tl || !tl.classList.contains('tl')) return;
+    btn.hidden = false;
+    btn.addEventListener('click', function () {
+      tl.classList.add('is-open');
+      $$('video[data-poster]', tl).forEach(function (v) { v.poster = v.getAttribute('data-poster'); v.removeAttribute('data-poster'); });
+      var first = $('li[data-more]:not(.tl__day) h3', tl);
+      btn.remove();
+      if (first) { first.tabIndex = -1; first.focus({ preventScroll: true }); }
+    });
+  });
+
   /* ---- diagrams with steps: Back, Next and Play walk through the parts of an SVG (data-step="n").
      Without the script the whole diagram and the numbered list show. Nothing moves until the reader asks. ---- */
   $$('figure[data-steps]').forEach(function (fig) {
