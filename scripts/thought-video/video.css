@@ -1,0 +1,38 @@
+/* The film of a thought: the site's sheet at 1920 x 1080. Colours are the tokens of assets/site.css (light theme). */
+@font-face { font-family: "Barlow Condensed"; font-weight: 600; src: url(/assets/fonts/barlow-condensed-600.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Condensed"; font-weight: 700; src: url(/assets/fonts/barlow-condensed-700.woff2) format("woff2"); }
+@font-face { font-family: "Karla"; font-weight: 200 800; src: url(/assets/fonts/karla.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; src: url(/assets/fonts/ibm-plex-mono-400.woff2) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; src: url(/assets/fonts/ibm-plex-mono-500.woff2) format("woff2"); }
+:root { --bg: #fff; --ink: #111; --muted: #5c5c5c; --soft: #d9d9d9; --surface: #f4f4f2; --red: #c62f22; --green: #16803e; --blue: #2554d0; --yellow: #9a6700; }
+html, body { margin: 0; background: var(--bg); }
+svg { display: block; }
+text { fill: var(--ink); font-family: Karla, sans-serif; }
+.frame { fill: none; stroke: var(--ink); stroke-width: 2; }
+.lab { font: 500 22px "IBM Plex Mono", monospace; letter-spacing: .08em; fill: var(--muted); }
+.h { font: 700 68px "Barlow Condensed", sans-serif; }
+.big { font: 700 124px "Barlow Condensed", sans-serif; }
+.line { font: 600 66px "Barlow Condensed", sans-serif; }
+.cap { font: 500 42px Karla, sans-serif; text-anchor: middle; }
+.bx { fill: var(--bg); stroke: var(--ink); stroke-width: 3; }
+.bx-s { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 10 8; }
+.bx-f { fill: var(--surface); stroke: none; }
+.t { font: 600 42px "Barlow Condensed", sans-serif; text-anchor: middle; }
+.s { font: 400 20px "IBM Plex Mono", monospace; fill: var(--muted); text-anchor: middle; }
+.m { font: 400 20px "IBM Plex Mono", monospace; fill: var(--muted); }
+.k { font: 500 30px Karla, sans-serif; }
+.b { font: 700 28px Karla, sans-serif; }
+.ln { fill: none; stroke: var(--ink); stroke-width: 3; }
+.dash { stroke-dasharray: 12 10; }
+.chip rect { fill: var(--ink); }
+.chip text { font: 500 23px "IBM Plex Mono", monospace; fill: #fff; text-anchor: middle; }
+.red rect, rect.red { fill: var(--red); } .green rect, rect.green { fill: var(--green); } .blue rect, rect.blue { fill: var(--blue); }
+text.red { fill: var(--red); } text.green { fill: var(--green); } text.blue { fill: var(--blue); }
+.ln.red { stroke: var(--red); } .ln.green { stroke: var(--green); }
+.hl { fill: none; stroke: var(--green); stroke-width: 6; }
+.hlr { stroke: var(--red); }
+.end { text-anchor: end; } .mid { text-anchor: middle; }
+.phone { fill: #000; } .screen { fill: var(--bg); }
+.row { fill: none; stroke: var(--soft); stroke-width: 2; }
+.fill { fill: var(--ink); } .onf { fill: #fff; }
+.hatch { fill: var(--bg); stroke: var(--ink); stroke-width: 3; stroke-dasharray: 10 8; }
