@@ -47,9 +47,9 @@
   <p class="sub">My agents can read keys that never expire. A design where they hold none: tokens bound to a key, a broker that knows which program asks, a phone that shows what the agent wants to do, and a gateway that keeps the last keys.</p>
   <p class="label">Tim Conrad · Security · Coding agents · OAuth · Android</p>
   <dl class="tmeta">
-    <div><dt>Status</dt><dd><span class="status">Draft</span></dd></div>
+    <div><dt>Status</dt><dd><span class="status">Trying it out</span></dd></div>
     <div><dt>Started</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
-    <div><dt>Last revised</dt><dd><time datetime="2026-11-12">12 Nov 2026</time></dd></div>
+    <div><dt>Last revised</dt><dd><time datetime="2026-11-19">19 Nov 2026</time></dd></div>
   </dl>
 </header>
 
@@ -71,6 +71,10 @@
       <li><a href="#first">What I would build first</a></li>
       <li><a href="#left">What it does not solve</a></li>
       <li><a href="#open">Open questions</a></li>
+      <li><a href="#trying">Trying it out: the setup I run</a></li>
+      <li><a href="#lastkeys">Where the last keys live</a></li>
+      <li><a href="#stages">Running it in stages</a></li>
+      <li><a href="#others">Making it usable for others</a></li>
       <li><a href="#start">Starting points</a></li>
       <li><a href="#sources">Sources</a></li>
       <li><a href="#revisions">Revisions</a></li>
@@ -607,6 +611,127 @@ signed   with the private key, which never leaves the agent's process</code></pr
     </ul>
 
     <div class="say" id="say-outro"><p><span class="say-k">Spoken</span>That was Agents without long-lived secrets. In short: a key that cannot be copied replaces the secret, the phone signs a narrow, short grant for what the agent means to do, and the last static keys move into one gateway that no agent can read. It is still a draft, and the open questions are where it goes next.</p></div>
+    <h2 id="trying">Trying it out: the setup I run</h2>
+    <p>I started this thought as a design. Since 17 November 2026 I run a first version of it on my own machines. It does not refuse anything yet: it watches, and writes down what it would refuse. My phone is paired with it, and the first real approval from the phone is the next step. Running the parts changed how I think about the keys that cannot go away yet, so this part is about them: where they live, how the whole thing runs, and how someone else could run the same.</p>
+    <p>The setup is three machines on one computer. Two of them are virtual machines: computers that a program on my real computer simulates, each with its own system, disk and network. The real computer is called the host.</p>
+    <figure class="fig-wide anim">
+      <svg class="dg dg-w" viewBox="0 0 680 380" role="img" aria-labelledby="f6t f6d">
+        <title id="f6t">The setup: three machines on one computer</title>
+        <desc id="f6d">One computer, the host, holds the secret store and the firewall. It runs two virtual machines: the agent VM, where agents and the broker work and no key lives, and the gate VM, which holds the last keys. The keys go one way, from the host's store to the gate. The agent VM reaches the gate over a private link, and the gate calls the APIs. The broker talks to the phone through a relay that sees only sealed messages.</desc>
+        <rect class="bx-d" x="20" y="40" width="440" height="320"/>
+        <text x="34" y="62" class="t-s">one computer: the host</text>
+        <g data-pick="host" class="pop d1">
+          <rect class="bx" x="40" y="80" width="180" height="76"/>
+          <text x="54" y="108" class="t-h">Host</text>
+          <text x="54" y="130" class="t-s">secret store, firewall</text>
+          <text x="54" y="146" class="t-s">no agents</text>
+        </g>
+        <g data-pick="agentvm" class="pop d2">
+          <rect class="bx" x="40" y="206" width="180" height="84"/>
+          <text x="54" y="234" class="t-h">Agent VM</text>
+          <text x="54" y="256" class="t-s">agents, broker</text>
+          <text x="54" y="274" class="t-s">no key that works alone</text>
+        </g>
+        <g data-pick="gatevm" class="pop d3">
+          <rect class="bx" x="260" y="206" width="180" height="84"/>
+          <text x="274" y="234" class="t-h">Gate VM</text>
+          <text x="274" y="256" class="t-s">gateway, verifier</text>
+          <text x="274" y="274" class="t-s">the last keys</text>
+        </g>
+        <path class="ln-s" d="M220 118 H350 V206"/>
+        <text x="236" y="108" class="t-s">keys, over SSH</text>
+        <line class="ln draw d3" pathLength="1" x1="220" y1="248" x2="260" y2="248"/>
+        <text x="240" y="306" text-anchor="middle" class="t-s">private link</text>
+        <g data-pick="phone6" class="pop d4">
+          <rect class="bx" x="520" y="60" width="140" height="76"/>
+          <text x="534" y="90" class="t-h">Phone</text>
+          <text x="534" y="112" class="t-s">signs grants</text>
+        </g>
+        <g data-pick="relay6" class="pop d5">
+          <rect class="bx" x="520" y="166" width="140" height="64"/>
+          <text x="534" y="194" class="t-h">Relay</text>
+          <text x="534" y="214" class="t-s">ntfy, sealed</text>
+        </g>
+        <line class="ln draw d5" pathLength="1" x1="590" y1="136" x2="590" y2="166"/>
+        <path class="ln draw d4" pathLength="1" d="M130 290 V336 H490 V198 H520"/>
+        <text x="300" y="326" text-anchor="middle" class="t-s">broker to phone</text>
+        <g data-pick="apis6" class="pop d6">
+          <rect class="bx" x="520" y="260" width="140" height="64"/>
+          <text x="534" y="288" class="t-h">APIs</text>
+          <text x="534" y="308" class="t-s">GitHub, …</text>
+        </g>
+        <path class="ln draw d6" pathLength="1" d="M440 228 H470 V292 H520"/>
+      </svg>
+      <svg class="dg dg-n" viewBox="0 0 360 500" role="img" aria-labelledby="f6nt">
+        <title id="f6nt">The setup: three machines on one computer</title>
+        <rect class="bx-d" x="5" y="6" width="350" height="230"/>
+        <text x="15" y="26" class="t-s">one computer: the host</text>
+        <g data-pick="host" class="pop d1"><rect class="bx" x="15" y="40" width="330" height="60"/><text x="29" y="66" class="t-h">Host</text><text x="29" y="88" class="t-s">secret store, firewall, no agents</text></g>
+        <g data-pick="agentvm" class="pop d2"><rect class="bx" x="15" y="140" width="155" height="76"/><text x="29" y="166" class="t-h">Agent VM</text><text x="29" y="186" class="t-s">agents, broker</text><text x="29" y="204" class="t-s">no keys</text></g>
+        <g data-pick="gatevm" class="pop d3"><rect class="bx" x="190" y="140" width="155" height="76"/><text x="204" y="166" class="t-h">Gate VM</text><text x="204" y="186" class="t-s">gateway</text><text x="204" y="204" class="t-s">the last keys</text></g>
+        <line class="ln-s" x1="267" y1="100" x2="267" y2="140"/>
+        <text x="275" y="125" class="t-s">keys</text>
+        <line class="ln" x1="170" y1="178" x2="190" y2="178"/>
+        <line class="ln" x1="92" y1="216" x2="92" y2="290"/>
+        <line class="ln" x1="267" y1="216" x2="267" y2="290"/>
+        <g data-pick="relay6" class="pop d5"><rect class="bx" x="15" y="290" width="155" height="60"/><text x="29" y="316" class="t-h">Relay</text><text x="29" y="336" class="t-s">ntfy, sealed</text></g>
+        <g data-pick="apis6" class="pop d6"><rect class="bx" x="190" y="290" width="155" height="60"/><text x="204" y="316" class="t-h">APIs</text><text x="204" y="336" class="t-s">GitHub, …</text></g>
+        <line class="ln" x1="92" y1="350" x2="92" y2="390"/>
+        <g data-pick="phone6" class="pop d4"><rect class="bx" x="15" y="390" width="155" height="60"/><text x="29" y="416" class="t-h">Phone</text><text x="29" y="436" class="t-s">signs grants</text></g>
+      </svg>
+      <div class="pick__panel">
+        <div class="pick__hint">Tap a part to read what it does and what it holds.</div>
+        <ul class="pick__list">
+          <li data-k="host"><b>Host</b>: my desktop. It runs no agent and no project code. It holds the secret store, a folder with the last long-lived keys, and the firewall rules for the virtual machines. I manage everything from here. Holds: every long-lived key, readable only by me.</li>
+          <li data-k="agentvm"><b>Agent VM</b>: where the agents work, with the repositories, containers and a browser. It may reach the internet, but the host's firewall drops everything towards my home network, the host and the other machine, and the VM cannot change that rule. The broker runs here. Holds: no key that works when copied, apart from the agents' own logins.</li>
+          <li data-k="gatevm"><b>Gate VM</b>: the gateway. agentgateway with my rules, the verifier that checks grants in front of it, and a small service that gets GitHub tokens. Its network allows only HTTPS and time to the internet, and only the host can log in. Holds: the last keys.</li>
+          <li data-k="phone6"><b>Phone</b>: the approver from the parts above. It pairs with the broker once and signs grants.</li>
+          <li data-k="relay6"><b>Relay</b>: ntfy, a public push service. I use ntfy.sh, so I run no server for it. The messages are sealed: it sees who talks when, and how much, but not what.</li>
+          <li data-k="apis6"><b>APIs</b>: GitHub through a GitHub App, and a few services that still take only a static key.</li>
+        </ul>
+      </div>
+      <figcaption>Fig. 6 · Three machines on one computer. Keys go one way only: from the host's store to the gate.</figcaption>
+    </figure>
+    <p>The order of trust is the point of the picture. The agent VM is where code from the internet runs, so it is the one I trust least, and it holds nothing worth stealing. The gate holds the keys, but runs no code that an agent chose. The host holds the store, and nothing from the other two can reach it.</p>
+
+    <h2 id="lastkeys">Where the last keys live</h2>
+    <p>All long-lived keys live in one folder on the host. A list in the configuration repository names each key and the machine it goes to, but never its value. One command copies the keys over SSH to the machines that need them. On the gate that is seven files: the GitHub App's private key and its client secret, the keys of four other services, and the gate's own TLS key.</p>
+    <p>No key goes into a git repository, not even encrypted. Encrypted secrets in git are common, and tools such as sops and agenix are made for it. I decided against it. A repository gets copied to every machine and every clone, and it keeps its history forever. Its safety then rests on one decryption key that must never leak, for as long as any copy exists. A folder in one place is easier to reason about.</p>
+    <p>The GitHub App's key never leaves the gate. A small service there signs a request with it and gets an installation token, which expires after one hour <a href="#s29">[29]</a>. The gateway adds that token to the agent's request on the way out. Before it does, it applies my rules: no push that changes or deletes the default branch, no administration of accounts or repositories, no deletes. The token also lacks the permission to administer anything, so for that part one wrong rule is not enough on its own.</p>
+    <p>I rotate a key only after a leak, or when I move to new machines. With no key in reach of an agent, a new key every month would add work and no safety.</p>
+    <p>One credential still lives in the agent VM: the login of the agent itself, for Claude Code and Codex. It is an OAuth login that renews itself, and the agent expects it on the machine where it runs. That is the honest gap. Whoever copies it can use my subscription until I log out. It cannot push, deploy or read any other key.</p>
+
+    <h2 id="stages">Running it in stages</h2>
+    <p>A security layer that breaks my daily work gets switched off. So the new parts start in a mode that changes nothing, and get stricter in three steps:</p>
+    <ol>
+      <li><b>Observe.</b> The broker in the agent VM sees each git push, finds out which program asks, and logs it. The verifier in front of the gateway logs each write as "would refuse", because no grant exists yet. This runs now.</li>
+      <li><b>Shadow.</b> Pushes ask the phone, but never wait for the answer. The verifier logs valid grants as passing. I learn how many questions a day the phone would get, and whether I still read them.</li>
+      <li><b>Enforce.</b> Writes without a grant are refused, reads still pass. Jobs that run on their own, such as the nightly dependency updates, get a standing grant. A few days before it ends, it asks the phone for a renewal.</li>
+    </ol>
+    <p>Each step is one line in the configuration and one deploy, and going back is one command.</p>
+    <p>The whole setup is declared in Nix, a package manager with its own language that describes a system as code: the three machines, their networks, the firewall rules, the gateway rules and the list of keys. From the configuration repository I can rebuild every machine from scratch. The repository holds no secret, so it could be public. And the gate never lets the agent VM reach it, so an agent cannot change its own boundaries.</p>
+
+    <h2 id="others">Making it usable for others</h2>
+    <p>I built this for myself, but little in it is specific to me. To make it usable for others, I would publish it as two pieces, because they solve two problems and each is useful alone.</p>
+    <ul>
+      <li><b>The machines.</b> The agent VM, the gate, the firewall and the secret store, generated from one configuration file. This piece alone already removes every forge token from the place where agents run. It needs no phone.</li>
+      <li><b>Countersign.</b> The broker, the verifier and the phone app. It adds an approval per action on top of a gateway. It plugs into the first piece with one option, and into any other gateway that can put the verifier in front of it.</li>
+    </ul>
+    <p>Who could use it: someone with a Linux computer that can run virtual machines, and who is fine with Nix. Nix is the price of a setup that rebuilds itself and can be checked before it runs. But not everyone has to write it by hand. The setup guide can double as instructions for an agent on the host. I would recommend exactly that: an agent does the setup, and a person reads each change and does the few steps that only a person can do. Those are creating the GitHub App, putting the keys into the store, scanning the pairing code with the phone, and approving.</p>
+    <p>What is missing before others can use it:</p>
+    <ul>
+      <li>An install on a fresh computer. My own setup grew step by step. The general version has not yet been installed from zero.</li>
+      <li>GitLab. Its rules exist and pass their tests, but they have not met a real GitLab server yet.</li>
+      <li>The app. I install it from my own app store. Others need a build from a public place, and a way to check that it was built from the published code.</li>
+      <li>The relay. ntfy.sh works and sees only who talks when. A team will want to run its own, which ntfy allows without a change to the code.</li>
+    </ul>
+    <p>Questions I have about this part:</p>
+    <ul>
+      <li>One project with Countersign as an option, or two projects that know about each other?</li>
+      <li>Is "an agent sets it up, a person reviews each change" a good enough setup story, or does it need a guided installer?</li>
+      <li>Could the gate hold the agents' own logins too, so that the agent VM holds nothing at all?</li>
+    </ul>
+
     <h2 id="start">Starting points</h2>
     <ul>
       <li>My own question: can DPoP replace the long-lived passwords, API keys and tokens on my machines, and can a phone approve what my agents may do, over an encrypted link to the Linux machine they run on?</li>
@@ -660,6 +785,7 @@ signed   with the private key, which never leaves the agent's process</code></pr
 
     <h2 id="revisions">Revisions</h2>
     <ul class="dates">
+      <li><time datetime="2026-11-19">19 Nov 2026</time><span>Added the setup I run since 17 November: three machines on one computer, where the last keys live, the three stages, and how others could use it. New status Trying it out, because I now test the design in practice. The new part is not narrated yet.</span></li>
       <li><time datetime="2026-11-12">12 Nov 2026</time><span>Rewrote it for readers who do not know every term, after my feedback on encrypted-patches: too many new words, too little room for the mechanism. Each new term (bearer token, key pair, JWT, pidfd, ptrace, MFA fatigue, StrongBox, MCP, Diffie-Hellman, PAKE) is now explained where it first appears, and DPoP gets several paragraphs. Cut notarization, Pomerium and "lending access" as detours, folded "the agent asks better questions" into the plan idea, and made the thought narrated.</span></li>
       <li><time datetime="2026-11-12">12 Nov 2026</time><span>First version.</span></li>
     </ul>
