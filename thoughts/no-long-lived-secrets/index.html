@@ -612,7 +612,7 @@ signed   with the private key, which never leaves the agent's process</code></pr
 
     <div class="say" id="say-outro"><p><span class="say-k">Spoken</span>That was Agents without long-lived secrets. In short: a key that cannot be copied replaces the secret, the phone signs a narrow, short grant for what the agent means to do, and the last static keys move into one gateway that no agent can read. It is still a draft, and the open questions are where it goes next.</p></div>
     <h2 id="trying">Trying it out: the setup I run</h2>
-    <p>I started this thought as a design. Since 17 November 2026 I run a first version of it on my own machines. It does not refuse anything yet: it watches, and writes down what it would refuse. My phone is paired with it, and the first real approval from the phone is the next step. Running the parts changed how I think about the keys that cannot go away yet, so this part is about them: where they live, how the whole thing runs, and how someone else could run the same.</p>
+    <p>I started this thought as a design. Since 17 November 2026 I run a first version of it on my own machines. It does not refuse anything yet. Since 19 November my phone gets a question for each push, but the push does not wait for my answer, and the gateway writes down what it would refuse. Running the parts changed how I think about the keys that cannot go away yet, so this part is about them: where they live, how the whole thing runs, and how someone else could run the same.</p>
     <p>The setup is three machines on one computer. Two of them are virtual machines: computers that a program on my real computer simulates, each with its own system, disk and network. The real computer is called the host.</p>
     <figure class="fig-wide anim">
       <svg class="dg dg-w" viewBox="0 0 680 380" role="img" aria-labelledby="f6t f6d">
@@ -704,8 +704,8 @@ signed   with the private key, which never leaves the agent's process</code></pr
     <h2 id="stages">Running it in stages</h2>
     <p>A security layer that breaks my daily work gets switched off. So the new parts start in a mode that changes nothing, and get stricter in three steps:</p>
     <ol>
-      <li><b>Observe.</b> The broker in the agent VM sees each git push, finds out which program asks, and logs it. The verifier in front of the gateway logs each write as "would refuse", because no grant exists yet. This runs now.</li>
-      <li><b>Shadow.</b> Pushes ask the phone, but never wait for the answer. The verifier logs valid grants as passing. I learn how many questions a day the phone would get, and whether I still read them.</li>
+      <li><b>Observe.</b> The broker in the agent VM sees each git push, finds out which program asks, and logs it. The verifier in front of the gateway logs each write as "would refuse", because no grant exists yet. This ran from 17 November.</li>
+      <li><b>Shadow.</b> Pushes ask the phone, but never wait for the answer. The verifier logs valid grants as passing. I learn how many questions a day the phone gets, and whether I still read them. This runs since 19 November.</li>
       <li><b>Enforce.</b> Writes without a grant are refused, reads still pass. Jobs that run on their own, such as the nightly dependency updates, get a standing grant. A few days before it ends, it asks the phone for a renewal.</li>
     </ol>
     <p>Each step is one line in the configuration and one deploy, and going back is one command.</p>
