@@ -23,7 +23,7 @@ fi
 git -C "$root" archive "$src" "${SITE[@]}" | tar -x
 # llms.txt and the RSS feed of the thoughts are made from the published pages, never by hand
 python3 "$root/scripts/gen-feeds.py" "$tree"
-# each tool page shows the README of the latest release of its repo; a failed fetch stops the deploy
+# each tool page shows the guide and the version of the latest release of its repo; a failed fetch stops the deploy
 python3 "$root/scripts/gen-tools.py" "$tree"
 git add -A
 
