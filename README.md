@@ -100,7 +100,7 @@ GitHub Pages serves the `gh-pages` branch at <https://t7d.dev>. `master` is the 
 2. The workflow `.github/workflows/deploy.yml` runs `scripts/deploy.sh`.
 3. The script copies the site files of that commit to `gh-pages`, writes `llms.txt` and the feeds from the pages with `scripts/gen-feeds.py`, puts the README of each tool's latest release into its page with `scripts/gen-tools.py`, and pushes. `scripts/`, `.claude/`, `.github/` and this README stay on `master`.
 
-To ship a pull request in one step, run `scripts/ship.sh [<pr>]`. It merges the PR, puts this clone on `master`, waits for the deploy and the Pages build, and checks that t7d.dev serves each site file of the PR. It runs no checks: look at the pages first.
+To ship a pull request in one step, run `scripts/ship.sh [<pr>]`. It merges the PR, puts the main clone on `master` (a worktree stays on its branch), waits for the deploy and the Pages build, and checks that t7d.dev serves each site file of the PR. It runs no checks: look at the pages first.
 
 The folder `sealed/` on `gh-pages` does not come from `master`. The admin app of sealed in the lab builds each encrypted site and pushes it to `gh-pages` as `sealed/<site>/`: a login page, a keyring and ciphertext, never the plain files. `scripts/deploy.sh` keeps that folder as it is, and sealed changes nothing outside it. Users, passwords and access are managed in the sealed admin app, not here. The setup is in "Publish below t7d.dev" in the README of sealed.
 

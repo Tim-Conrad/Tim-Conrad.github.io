@@ -512,5 +512,78 @@ esac
         self.assertEqual(merges, [])
 
 
+class ShipCheckout(unittest.TestCase):
+    """ship.sh in a throwaway repository: a bare origin, a main clone and a linked worktree, each with a copy of
+    ship.sh. The fake gh says that the merge commit is origin/master and that its deploy passed. With no
+    "Deploy <sha>" on gh-pages the run ends after the deploy, so it touches no network."""
+    GH = """#!/usr/bin/env bash
+case "$*" in
+  *"--json state"*) echo MERGED ;;
+  *"--json title"*) echo "A title" ;;
+  *"--json headRefName"*) echo t/a ;;
+  *"--json mergeCommit"*) echo "$MERGE_SHA" ;;
+  "run list"*) echo 7 ;;
+  "run view"*) echo "completed success" ;;
+  *) exit 1 ;;
+esac
+"""
+    GIT = """#!/usr/bin/env bash
+case "$1" in
+  ls-remote) exit 2 ;;
+  *) exec "$REAL_GIT" "$@" ;;
+esac
+"""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        bin_dir = os.path.join(self.tmp, "bin")
+        write(os.path.join(bin_dir, "gh"), self.GH, 0o755)
+        write(os.path.join(bin_dir, "git"), self.GIT, 0o755)
+        self.main = os.path.join(self.tmp, "main")
+        self.wt = os.path.join(self.tmp, "wt")
+        origin = os.path.join(self.tmp, "origin.git")
+        self.git(self.tmp, "init", "-q", "--bare", "-b", "master", origin)
+        self.git(self.tmp, "clone", "-q", origin, self.main)
+        write(os.path.join(self.main, "scripts", "ship.sh"), open(SHIP).read(), 0o755)
+        self.git(self.main, "add", ".")
+        self.git(self.main, "commit", "-qm", "one")
+        self.git(self.main, "push", "-q", "origin", "master", "master:gh-pages")
+        self.git(self.main, "worktree", "add", "-q", "-b", "t/a", self.wt)
+        self.git(self.main, "commit", "-q", "--allow-empty", "-m", "merge")
+        self.git(self.main, "push", "-q", "origin", "master")
+        self.git(self.main, "reset", "-q", "--hard", "HEAD~1")
+        self.merge_sha = self.git(self.main, "rev-parse", "origin/master")
+        self.env = dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"], REAL_GIT=shutil.which("git"),
+                        MERGE_SHA=self.merge_sha, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
+                        GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+
+    def git(self, cwd, *args):
+        env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+                   GIT_COMMITTER_EMAIL="t@t")
+        return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+    def ship(self, clone):
+        return subprocess.run(["bash", os.path.join(clone, "scripts", "ship.sh"), "5"], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def test_a_worktree_stays_on_its_branch(self):
+        """master is checked out in the main clone, so a worktree cannot check it out."""
+        res = self.ship(self.wt)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(self.git(self.wt, "branch", "--show-current"), "t/a")
+        self.assertIn("the PR changed no site file", res.stdout)
+
+    def test_the_main_clone_goes_to_master(self):
+        """The review site shows the main clone: after a ship it shows master."""
+        self.git(self.wt, "checkout", "-q", "--detach")
+        self.git(self.main, "checkout", "-q", "t/a")
+        res = self.ship(self.main)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(self.git(self.main, "branch", "--show-current"), "master")
+        self.assertEqual(self.git(self.main, "rev-parse", "HEAD"), self.merge_sha)
+
+
 if __name__ == "__main__":
     unittest.main()
