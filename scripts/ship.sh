@@ -17,14 +17,22 @@ SITE_URL=https://t7d.dev
 
 # wait_run <workflow> <sha>: the run of that workflow for that commit, watched to its end
 wait_run() {
-  local id="" i
-  for i in $(seq 1 30); do
+  local id=""
+  for _ in $(seq 1 30); do
     id=$(gh run list -R "$REPO" --workflow "$1" --commit "$2" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
     [ -n "$id" ] && break
     sleep 4
   done
   [ -n "$id" ] || { echo "ship: no run of \"$1\" for ${2:0:7} after 2 min" >&2; return 1; }
-  gh run watch -R "$REPO" "$id" --exit-status >/dev/null || { echo "ship: \"$1\" failed: gh run view -R $REPO $id --log-failed" >&2; return 1; }
+  # Not `gh run watch`: it reads /actions/runs/<id>/jobs, and the gate answers that with 403.
+  local state="" conclusion=""
+  for _ in $(seq 1 120); do
+    read -r state conclusion < <(gh run view -R "$REPO" "$id" --json status,conclusion --jq '"\(.status) \(.conclusion)"') || true
+    [ "$state" = completed ] && break
+    sleep 10
+  done
+  [ "$state" = completed ] || { echo "ship: \"$1\" did not end after 20 min (state: ${state:-unknown}): gh run view -R $REPO $id" >&2; return 1; }
+  [ "$conclusion" = success ] || { echo "ship: \"$1\" ended with \"$conclusion\": gh run view -R $REPO $id --log-failed" >&2; return 1; }
   echo "   \"$1\" passed (run $id)"
 }
 
