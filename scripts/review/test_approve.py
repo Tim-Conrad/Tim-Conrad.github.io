@@ -449,39 +449,65 @@ class Api(Fixture):
 
 
 class Ship(unittest.TestCase):
-    """ship.sh with a fake gh first in PATH: the merge call is logged, the next query fails and ends the run."""
+    """ship.sh with a fake gh and a fake git first in PATH: both log their calls. The merge commit query fails and
+    ends the run. The fake git answers ls-remote and push itself, so nothing goes to the real origin."""
     GH = """#!/usr/bin/env bash
 echo "$*" >>"$LOG"
 case "$*" in
-  *"--json state"*) echo OPEN ;;
+  *"--json state"*) echo "${FAKE_STATE:-OPEN}" ;;
   *"--json title"*) echo "A title" ;;
+  *"--json headRefName"*) echo t/a ;;
   "pr merge"*) exit 0 ;;
   *) exit 1 ;;
 esac
 """
+    GIT = """#!/usr/bin/env bash
+case "$1" in
+  ls-remote|push) echo "git $*" >>"$LOG"; [ "$1" = push ] || [ -n "${FAKE_BRANCH_EXISTS:-}" ] ;;
+  *) exec "$REAL_GIT" "$@" ;;
+esac
+"""
 
-    def run_ship(self, *args):
+    def run_ship(self, *args, **env_extra):
+        """Returns the result, the merge calls of gh and the push calls of git."""
         with tempfile.TemporaryDirectory() as tmp:
             write(os.path.join(tmp, "gh"), self.GH, 0o755)
+            write(os.path.join(tmp, "git"), self.GIT, 0o755)
             log = os.path.join(tmp, "gh.log")
             write(log, "")
-            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ["PATH"], LOG=log)
+            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ["PATH"], LOG=log, REAL_GIT=shutil.which("git"),
+                       **env_extra)
             res = subprocess.run(["bash", SHIP, *args], env=env, capture_output=True, text=True, timeout=30)
             with open(log) as f:
-                return res, [line for line in f.read().splitlines() if line.startswith("pr merge")]
+                lines = f.read().splitlines()
+            return (res, [line for line in lines if line.startswith("pr merge")],
+                    [line for line in lines if line.startswith("git push")])
 
     def test_sha_goes_to_match_head_commit(self):
         sha = "a" * 40
-        res, merges = self.run_ship("5", sha)
-        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --delete-branch --match-head-commit " + sha],
+        res, merges, _ = self.run_ship("5", sha)
+        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --match-head-commit " + sha],
                          res.stderr)
 
     def test_without_sha_no_flag(self):
-        res, merges = self.run_ship("5")
-        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --delete-branch"], res.stderr)
+        res, merges, _ = self.run_ship("5")
+        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge"], res.stderr)
+
+    def test_git_deletes_the_branch(self):
+        """The gate answers 403 to the branch delete of the API (gh --delete-branch): git push deletes it."""
+        res, _, pushes = self.run_ship("5", FAKE_BRANCH_EXISTS="1")
+        self.assertEqual(pushes, ["git push origin --delete t/a"], res.stderr)
+
+    def test_a_merged_pr_with_its_branch_still_there_loses_the_branch(self):
+        res, merges, pushes = self.run_ship("5", FAKE_STATE="MERGED", FAKE_BRANCH_EXISTS="1")
+        self.assertEqual((merges, pushes), ([], ["git push origin --delete t/a"]), res.stderr)
+
+    def test_a_branch_that_is_gone_is_not_deleted_again(self):
+        res, _, pushes = self.run_ship("5", FAKE_STATE="MERGED")
+        self.assertEqual(pushes, [], res.stderr)
 
     def test_a_bad_sha_merges_nothing(self):
-        res, merges = self.run_ship("5", "--admin")
+        res, merges, _ = self.run_ship("5", "--admin")
         self.assertNotEqual(res.returncode, 0)
         self.assertEqual(merges, [])
 

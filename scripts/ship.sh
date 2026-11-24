@@ -2,8 +2,9 @@
 # Ship a pull request in one step: merge it, wait for the deploy, and check that t7d.dev serves the new files.
 #   scripts/ship.sh [<pr>]      the PR number. Without it: the PR of the current branch.
 #   scripts/ship.sh <pr> <sha>  merge only if the head of the PR is still this commit (the approved round).
-# 1. gh pr merge --merge --delete-branch. A PR that is already merged is not merged again, so a second run
-#    after a failed step does the other steps only.
+# 1. gh pr merge --merge. A PR that is already merged is not merged again, so a second run
+#    after a failed step does the other steps only. Then `git push origin --delete <branch>`, if the branch is still
+#    there: the gate answers 403 to the branch delete of the API (gh --delete-branch).
 # 2. This clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked files.
 # 3. The workflow "Deploy to gh-pages" of the merge commit must pass. It writes the commit "Deploy <sha>" on gh-pages,
 #    unless the PR changed no site file (scripts/, docs): then the script ends here.
@@ -39,10 +40,14 @@ fi
 state=$(gh pr view "$pr" -R "$REPO" --json state --jq .state)
 echo "== PR #$pr ($state): $(gh pr view "$pr" -R "$REPO" --json title --jq .title)"
 case $state in
-  OPEN)   gh pr merge "$pr" -R "$REPO" --merge --delete-branch "${match[@]}" ;;
+  OPEN)   gh pr merge "$pr" -R "$REPO" --merge "${match[@]}" ;;
   MERGED) echo "== already merged" ;;
   *)      echo "ship: PR #$pr is $state. Nothing was done." >&2; exit 1 ;;
 esac
+branch=$(gh pr view "$pr" -R "$REPO" --json headRefName --jq .headRefName)
+if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+  git push origin --delete "$branch"
+fi
 sha=$(gh pr view "$pr" -R "$REPO" --json mergeCommit --jq .mergeCommit.oid)
 
 echo "== this clone to master"
