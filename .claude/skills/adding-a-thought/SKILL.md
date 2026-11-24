@@ -56,7 +56,7 @@ Copy `thoughts/humans-md/index.html` and keep its structure:
 3. `.toc` with every `h2`.
 4. The text, then in this order: Open questions (if any), Starting points, Sources (`ol.refs`, `id="s1"`...), Revisions (`ul.dates`), Feedback.
 
-Status is one of `Draft` (still forming), `Settled` (Tim stands by it) and `Changed my mind`. Set it only as Tim says; a new thought is `Draft`.
+Status is one of `Draft` (still forming), `Trying it out` (Tim builds or runs it to test it in practice), `Settled` (Tim stands by it) and `Changed my mind`. Set it only as Tim says; a new thought is `Draft`.
 
 Then:
 

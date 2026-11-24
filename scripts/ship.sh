@@ -2,9 +2,11 @@
 # Ship a pull request in one step: merge it, wait for the deploy, and check that t7d.dev serves the new files.
 #   scripts/ship.sh [<pr>]      the PR number. Without it: the PR of the current branch.
 #   scripts/ship.sh <pr> <sha>  merge only if the head of the PR is still this commit (the approved round).
-# 1. gh pr merge --merge --delete-branch. A PR that is already merged is not merged again, so a second run
-#    after a failed step does the other steps only.
-# 2. This clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked files.
+# 1. gh pr merge --merge. A PR that is already merged is not merged again, so a second run
+#    after a failed step does the other steps only. Then `git push origin --delete <branch>`, if the branch is still
+#    there: the gate answers 403 to the branch delete of the API (gh --delete-branch).
+# 2. The main clone goes to master (fast-forward only), so the review site shows master. It stops on changes to tracked
+#    files. A linked worktree (wt new) only fetches and stays on its branch: master is checked out in another clone.
 # 3. The workflow "Deploy to gh-pages" of the merge commit must pass. It writes the commit "Deploy <sha>" on gh-pages,
 #    unless the PR changed no site file (scripts/, docs): then the script ends here.
 # 4. The GitHub Pages build of the newest gh-pages commit must pass (a later deploy contains this one).
@@ -16,14 +18,22 @@ SITE_URL=https://t7d.dev
 
 # wait_run <workflow> <sha>: the run of that workflow for that commit, watched to its end
 wait_run() {
-  local id="" i
-  for i in $(seq 1 30); do
+  local id=""
+  for _ in $(seq 1 30); do
     id=$(gh run list -R "$REPO" --workflow "$1" --commit "$2" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
     [ -n "$id" ] && break
     sleep 4
   done
   [ -n "$id" ] || { echo "ship: no run of \"$1\" for ${2:0:7} after 2 min" >&2; return 1; }
-  gh run watch -R "$REPO" "$id" --exit-status >/dev/null || { echo "ship: \"$1\" failed: gh run view -R $REPO $id --log-failed" >&2; return 1; }
+  # Not `gh run watch`: it reads /actions/runs/<id>/jobs, and the gate answers that with 403.
+  local state="" conclusion=""
+  for _ in $(seq 1 120); do
+    read -r state conclusion < <(gh run view -R "$REPO" "$id" --json status,conclusion --jq '"\(.status) \(.conclusion)"') || true
+    [ "$state" = completed ] && break
+    sleep 10
+  done
+  [ "$state" = completed ] || { echo "ship: \"$1\" did not end after 20 min (state: ${state:-unknown}): gh run view -R $REPO $id" >&2; return 1; }
+  [ "$conclusion" = success ] || { echo "ship: \"$1\" ended with \"$conclusion\": gh run view -R $REPO $id --log-failed" >&2; return 1; }
   echo "   \"$1\" passed (run $id)"
 }
 
@@ -39,21 +49,30 @@ fi
 state=$(gh pr view "$pr" -R "$REPO" --json state --jq .state)
 echo "== PR #$pr ($state): $(gh pr view "$pr" -R "$REPO" --json title --jq .title)"
 case $state in
-  OPEN)   gh pr merge "$pr" -R "$REPO" --merge --delete-branch "${match[@]}" ;;
+  OPEN)   gh pr merge "$pr" -R "$REPO" --merge "${match[@]}" ;;
   MERGED) echo "== already merged" ;;
   *)      echo "ship: PR #$pr is $state. Nothing was done." >&2; exit 1 ;;
 esac
+branch=$(gh pr view "$pr" -R "$REPO" --json headRefName --jq .headRefName)
+if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+  git push origin --delete "$branch"
+fi
 sha=$(gh pr view "$pr" -R "$REPO" --json mergeCommit --jq .mergeCommit.oid)
 
-echo "== this clone to master"
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  echo "ship: this clone has changes to tracked files. The PR is merged, but the clone stays on $(git branch --show-current)." >&2
-  exit 1
+if [ "$(git rev-parse --absolute-git-dir)" != "$(cd "$(git rev-parse --git-common-dir)" && pwd -P)" ]; then
+  echo "== this worktree stays on $(git branch --show-current)"
+  git fetch -q origin
+else
+  echo "== this clone to master"
+  if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    echo "ship: this clone has changes to tracked files. The PR is merged, but the clone stays on $(git branch --show-current)." >&2
+    exit 1
+  fi
+  git fetch -q origin
+  [ "$(git branch --show-current)" = master ] || git checkout -q master
+  git merge -q --ff-only origin/master
+  echo "   $(git log --oneline -1)"
 fi
-git fetch -q origin
-[ "$(git branch --show-current)" = master ] || git checkout -q master
-git merge -q --ff-only origin/master
-echo "   $(git log --oneline -1)"
 
 echo "== deploy of ${sha:0:7}"
 wait_run deploy.yml "$sha"
@@ -65,7 +84,7 @@ fi
 wait_run pages-build-deployment "$(git rev-parse origin/gh-pages)"
 
 echo "== $SITE_URL serves the new files"
-read -r -a site <<<"$(sed -n 's/^SITE=(\(.*\))$/\1/p' scripts/deploy.sh)"
+read -r -a site <<<"$(git show "$sha:scripts/deploy.sh" | sed -n 's/^SITE=(\(.*\))$/\1/p')"   # a worktree can be behind
 mapfile -t files < <(git diff --name-only --diff-filter=AM "$sha^1" "$sha" -- "${site[@]}")
 bad=0
 for f in "${files[@]}"; do

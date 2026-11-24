@@ -449,41 +449,140 @@ class Api(Fixture):
 
 
 class Ship(unittest.TestCase):
-    """ship.sh with a fake gh first in PATH: the merge call is logged, the next query fails and ends the run."""
+    """ship.sh with a fake gh and a fake git first in PATH: both log their calls. The merge commit query fails and
+    ends the run. The fake git answers ls-remote and push itself, so nothing goes to the real origin."""
     GH = """#!/usr/bin/env bash
 echo "$*" >>"$LOG"
 case "$*" in
-  *"--json state"*) echo OPEN ;;
+  *"--json state"*) echo "${FAKE_STATE:-OPEN}" ;;
   *"--json title"*) echo "A title" ;;
+  *"--json headRefName"*) echo t/a ;;
   "pr merge"*) exit 0 ;;
   *) exit 1 ;;
 esac
 """
+    GIT = """#!/usr/bin/env bash
+case "$1" in
+  ls-remote|push) echo "git $*" >>"$LOG"; [ "$1" = push ] || [ -n "${FAKE_BRANCH_EXISTS:-}" ] ;;
+  *) exec "$REAL_GIT" "$@" ;;
+esac
+"""
 
-    def run_ship(self, *args):
+    def run_ship(self, *args, **env_extra):
+        """Returns the result, the merge calls of gh and the push calls of git."""
         with tempfile.TemporaryDirectory() as tmp:
             write(os.path.join(tmp, "gh"), self.GH, 0o755)
+            write(os.path.join(tmp, "git"), self.GIT, 0o755)
             log = os.path.join(tmp, "gh.log")
             write(log, "")
-            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ["PATH"], LOG=log)
+            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ["PATH"], LOG=log, REAL_GIT=shutil.which("git"),
+                       **env_extra)
             res = subprocess.run(["bash", SHIP, *args], env=env, capture_output=True, text=True, timeout=30)
             with open(log) as f:
-                return res, [line for line in f.read().splitlines() if line.startswith("pr merge")]
+                lines = f.read().splitlines()
+            return (res, [line for line in lines if line.startswith("pr merge")],
+                    [line for line in lines if line.startswith("git push")])
 
     def test_sha_goes_to_match_head_commit(self):
         sha = "a" * 40
-        res, merges = self.run_ship("5", sha)
-        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --delete-branch --match-head-commit " + sha],
+        res, merges, _ = self.run_ship("5", sha)
+        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --match-head-commit " + sha],
                          res.stderr)
 
     def test_without_sha_no_flag(self):
-        res, merges = self.run_ship("5")
-        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge --delete-branch"], res.stderr)
+        res, merges, _ = self.run_ship("5")
+        self.assertEqual(merges, ["pr merge 5 -R Tim-Conrad/Tim-Conrad.github.io --merge"], res.stderr)
+
+    def test_git_deletes_the_branch(self):
+        """The gate answers 403 to the branch delete of the API (gh --delete-branch): git push deletes it."""
+        res, _, pushes = self.run_ship("5", FAKE_BRANCH_EXISTS="1")
+        self.assertEqual(pushes, ["git push origin --delete t/a"], res.stderr)
+
+    def test_a_merged_pr_with_its_branch_still_there_loses_the_branch(self):
+        res, merges, pushes = self.run_ship("5", FAKE_STATE="MERGED", FAKE_BRANCH_EXISTS="1")
+        self.assertEqual((merges, pushes), ([], ["git push origin --delete t/a"]), res.stderr)
+
+    def test_a_branch_that_is_gone_is_not_deleted_again(self):
+        res, _, pushes = self.run_ship("5", FAKE_STATE="MERGED")
+        self.assertEqual(pushes, [], res.stderr)
 
     def test_a_bad_sha_merges_nothing(self):
-        res, merges = self.run_ship("5", "--admin")
+        res, merges, _ = self.run_ship("5", "--admin")
         self.assertNotEqual(res.returncode, 0)
         self.assertEqual(merges, [])
+
+
+class ShipCheckout(unittest.TestCase):
+    """ship.sh in a throwaway repository: a bare origin, a main clone and a linked worktree, each with a copy of
+    ship.sh. The fake gh says that the merge commit is origin/master and that its deploy passed. With no
+    "Deploy <sha>" on gh-pages the run ends after the deploy, so it touches no network."""
+    GH = """#!/usr/bin/env bash
+case "$*" in
+  *"--json state"*) echo MERGED ;;
+  *"--json title"*) echo "A title" ;;
+  *"--json headRefName"*) echo t/a ;;
+  *"--json mergeCommit"*) echo "$MERGE_SHA" ;;
+  "run list"*) echo 7 ;;
+  "run view"*) echo "completed success" ;;
+  *) exit 1 ;;
+esac
+"""
+    GIT = """#!/usr/bin/env bash
+case "$1" in
+  ls-remote) exit 2 ;;
+  *) exec "$REAL_GIT" "$@" ;;
+esac
+"""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        bin_dir = os.path.join(self.tmp, "bin")
+        write(os.path.join(bin_dir, "gh"), self.GH, 0o755)
+        write(os.path.join(bin_dir, "git"), self.GIT, 0o755)
+        self.main = os.path.join(self.tmp, "main")
+        self.wt = os.path.join(self.tmp, "wt")
+        origin = os.path.join(self.tmp, "origin.git")
+        self.git(self.tmp, "init", "-q", "--bare", "-b", "master", origin)
+        self.git(self.tmp, "clone", "-q", origin, self.main)
+        write(os.path.join(self.main, "scripts", "ship.sh"), open(SHIP).read(), 0o755)
+        self.git(self.main, "add", ".")
+        self.git(self.main, "commit", "-qm", "one")
+        self.git(self.main, "push", "-q", "origin", "master", "master:gh-pages")
+        self.git(self.main, "worktree", "add", "-q", "-b", "t/a", self.wt)
+        self.git(self.main, "commit", "-q", "--allow-empty", "-m", "merge")
+        self.git(self.main, "push", "-q", "origin", "master")
+        self.git(self.main, "reset", "-q", "--hard", "HEAD~1")
+        self.merge_sha = self.git(self.main, "rev-parse", "origin/master")
+        self.env = dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"], REAL_GIT=shutil.which("git"),
+                        MERGE_SHA=self.merge_sha, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
+                        GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+
+    def git(self, cwd, *args):
+        env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+                   GIT_COMMITTER_EMAIL="t@t")
+        return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+    def ship(self, clone):
+        return subprocess.run(["bash", os.path.join(clone, "scripts", "ship.sh"), "5"], env=self.env,
+                              capture_output=True, text=True, timeout=30)
+
+    def test_a_worktree_stays_on_its_branch(self):
+        """master is checked out in the main clone, so a worktree cannot check it out."""
+        res = self.ship(self.wt)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(self.git(self.wt, "branch", "--show-current"), "t/a")
+        self.assertIn("the PR changed no site file", res.stdout)
+
+    def test_the_main_clone_goes_to_master(self):
+        """The review site shows the main clone: after a ship it shows master."""
+        self.git(self.wt, "checkout", "-q", "--detach")
+        self.git(self.main, "checkout", "-q", "t/a")
+        res = self.ship(self.main)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(self.git(self.main, "branch", "--show-current"), "master")
+        self.assertEqual(self.git(self.main, "rev-parse", "HEAD"), self.merge_sha)
 
 
 if __name__ == "__main__":
