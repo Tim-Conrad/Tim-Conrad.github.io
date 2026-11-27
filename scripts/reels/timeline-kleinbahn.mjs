@@ -160,4 +160,35 @@ export const STAGES = [
     setup: `G('env').time=0.45; const S=G('S'), W=G('W'), ROAD=G('ROAD'); let i=-1; for(let k=0;k<S.track.length && i<0;k++) if(S.track[k] && S.land[k] && !ROAD[k] && G('dirsOf')(S.track[k]).length===3) i=k;
       T.c={ x:G('wx')(i%W), z:G('wz')((i/W)|0) };`,
     cam: `({x:T.c.x, z:T.c.z, y:0, dist:2.8-0.7*e, pitch:0.5-0.14*e, yaw:0.3+1.3*u})` },
+
+  // #38: the new Geisterbahn ride with its shooting game. The setup runs the ride (without drawing) to the throne hall
+  // and taps every little monster in view on the way, as the harness check ride.game does; the clip taps the Ghost King.
+  { id: 'pr38', ref: 'a096ccf', ui: true, scale: 1.5, frames: 216,
+    setup: `const R=T.R=G('GB_RIDE'); R.start(); T.tap=() => R.targets.forEach((tg,k) => { if(R.game.dead[k]>=0 || R.t<tg.t0+0.5 || R.t>tg.t1) return; const s=R.onScreen(tg.name,tg.r,tg.cy); if(s && s.x>0 && s.x<innerWidth && s.y>0 && s.y<innerHeight) R.shoot(s.x,s.y); });
+      const t=R.tAt(R.marks.throne+2); let n=0; while(R.active && R.t<t){ R.frame(1/30,false); if(++n%4===0) T.tap(); }`, pre: 1,
+    each: `if(f>=30 && f%2===0) T.tap();`,
+    cam: null },
+
+  // #46: one map of 144 x 120 tiles: the camera rises from the old island in the middle until it sees the whole map
+  { id: 'pr46', ref: 'ce277d7', frames: 144,
+    setup: `G('env').time=0.45;`,
+    cam: `({x:0, z:0, dist:26+52*e, pitch:0.75+0.15*e, yaw:0.5+0.15*u})` },
+
+  // #48 and #49: the Mountain tool on the most open inland spot (as the harness state 'mountain'): flat land, then
+  // the mountain with its cliffs, stairs, scree and snow; the camera turns round it
+  { id: 'pr49', ref: 'eeda93a', frames: 168,
+    setup: `G('env').time=0.42; G('env').season=1; const S=G('S'), W=G('W'), H=G('H'); let best=-1, bs=-1;
+      for (let z=4; z<H-4; z++) for (let x=4; x<W-4; x++) { let n=0; for (let dz=-4; dz<=4; dz++) for (let dx=-4; dx<=4; dx++) { const j=(z+dz)*W+x+dx; if (S.land[j] && !S.track[j] && !S.prop[j]) n++; else if (S.land[j] && S.prop[j]===1) n+=0.6; } if (n>bs) { bs=n; best=z*W+x; } }
+      T.m=[best%W, (best/W)|0]; T.c={x:G('wx')(T.m[0]), z:G('wz')(T.m[1])};`,
+    each: `if(f===30){ const why=G('mountainAt')(T.m[0], T.m[1]); if(why) throw new Error('no mountain: '+why); G('dirty').land=G('dirty').props=true; }`,
+    cam: `({x:T.c.x, z:T.c.z, y:0.5, dist:16-2*e, pitch:0.5, yaw:0.4+0.9*u})` },
+
+  // #50: high ground: a Zeppelin base placed by force on the side of a mountain levels its tiles
+  { id: 'pr50', ref: '6443271', frames: 192,
+    setup: `G('env').time=0.42; G('env').season=1; const S=G('S'), W=G('W'), H=G('H'); let best=-1, bs=-1;
+      for (let z=4; z<H-4; z++) for (let x=4; x<W-4; x++) { let n=0; for (let dz=-4; dz<=4; dz++) for (let dx=-4; dx<=4; dx++) { const j=(z+dz)*W+x+dx; if (S.land[j] && !S.track[j] && !S.prop[j]) n++; else if (S.land[j] && S.prop[j]===1) n+=0.6; } if (n>bs) { bs=n; best=z*W+x; } }
+      T.m=[best%W, (best/W)|0]; const why=G('mountainAt')(T.m[0], T.m[1]); if(why) throw new Error('no mountain: '+why);
+      G('dirty').land=G('dirty').props=true; T.step(1,0.05); T.c={x:G('wx')(T.m[0]), z:G('wz')(T.m[1])};`, pre: 6,
+    each: `if(f===36){ const r=G('zepPlace')(T.m[0]+2, T.m[1]+2, 2); if(!r) throw new Error('no Zeppelin base'); G('dirty').land=G('dirty').props=true; }`,
+    cam: `({x:T.c.x+0.6*e, z:T.c.z+0.6*e, y:0.5, dist:15-1.5*e, pitch:0.5, yaw:0.6+0.7*u})` },
 ];
