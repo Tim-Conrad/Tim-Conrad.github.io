@@ -135,4 +135,10 @@ export const STAGES = [
   { id: 'pr72', ref: '579d3c8', setup: `async () => { WZ.enterCastle(); await WZ.until(() => Castle.active && Castle.state() && Castle.state().x > 60 && !Castle.busy, 30000, 'castle');
       Castle.cheat('floor', 1); WZ.lines.length = 0; Castle.teleport(0, 650, 1); ${wait(2400)} }`,   // behind the gate (x 600)
     act: `async () => { Castle.walkTo(780); await WZ.until(() => WZ.lines.some(l => l.by === 'merchant'), 15000, 'merchant'); ${wait(2500)} }`, hold: 600 },
+  // #99: a thing that does not help gets an answer: "Hund" at the lookout (the case of the papercuts), as tests/riddle-nohelp.js
+  { id: 'pr99', ref: 'ca0d211', setup: `async () => { WZ.math.set({ on: false }); WZ.jump('castle');
+      await WZ.until(() => Castle.active && !Castle.busy && Castle.state().x > 60, 30000, 'castle');
+      ${wait(1500)} Castle.cheat('floor', 1); Castle.teleport(1, 1790, 1); await WZ.until(() => !Castle.busy && Castle.state().floor === 1 && Math.abs(Castle.state().x - 1790) < 40, 8000, 'at the lookout ' + JSON.stringify([Castle.state().floor, Castle.state().x])); ${wait(2400)} }`,
+    act: `async () => { const seen = new Set(WZ.lines); WZ.useWord('Hund');
+      await WZ.until(() => WZ.lines.some(l => !seen.has(l) && l.by === 'lookout'), 8000, 'lookout'); ${wait(3000)} }`, hold: 600 },
 ];
